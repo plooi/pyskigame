@@ -1,0 +1,17 @@
+IS THERE ISSUE WITH DRAW LINE 3D LINE WIDTH???
+use draw array for all graphics drawing
+
+Drawing
+    Option 1 (500 objects max, but easy)
+        Just call draw_rect or draw_quad
+    Option 2 (5000 objects max, but kinda difficult and only one type of draw option supported. Supports moving objects)
+        Each step, create a new list with object depth order (or with arbitrary
+        order if 3D) and then convert that list to numpy array, then add to 
+        VertexHandler object and draw the vertex handler object
+    Option 3 (500000 objects max, but also kinda difficult. No moving objects)
+        Each step, update vertices in VertexHandler
+        Then draw the VertexHandler
+
+
+
+
