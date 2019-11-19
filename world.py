@@ -102,6 +102,7 @@ class World(LooiObject):
             except:
                 pass
         self.setup_3d = setup_3d
+    
     def step(self):
         self.menu_option()
         self.update_line_of_sight()
@@ -141,8 +142,8 @@ class World(LooiObject):
             self.mobile_colors.append(color)
         elif type(color) == type([]):
             for i in range(4):
-                self.mobile_colors.append(int(i/4 * len(color)))
-        
+                #self.mobile_colors.append(int(i/4 * len(color)))
+                self.mobile_colors.append(color)
     
     #unused
     def _add_all_points(self):

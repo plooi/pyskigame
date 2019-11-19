@@ -7,18 +7,36 @@ def main():
     print(p)
 def copy_model(model):
     return copy.deepcopy(model)
+
+
+
+
+
 def horizontal_rotate_around_origin(point, theta):
     theta *= -1
     x = point[0]*cos(theta)- point[2]*sin(theta)
     z = point[0]*sin(theta)+ point[2]*cos(theta)
     point[0] = x
     point[2] = z
+def horizontal_rotate_track_around_origin(track, theta):
+    for i in range(0, len(track.points)):
+        horizontal_rotate_around_origin(track.points[i], theta)
+        
 def horizontal_rotate_model_around_origin(model, theta):
     for i in range(0, len(model), 5):
         horizontal_rotate_around_origin(model[i], theta)
         horizontal_rotate_around_origin(model[i+1], theta)
         horizontal_rotate_around_origin(model[i+2], theta)
         horizontal_rotate_around_origin(model[i+3], theta)
+def move_point(point, x_mov, y_mov, z_mov):
+    point[0] += x_mov
+    point[1] += y_mov
+    point[2] += z_mov
+def move_track(track, x_mov, y_mov, z_mov):
+    for i in range(0, len(track.points)):
+        track.points[i][0] += x_mov
+        track.points[i][1] += y_mov
+        track.points[i][2] += z_mov
 def move_model(model, x_mov, y_mov, z_mov):
     for i in range(0, len(model), 5):
         model[i][0] += x_mov
@@ -52,7 +70,10 @@ def rm_model_from_vertex_handler(keys, vertex_handler):
         vertex_handler.rm_vertex(key+2)
         vertex_handler.rm_vertex(key+3)
         
-        
+def add_model_to_world(model, world):
+    for i in range(0, len(model), 5):
+        world.add_quad(model[i], model[i+1], model[i+2], model[i+3], model[i+4])
+    
         
             
 if __name__ == "__main__": main()

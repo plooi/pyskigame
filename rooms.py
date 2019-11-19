@@ -4,7 +4,8 @@ import pylooiengine
 import easygui
 import world
 from lift import Lift
-
+from lift import TimeOverflowException
+from model_3d import *
 class Launcher(LooiObject):
     def step(self):
         main_menu()
@@ -54,11 +55,15 @@ def init_game_room(world):
 
     world.add_trees_elevation(1, 1,world.get_height()-1,world.get_width()-1)
     l = Lift(world)
-    l.build([100,100,[x/100 for x in range(10,100,7)],100,300])
+    l.build([100,100,[x/100 for x in range(10,100,7)],100,300], rope_speed = .2, terminal_speed = .05, chair_time_distance=50)
     world.activate()
 
 
 
+
+
+
+    
 
 
 
