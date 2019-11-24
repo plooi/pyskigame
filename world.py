@@ -1,5 +1,5 @@
 from pylooiengine import *
-from player import Player
+from player import *
 from pylooiengine.misc.graphics import VertexHandler
 import math
 import pylooiengine
@@ -37,6 +37,7 @@ def rad_to_deg(rad):
 
 def new_world_from_dims(name, width, height):
     w = World(name, width, height)
+    w.reset_floor_colors()
     return w
 def new_world_from_data_file(name, file_name, min_row=0, max_row=9999999999999999999, min_col=0, max_col=9999999999999999999):
     w = World(name, 0, 0)
@@ -64,6 +65,8 @@ def new_world_from_data_file(name, file_name, min_row=0, max_row=999999999999999
     f.close()
     w.smooth(0,0,w.get_height(),w.get_width())
     
+    w.reset_floor_colors()
+    
     return w
 
 
@@ -84,7 +87,8 @@ class World(LooiObject):
         #if it's too small (like .5) then the tiles farthest away aren't gonna get turned off and on
         #properly because we're not checking them
         
-        self.player = Player() if player == None else player
+        self.player = MapEditorPlayer() if player == None else player
+        self.player.world = self
         self.player.deactivate()
         self.add(self.player)
         self.a = None
@@ -110,10 +114,10 @@ class World(LooiObject):
         #draw all immobile vertices
         self.draw_quad_array_3d(self.vertex_handler.get_vertices(), self.vertex_handler.get_colors(), setup_3d=self.setup_3d)
         #self.draw_quad_3d(-1,1,-5, 1,1,-5, 1,-1,-5, -1,-1,-5, black, setup_3d=self.setup_3d)
-        self.draw_text(100,100, str(self.vertex_handler.capacity()))
+        #self.draw_text(100,100, str(self.vertex_handler.capacity()))
         
         
-        self.add_quad([-1,1,-5],[1,1,-5],[1,-1,-5],[-1,-1,-5], Color(0,0,1))
+        #self.add_quad([-1,1,-5],[1,1,-5],[1,-1,-5],[-1,-1,-5], Color(0,0,1))
         #draw mobile vertices
         if len(self.mobile_vertices) > 0:
             mobile_vertices = numpy.array(self.mobile_vertices)
@@ -151,7 +155,7 @@ class World(LooiObject):
             for x in range(0, self.get_width()-1):
                 color = random()*.5 +.5# for now we're just doing random colors
                 color = [color, color, color]
-                self.grid[z][x][1] = self.vertex_handler.add_vertex(
+                self.grid[z][x].floor_vert_handler_index = self.vertex_handler.add_vertex(
                         [x*self.unit_length, 
                         self.vertical_stretch * self.get_elevation(z,x),
                         z*self.unit_length]
@@ -197,7 +201,7 @@ class World(LooiObject):
                         #yes it is within the player's los
                         
                         #is it added?
-                        if self.grid[chunk_corner_z][chunk_corner_x][1] == None:
+                        if self.grid[chunk_corner_z][chunk_corner_x].floor_vert_handler_index == None:
                             #sweet niblets we have a square inside the los and not added
                             #we must add it
                             #if the probability test passes
@@ -208,10 +212,10 @@ class World(LooiObject):
                                             #color = random()*.5 +.5# for now we're just doing random colors
                                             #color = [color, color, color]
                                             
-                                            color = self.get_floor_color_zx(z, x)
+                                            color = self.grid[z][x].color#self.get_floor_color_zx(z, x)
                                             
                                             #ADD FLOOR QUADRILATERAL
-                                            self.grid[z][x][1] = self.vertex_handler.add_vertex(
+                                            self.grid[z][x].floor_vert_handler_index = self.vertex_handler.add_vertex(
                                                 [x*self.unit_length, 
                                                 self.vertical_stretch * self.get_elevation(z,x),
                                                 z*self.unit_length]
@@ -231,9 +235,9 @@ class World(LooiObject):
                                                 self.vertical_stretch * self.get_elevation(z+1,x),
                                                 (z+1)*self.unit_length]
                                                 , color) 
-                                            if self.grid[z][x][3] != None:
+                                            if self.grid[z][x].tree_obj != None:
                                                 #print("tree at %d %d" % (z,x))
-                                                if not self.grid[z][x][3].added: self.grid[z][x][3].add_to_vertex_handler(self.vertex_handler)
+                                                if not self.grid[z][x].tree_obj.added: self.grid[z][x].tree_obj.add_to_vertex_handler(self.vertex_handler)
                                             
                                                 
                         else:
@@ -241,18 +245,18 @@ class World(LooiObject):
                             pass
                         
                         #is the pan-chunk square added?
-                        if self.grid[chunk_corner_z][chunk_corner_x][2] != None:
+                        if self.grid[chunk_corner_z][chunk_corner_x].chunk_vert_handler_index != None:
                             #yeah it's added, but we need to get rid of it because the chunk is actually within the los of player now
-                            self.vertex_handler.rm_vertex(self.grid[chunk_corner_z][chunk_corner_x][2])
-                            self.vertex_handler.rm_vertex(self.grid[chunk_corner_z][chunk_corner_x][2]+1)
-                            self.vertex_handler.rm_vertex(self.grid[chunk_corner_z][chunk_corner_x][2]+2)
-                            self.vertex_handler.rm_vertex(self.grid[chunk_corner_z][chunk_corner_x][2]+3)
-                            self.grid[chunk_corner_z][chunk_corner_x][2] = None
+                            self.vertex_handler.rm_vertex(self.grid[chunk_corner_z][chunk_corner_x].chunk_vert_handler_index)
+                            self.vertex_handler.rm_vertex(self.grid[chunk_corner_z][chunk_corner_x].chunk_vert_handler_index+1)
+                            self.vertex_handler.rm_vertex(self.grid[chunk_corner_z][chunk_corner_x].chunk_vert_handler_index+2)
+                            self.vertex_handler.rm_vertex(self.grid[chunk_corner_z][chunk_corner_x].chunk_vert_handler_index+3)
+                            self.grid[chunk_corner_z][chunk_corner_x].chunk_vert_handler_index = None
                     else:
                         #this square is outside the los
                         
                         #is it added?
-                        if self.grid[chunk_corner_z][chunk_corner_x][1] == None:
+                        if self.grid[chunk_corner_z][chunk_corner_x].floor_vert_handler_index == None:
                             #kay that's fine, square outside the los and also not added to vertex handler. good
                             pass
                         else:
@@ -263,19 +267,19 @@ class World(LooiObject):
                                 for z in range(chunk_corner_z, chunk_corner_z+self.chunk_size):
                                     for x in range(chunk_corner_x, chunk_corner_x+self.chunk_size):
                                         if z < self.get_height()-1 and x <  self.get_width()-1: #if it's a bottom or right edge chunk, make sure that I am only attempting to rm the squares that actually exist 
-                                            self.vertex_handler.rm_vertex(self.grid[z][x][1])
-                                            self.vertex_handler.rm_vertex(self.grid[z][x][1]+1)
-                                            self.vertex_handler.rm_vertex(self.grid[z][x][1]+2)
-                                            self.vertex_handler.rm_vertex(self.grid[z][x][1]+3)
-                                            self.grid[z][x][1] = None
+                                            self.vertex_handler.rm_vertex(self.grid[z][x].floor_vert_handler_index)
+                                            self.vertex_handler.rm_vertex(self.grid[z][x].floor_vert_handler_index+1)
+                                            self.vertex_handler.rm_vertex(self.grid[z][x].floor_vert_handler_index+2)
+                                            self.vertex_handler.rm_vertex(self.grid[z][x].floor_vert_handler_index+3)
+                                            self.grid[z][x].floor_vert_handler_index = None
                                             
                                             
-                                            if self.grid[z][x][3] != None:
-                                                if self.grid[z][x][3].added: self.grid[z][x][3].remove_from_vertex_handler(self.vertex_handler)
+                                            if self.grid[z][x].tree_obj != None:
+                                                if self.grid[z][x].tree_obj.added: self.grid[z][x].tree_obj.remove_from_vertex_handler(self.vertex_handler)
                                             
                         
                         #is the pan-chunk square added?
-                        if self.grid[chunk_corner_z][chunk_corner_x][2] == None:
+                        if self.grid[chunk_corner_z][chunk_corner_x].chunk_vert_handler_index == None:
                             #it is not added, but we must add it
                             bottom_right_z = chunk_corner_z + self.chunk_size
                             bottom_right_x = chunk_corner_x + self.chunk_size
@@ -305,7 +309,7 @@ class World(LooiObject):
                                 color_adjust = 0
                                 for zz in range(chunk_corner_z, bottom_right_z):
                                     for xx in range(chunk_corner_x, bottom_right_x):
-                                        if self.grid[zz][xx][3] != None:
+                                        if self.grid[zz][xx].tree_obj != None:
                                             color_adjust += .005
                                 if color_adjust > .15: color_adjust = .25
                                 if color_adjust > .1:
@@ -318,7 +322,7 @@ class World(LooiObject):
                                         
                                 
                                 
-                                self.grid[chunk_corner_z][chunk_corner_x][2] = self.vertex_handler.add_vertex(
+                                self.grid[chunk_corner_z][chunk_corner_x].chunk_vert_handler_index = self.vertex_handler.add_vertex(
                                     [chunk_corner_x*self.unit_length, 
                                     self.vertical_stretch * self.get_elevation(chunk_corner_z,chunk_corner_x),
                                     chunk_corner_z*self.unit_length]
@@ -339,7 +343,10 @@ class World(LooiObject):
                                     (chunk_corner_z+self.chunk_size)*self.unit_length]
                                     , color) 
                     
-    
+    def reset_floor_colors(self):
+        for x in range(self.get_width()-1):
+            for z in range(self.get_height()-1):
+                self.grid[z][x].reset_floor_color()
     def get_floor_color_zx(self, z, x):
         return self.get_floor_color(
                         x*self.unit_length, 
@@ -388,20 +395,22 @@ class World(LooiObject):
     the world will be automatically expanded
     """
     def set_elevation(self, z, x, elevation):
-        flat_floor_color = self.get_floor_color(0,0,0, 1,0,0, 0,0,1)
+        #flat_floor_color = self.get_floor_color(0,0,0, 1,0,0, 0,0,1)
         while self.get_height() <= z:
             new_row = []
             new_color_row = []
             for i in range(self.get_width()):
-                new_row.append([0,None,None,None])#elevation, floor first corner index in vertex handler, chunk floor first corner index in vertex handler,tree object
-                new_color_row.append(flat_floor_color)
+                new_row.append(FloorVertex(x=i, z=self.get_height(), world=self))#elevation, floor first corner index in vertex handler, chunk floor first corner index in vertex handler,tree object
+                #new_color_row.append(flat_floor_color)
             self.grid.append(new_row)
-            
+        
+        
         while self.get_width() <= x:
+            x_of_following_floor_vertices = self.get_width()
             for z in range(len(self.grid)):
-                self.grid[z].append([0,None,None,None])
+                self.grid[z].append(FloorVertex(x=x_of_following_floor_vertices, z=z, world=self))
         ###
-        self.grid[z][x][0] = elevation
+        self.grid[z][x].elevation = elevation
         if z % 100 == 0 and x == 0:
             print(z,x)
         ###
@@ -429,29 +438,29 @@ class World(LooiObject):
                 #So we are in the player's los
                 
                 #now check if this square is already added
-                if self.grid[z][x][1] != None:
+                if self.grid[z][x].floor_vert_handler_index != None:
                     
                     #Okay so this square is already added. We just have to update the four vertexes
                     
                     
                     
                     color = [0,0,0]
-                    self.vertex_handler.update_vertex(self.grid[z][x][1],
+                    self.vertex_handler.update_vertex(self.grid[z][x].floor_vert_handler_index,
                         [x*self.unit_length, 
                         self.vertical_stretch * self.get_elevation(z,x),#this confirms the height is up to date
                         z*self.unit_length]
                         , color) 
-                    self.vertex_handler.update_vertex(self.grid[z][x][1]+1,
+                    self.vertex_handler.update_vertex(self.grid[z][x].floor_vert_handler_index+1,
                         [(x+1)*self.unit_length, 
                         self.vertical_stretch * self.get_elevation(z,x+1),#this confirms the height is up to date
                         z*self.unit_length]
                         , color) 
-                    self.vertex_handler.update_vertex(self.grid[z][x][1]+2,
+                    self.vertex_handler.update_vertex(self.grid[z][x].floor_vert_handler_index+2,
                         [(x+1)*self.unit_length, 
                         self.vertical_stretch * self.get_elevation(z+1,x+1),#this confirms the height is up to date
                         (z+1)*self.unit_length]
                         , color) 
-                    self.vertex_handler.update_vertex(self.grid[z][x][1]+3,
+                    self.vertex_handler.update_vertex(self.grid[z][x].floor_vert_handler_index+3,
                         [(x)*self.unit_length, 
                         self.vertical_stretch * self.get_elevation(z+1,x),#this confirms the height is up to date
                         (z+1)*self.unit_length]
@@ -471,11 +480,13 @@ class World(LooiObject):
                 break
         return ret
     def get_elevation(self, z, x):
-        return self.grid[z][x][0]
+        return self.grid[z][x].elevation
     def get_real_elevation(self, z, x):
-        return self.grid[z][x][0] * self.vertical_stretch
+        return self.grid[z][x].elevation * self.vertical_stretch
     def grid_to_real(self, xz):
         return xz*self.unit_length + self.unit_length/2
+    def real_to_grid(self, xz):
+        return int((xz - self.unit_length/2)/self.unit_length)
     def subworld(self, z1, x1, z2, x2):
         w = World(self.name, x2-x1, z2-z1)
         
@@ -486,7 +497,7 @@ class World(LooiObject):
         for my_z in range(z1, z2):
             for my_x in range(x1, x2):
                 #print(w_z,w_x)
-                w.grid[w_z][w_x] = self.get_height(my_x, my_z)
+                w.grid[w_z][w_x] = self.grid[my_z][my_x].copy_move(w_z, w_x)
                 
                 w_x += 1
             w_x = 0
@@ -532,7 +543,7 @@ class World(LooiObject):
         chunk_center_x = (x // self.chunk_size)* self.chunk_size + self.chunk_size/2
         chunk_center_z = (z // self.chunk_size)* self.chunk_size + self.chunk_size/2
         
-        self.grid[z][x][3] = t
+        self.grid[z][x].tree_obj = t
         #t.add_to_vertex_handler(self.vertex_handler)
     def add_trees(self, z1, x1, z2, x2, density=.5):
         for z in range(z1, z2):
@@ -559,16 +570,79 @@ class World(LooiObject):
                 if random() < density:
                     if random() > elevation_frac:
                         self.add_tree(z, x)
+    def get_player_pointing(self):
+        player = self.player
+        hr = player.hor_rot
+        vr = player.vert_rot
+        step_size = .5
+        ray = [player.x, player.y, player.z]
+        while True:
+            if ( (ray[0]-player.x)**2 + (ray[2]-player.z)**2 ) ** .5 > player.line_of_sight*self.unit_length + 2:
+                return None
+            grid_x = self.real_to_grid(ray[0])
+            grid_z = self.real_to_grid(ray[2])
+            
+            if grid_x >= self.get_width()-1 or grid_z >= self.get_height()-1 or grid_x < 0 or grid_z < 0:
+                pass#not inside world
+            else:
+                four_corners = [self.get_real_elevation(grid_z, grid_x), 
+                    self.get_real_elevation(grid_z+1, grid_x), 
+                    self.get_real_elevation(grid_z+1, grid_x+1), 
+                    self.get_real_elevation(grid_z, grid_x+1)]
+                highest = max(four_corners) + step_size*self.unit_length
+                lowest = min(four_corners) - step_size*self.unit_length*3
+                if ray[1] <= highest and ray[1] >= lowest: 
+                    if self.grid[grid_z][grid_x].floor_vert_handler_index == None:
+                        return None
+                    else:
+                        return grid_z, grid_x
                 
+            ray[0] += step_size*self.unit_length * math.cos(hr) * math.cos(vr)
+            ray[2] += step_size*self.unit_length * -math.sin(hr) * math.cos(vr)
+            ray[1] += step_size*self.unit_length * math.sin(vr)
+                
+
 def array_2d(rows, cols):
     ret = []
     for i in range(rows):
         ret.append([0]*cols)
     return ret
-#x = new_world_from_data_file("whistler", "whistler.csv")
-#print(x.width, x.height)
-#x = x.subworld(100,100,400,500)
 
+
+class FloorVertex:
+    def __init__(self, x=0, z=0, world=None):
+        self.elevation = 0
+        self.z = z
+        self.x = x
+        
+        self.world = world
+        
+        self.floor_vert_handler_index = None
+        self.chunk_vert_handler_index = None
+        
+        self.tree_obj = None
+        
+        self.color = None#the color of the individual floor tile
+    def reset_floor_color(self):
+        self.color = self.world.get_floor_color_zx(self.z, self.x)
+    def copy_move(self, z, x):
+        
+        ret = FloorVertex()
+        
+        ret.x = x
+        ret.z = z
+        
+        x_moved = x - self.x
+        z_moved = z - self.z
+        
+        ret.elevation = self.elevation
+        
+        ret.floor_vert_handler_index = self.floor_vert_handler_index
+        ret.chunk_vert_handler_index = self.chunk_vert_handler_index
+        
+        ret.tree_obj = self.tree_obj.copy_move(self.tree_obj.z + z_moved, self.tree_obj.x + x_moved)
+    
+        return ret
 
 
                 

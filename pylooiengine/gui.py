@@ -37,8 +37,10 @@ class Label(LooiObject):
     def paint(self):
         self.draw_text(self.x + 5, self.y + self.height/2, self.text, self.font_size, self.text_color, self.color, self.font)
         self.draw_rect(self.x, self.y, self.x + self.width, self.y + self.height, self.color)
+
+no_action_parameter = ["no_action_parameter"]
 class Button(LooiObject):
-    def __init__(self, x=0, y=0, width=100, height=100, text="Button", action=lambda x: 0, color=light_gray, text_color=black, font_size=50, font="Microsoft Sans Serif"):
+    def __init__(self, x=0, y=0, width=100, height=100, text="Button", action=lambda: 0, color=light_gray, text_color=black, font_size=50, font="Microsoft Sans Serif", action_parameter=no_action_parameter):
         super().__init__()
         self.x = x
         self.y = y
@@ -62,6 +64,8 @@ class Button(LooiObject):
         self.font = font
         self.mouse_on = False
         self.pressed = False
+        
+        self.action_parameter = action_parameter
     def set_color(self, color):
         self.color = color
         self.calculate_colors(color)
@@ -80,7 +84,10 @@ class Button(LooiObject):
         else:
             self.mouse_on = False
         if self.pressed and self.mouse("left", "released"):
-            self.action()
+            if self.action_parameter == no_action_parameter:
+                self.action()
+            else:
+                self.action(self.action_parameter)
         if self.mouse("left", "down") and self.mouse_on:
             self.pressed = True
         else:

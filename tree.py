@@ -11,12 +11,13 @@ def tree_design_1():
     
     ]
 class Tree:
-    def __init__(self, z, x, world, darkness_factor=.5):
+    def __init__(self, z, x, world, darkness_factor=.5, design_function=tree_design_1):
         self.z=z * world.unit_length + .5*world.unit_length
         self.x=x * world.unit_length + .5*world.unit_length
         self.world = world
-        self.y = self.world.grid[z][x][0] * self.world.vertical_stretch
-        self.design = tree_design_1()
+        self.y = self.world.grid[z][x].elevation * self.world.vertical_stretch
+        self.design_function = design_function
+        self.design = design_function()
         for i in range(len(self.design)):
             if i%5 != 4:
                 self.design[i][0] += self.x
@@ -28,6 +29,7 @@ class Tree:
                 self.design[i][1] -= darkness*darkness_factor
         self.vertex_handler_pointers = [0]*int(len(self.design)/5)
         self.added = False
+        self.darkness_factor = darkness_factor
     """def add_to_vertex_handler(self, vertex_handler):
         if self.added:
             raise Exception()
@@ -69,4 +71,8 @@ class Tree:
             vertex_handler.rm_vertex(self.vertex_handler_pointers[i]+1)
             vertex_handler.rm_vertex(self.vertex_handler_pointers[i]+2)
             vertex_handler.rm_vertex(self.vertex_handler_pointers[i]+3)
+    def copy_move(self, z, x):
+        ret = Tree(z,x, self.world, self.darkness_factor, self.design_function)
+        return ret
+        
         

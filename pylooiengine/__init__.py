@@ -271,7 +271,9 @@ class Window():
             strict_remove(looi_object, self.to_remove)
     
     
-    
+    def set_fps(self, fps):
+        self.fps = fps
+        self.seconds_per_frame = 1/self.fps
     def get_window_size(self): return self.window_size
     def set_window_size(self, size): 
         self.window_size = size

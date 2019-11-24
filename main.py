@@ -1,6 +1,7 @@
 import pylooiengine
 from pylooiengine import *
-w = Window(internal_size = (2000,1080), fps=15)
+w = Window(internal_size = (2000,1080), fps=60)
+import pygame
 
 import rooms
 
