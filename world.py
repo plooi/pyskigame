@@ -4,7 +4,7 @@ from pylooiengine.misc.graphics import VertexHandler
 import math
 import pylooiengine
 import easygui
-import rooms
+import rooms #UNCOMMENT THIS PLEASE!
 import normal
 import copy
 from tree import Tree
@@ -645,5 +645,88 @@ class FloorVertex:
         return ret
 
 
-                
+class Chunk:
+    def __init__(self, z, x, width, height):
+        self.z = z
+        self.x = x
+        self.width = width#width as in number of vertices not number of squares
+        self.height = height#height as in number of vertices not number of squares
+        num_squares = (width-1) * (height-1) 
+        
+        
+        """
+        This is directly fed into the OPENGL draw arrays function, so this is
+        literally all the corners of all the quadrilaterals in this chunk. Now,
+        if you wanted to change the elevation of one vertex, you would actually
+        have to change four items in this buffer array, because each point is 
+        connected to four squares (unless on the edge of course)
+        
+        buffer is 1d array containing all the quads
+        
+        
+        [
+        quad 1 upper left, 
+        quad 1 upper right, 
+        quad 1 lower right, 
+        quad 1 lower left, 
+        quad 2 upper left, 
+        quad 2 upper right, 
+        quad 2 lower right, 
+        quad 2 lower left... ]
+        """
+        self.chunk_points_buffer = numpy.zeros(num_squares * 4)
+        self.chunk_colors_buffer = numpy.zeros(num_squares * 4)
+    """
+    conv 
     
+    input z and x coordinates of a vertex within this chunk
+    this outputs the list of all the indices in the chunk_points_buffer
+    that correspond to this z x vertex. There are multiple because
+    for each vertex, there may be multiple quadrilaterals that 
+    touch it, so for each quadrilateral that touches it it is going
+    to have to have its own array spot for that
+    
+    These vertices work for the points buffer and the colors buffer
+    """
+    def conv(self, z, x):
+        ret = []
+        up = z-1
+        left = x-1
+        down = z
+        right = x
+        
+        #upper left quadrilateral
+        if self.valid_quad(z-1, x-1):
+            index_of_first_point_of_this_quad_in_2d_flatten_to_1d = ((z-1)*self.width + (x-1))*4 # *4 for four points in a square
+            ret.append(index_of_first_point_of_this_quad_in_2d_flatten_to_1d + 2)#+2 because the lower right of the upper left quad is point z, x. lower right is the 3rd point (0,1,2...))
+        #lower right
+        if self.valid_quad(z, x):
+            index_of_first_point_of_this_quad_in_2d_flatten_to_1d = ((z)*self.width + (x))*4
+            ret.append(index_of_first_point_of_this_quad_in_2d_flatten_to_1d + 0)
+        #lower left
+        if self.valid_quad(z, x-1):
+            index_of_first_point_of_this_quad_in_2d_flatten_to_1d = ((z)*self.width + (x-1))*4
+            ret.append(index_of_first_point_of_this_quad_in_2d_flatten_to_1d + 1)
+        #upper right
+        if self.valid_quad(z-1, x):
+            index_of_first_point_of_this_quad_in_2d_flatten_to_1d = ((z-1)*self.width + (x))*4
+            ret.append(index_of_first_point_of_this_quad_in_2d_flatten_to_1d + 3)
+        return ret
+    
+    
+    """
+    checks if a vertex is inside this chunk (starting at zero, zero for upper left corner
+    """
+    def valid_vertex(self, z, x):
+        return z >= 0 and z < self.height and x >= 0 and x < self.width
+    """
+    checks if a vertex is inside this chunk (starting at zero, zero for upper left corner
+    """
+    def valid_quad(self, z, x):
+        return z >= 0 and z < self.height-1 and x >= 0 and x < self.width-1
+def main():
+     c = Chunk(0,0, 3, 3)
+     print(c.conv(1,1))
+
+
+if __name__ == "__main__": main()
