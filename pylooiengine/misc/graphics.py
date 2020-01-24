@@ -8,7 +8,8 @@ from queue import Queue
 
 
 class VertexHandler:
-    def __init__(self, vertex_size, color_size=3, initial_capacity=5):
+    def __init__(self, vertex_size, color_size=3, initial_capacity=2):
+        initial_capacity *= 4 #to make sure it's multiple of four so squares will stay together
         self.vertices = numpy.empty([initial_capacity, vertex_size])
         self.vertex_colors = numpy.empty([initial_capacity, color_size])
         self.available_indices = Queue()
@@ -53,7 +54,7 @@ class VertexHandler:
         self.vertex_colors = numpy.vstack((self.vertex_colors, [[0]*self.color_size]*original_length))
         self.num_available_indices += original_length
         
-    def update_vertex(self, index, new_vertex, new_color, ):
+    def update_vertex(self, index, new_vertex, new_color):
         if index >= len(self.vertices):
             fail("Cannot update vertex %d from vertex list of length %d" % (index, len(self.vertices)))
         

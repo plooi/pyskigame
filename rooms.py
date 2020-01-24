@@ -9,9 +9,11 @@ from model_3d import *
 import os
 from time import sleep
 import pygame
-import player
+import game_ui
 import PySimpleGUI as sg
 import traceback
+from random import random
+from math import sin,cos
 
 
 class Launcher(LooiObject):
@@ -67,7 +69,7 @@ def blank_world():
     
     if event==None: return
     try:
-        the_world = world.new_world_from_dims(values[0], int(values[1]), int(values[2]))
+        the_world = world.World().init(values[0], int(values[1]), int(values[2]), elevation_function=lambda z,x:sin(x/30)*300+sin(z/15)*150)
     except Exception as e:
         sleep(1)
         traceback.print_exc()
@@ -128,19 +130,22 @@ def new_world():
     n = NewWorldPrompt()
 """
 def init_game_room(world):
-    player.set_mouse_mode("3D")
+    game_ui.set_mouse_mode("3D")
 
-    pylooiengine.main_window.set_fps(15)
+    pylooiengine.main_window.set_fps(30)
     
     
     kill_all()
-    world.add_trees_elevation(1, 1,world.get_height()-1,world.get_width()-1)
-    try:
+    
+    #world.add_trees_elevation(1, 1,world.get_height()-1,world.get_width()-1)
+    """try:
         l = Lift(world)
         l.build([100,100,[x/100 for x in range(10,100,7)],100,300], rope_speed = .2, terminal_speed = .05, chair_time_distance=50)
     except:
         pass
+    """
     world.activate()
+    game_ui.UI(world).activate()
 
 
 

@@ -14,7 +14,7 @@ class Player(LooiObject):
         self.vert_rot = 0
         self.speed = 4
         self.rot_spd = .001
-        self.line_of_sight = 80 #IN NUMBER OF BLOCKS (not opengl space) #the radius
+        self.line_of_sight = 10 #IN NUMBER OF CHUNKS (not opengl space) #the radius
         self.world = None
         
         self.max_vert_rot = math.pi/2.3

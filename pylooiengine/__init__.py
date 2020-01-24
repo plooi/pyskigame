@@ -699,7 +699,6 @@ class LooiObject:
         glPopMatrix()
 
     def draw_quad_array_3d(self, vertices, colors, setup_3d=default_3d_view_setup):
-        
         glPushMatrix()
         setup_3d()
         

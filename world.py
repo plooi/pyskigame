@@ -6,11 +6,12 @@ import pylooiengine
 import easygui
 import rooms #UNCOMMENT THIS PLEASE!
 import normal
+import numpy
 import copy
 from tree import Tree
+from game_ui import UI
 
-
-#for testing
+#TESTING PURPOSES ONLY FPS
 class FPS(LooiObject):
     def __init__(self, v):
         super().__init__()
@@ -28,342 +29,482 @@ class FPS(LooiObject):
     def paint(self):
         self.draw_text(300,200,"FPS: " + str(self.fps))
 
-
-
-def rad_to_deg(rad):
-    return rad/(2*math.pi) *360
-
-
-
-def new_world_from_dims(name, width, height):
-    w = World(name, width, height)
-    w.reset_floor_colors()
-    return w
-def new_world_from_data_file(name, file_name, min_row=0, max_row=9999999999999999999, min_col=0, max_col=9999999999999999999):
-    w = World(name, 0, 0)
-    f = open(file_name, "r")
-    
-    
-    
-    
-    file_row = 0
-    
-    row = 0
-    for line in f:
-        if file_row >= min_row and file_row < max_row:
-            line = line.strip().split(",")
-            col = 0
-            for file_col in range(0, len(line)):
-                if file_col >= min_col and file_col < max_col:
-                    w.set_elevation(row, col, 0 if line[file_col] == 'None' else float(line[file_col]) )
-                    col += 1
-                else:
-                    pass
-                    #print("col: " + str(file_col) + " rejected")
-            row += 1
-        file_row += 1
-    f.close()
-    w.smooth(0,0,w.get_height(),w.get_width())
-    
-    w.reset_floor_colors()
-    
-    return w
-
-
-class World(LooiObject):
-    def __init__(self, name, width, height, player=None, unit_length = 2, vertical_stretch = .15, chunk_size = 8, update_probability=1):
-        super().__init__(active=False)
-        self.unit_length = unit_length
-        self.vertical_stretch = vertical_stretch
-        self.vertex_handler = VertexHandler(3)
-        self.chunk_size = chunk_size
-        self.mobile_vertices = []
-        self.mobile_colors = []
-        self.name = name
-        self.grid = []
-        self.line_of_sight_update_box_size_scalar = 1.6 #as you move, you can turn off and on squares in the box
-        self.update_probability = update_probability
-        #defined by player's line of sight TIMES line_of_sight_update_box_size_scalar
-        #if it's too small (like .5) then the tiles farthest away aren't gonna get turned off and on
-        #properly because we're not checking them
+class View:
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.z = 0
+        self.hor_rot = -math.pi/4
+        self.vert_rot = 0
+        self.speed = 4
+        self.rot_spd = .001
+        self.line_of_sight = 20 #IN NUMBER OF CHUNKS (not opengl space) #the radius
+        self.max_vert_rot = math.pi/2.3
         
-        self.player = MapEditorPlayer() if player == None else player
-        self.player.world = self
-        self.player.deactivate()
-        self.add(self.player)
-        self.a = None
+        
+        
+class Quad:
+    def __init__(self):
+        self.my_chunk_x = -1#keeps track of which chunk we're in
+        self.my_chunk_z = -1#keeps track of which chunk we're in
+        
+        self.floor_pointer = -1#keeps track of the position of the floor quad in the chunk vertex handler
+        
+        self.containedObjects = []#keeps track of all 3d bjects that are related to this quadrilateral (like trees)
+class Chunk:
+    def __init__(self, world):
+        self.vh = VertexHandler(3)#vertex handler to store all non-moving drawables in this chunk
+        
+        
+        #is this even used???
+        self.pan_chunk_square_pointer = -1 #pointer to it's chunk square location in the "vertex buffer for all chunk squares" (None if not added)
+        
+        self.world = world
+        
+        self.colors_changed = False
+        self.last_pan_chunk_color = [0,0,0]
+    """
+    get_pan_chunk_square
+    
+    Uses the quads grid to find out what the dimensions and color of the pan chunk 
+    square are. Generates a new return value on each call
+    
+    returns ([x1,y1,z1], [x2,y2,z2], [x3,y3,z3], [x4,y4,z4], [r,g,b]) representing
+    the pan chunk square. 
+    
+    
+    """
+    def get_pan_chunk_square(self, chunk_z, chunk_x):
+        cs = self.world.properties["chunk_size"]
+        ul_z = chunk_z * cs
+        ul_x = chunk_x * cs
+        s = self.world.properties["horizontal_stretch"]
+        
+        if self.colors_changed:
+            #if the floor tile colors have changed since last time we calculated the pan chunk square
+            #recalculate a new pan chunk square color
+            new_pan_chunk_color = [0,0,0]
+            self.colors_changed = False
+            for r in range(ul_z, ul_z+cs):
+                for c in range(ul_x, ul_x+cs):
+                    each_floor_color = self.world.get_floor_color(r, c)
+                    new_pan_chunk_color[0] += each_floor_color[0]
+                    new_pan_chunk_color[1] += each_floor_color[1]
+                    new_pan_chunk_color[2] += each_floor_color[2]
+            new_pan_chunk_color[0] /= cs**2#the pan chunk color is the average of all the colors of it's floor tiles
+            new_pan_chunk_color[1] /= cs**2#the pan chunk color is the average of all the colors of it's floor tiles
+            new_pan_chunk_color[2] /= cs**2#the pan chunk color is the average of all the colors of it's floor tiles
+            self.last_pan_chunk_color = new_pan_chunk_color
+        
+        return (
+                [ul_x*s, self.world.get_elevation(ul_z, ul_x, scaled=True), ul_z*s], 
+                [(ul_x+cs)*s, self.world.get_elevation(ul_z, ul_x+cs, scaled=True), ul_z*s], 
+                [(ul_x+cs)*s, self.world.get_elevation(ul_z+cs, ul_x+cs, scaled=True), (ul_z+cs)*s], 
+                [ul_x*s, self.world.get_elevation(ul_z+cs, ul_x, scaled=True), (ul_z+cs)*s], 
+                self.last_pan_chunk_color
+                )
+    
+class World(LooiObject):
+    
+###################################
+#INIT STUFF
+###################################
+    """
+    __init__ 
+    
+    really the purpose is to just allocate the memory and do some
+    basic initialization
+    """
+    def __init__(self):
+        super().__init__(active=False)
+        
+        
+        #just a dictionary that stores all properties of this world
+        self.properties = {
+            "name" : "unnamed",
+            "chunk_size" : 8,
+            "width" : -1,
+            "height" : -1,
+            "width_chunks" : -1,
+            "height_chunks" : -1,
+            "horizontal_stretch" : 2,
+            "vertical_stretch" : .15,
+            }
+            
+            
+        #2D Array where each element denotes one quadrilateral
+        self.quads = []
+        
+        #2D Array where each element denotes one chunk
+        self.chunks = []
+        
+        #stores all the pan chunk squares
+        self.pan_chunk_squares = VertexHandler(3)
+        
+        
+        #keep track of the view position
+        self.view = View()
+        
+        
+        #used to tell opengl to draw our objects from the proper angles
+        self.setup_3d = None
+        
+    
+        self.mobile_vertices = None
+        self.mobile_colors = None
+    
+    """
+    init_csv
+    """
+    
+    def init_csv(self, name, csv_name, more_properties={}, view=None):
+        lines = []
+        f = open(csv_name, "r")
+        for line in f:
+            lines.append([int(x) for x in line.split(",")])
+        f.close()
+        
+        height = len(lines)
+        width = 0 if height==0 else len(lines[0])
+        return self.init(name, width, height, more_properties, lambda z,x: lines[z][x], view) 
+    
+    """
+    init 
+    
+    call this one time to initialize the world
+    
+    finds the number of chunks in the z and x directions
+    then adds new chunk rows and cols until height and width are matching
+    
+    
+    finds the actual height and width in number of quadrilaterals (cuz we can't have half a chunk, so we round up to the nearest chunk)
+    then adds new quadrilateral rows and cols until height and width are matching
+        tells each quadrilateral which chunk it's in
+        allocates a spot in the current chunk's buffer for the floor square, and hands that pointer over to the quadrilateral
+    """
+    def init(self, name, width, height, more_properties={}, elevation_function=lambda z,x:0, view=None):
+        
+        
+        
+        #set properties properly
+        for property in more_properties:
+            self.properties[property] = more_properties[property]
+        self.properties["name"] = name
+        self.properties["width_chunks"] = int(width/self.properties["chunk_size"])
+        self.properties["height_chunks"] = int(height/self.properties["chunk_size"])
+        self.properties["width"] = self.properties["width_chunks"]*self.properties["chunk_size"]
+        self.properties["height"] = self.properties["height_chunks"]*self.properties["chunk_size"]
+        if view != None: self.view = view
+        
+        """
+        mobile drawables are stored in these arrays
+        
+        "mobile" refers to, it can move. So once this paint iteration completes and all the
+        mobile vertices are drawn with their corresponding colors, all the mobile vertices
+        are DELETED, so that on the next iteration you can add the vertices and colors in
+        again, but if they've changed that's okay cuz that's why we add fresh ones every time
+        
+        However, don't make everything a mobile vertex because mobile vertices are slower than static ones
+        """
+        self.mobile_vertices = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        self.mobile_colors = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        
+        
+        #initialize all chunks
+        for z in range(self.properties["height_chunks"]):
+            row = []
+            for x in range(self.properties["width_chunks"]):
+                c = Chunk(self)
+                
+                row.append(c)
+            self.chunks.append(row)
+            
+            
+        #create a temp elevation grid
+        elevation_grid = [None]*(self.properties["height"]+1)
+        for z in range(self.properties["height"]+1):#+1 because the height in points is one plus the height in quads
+            elevation_grid[z] = [elevation_function(z, x) for x in range(self.properties["width"]+1)]
+        elevation_function = lambda z,x: elevation_grid[z][x]*self.properties["vertical_stretch"]
+            
+        #initialize quads 
+        for z in range(self.properties["height"]):
+            row = []
+            self.quads.append(row)
+            for x in range(self.properties["width"]):
+                z_chunk, x_chunk = self.convert_to_chunk_coords(z, x)#find which chunk this quad z,x is in
+                q = Quad()#actually create the quad object
+                row.append(q)#add the quad object to the self.quads
+                
+                q.my_chunk_z = z_chunk#set properly which chunk it belongs to
+                q.my_chunk_x = x_chunk
+                
+                #allocate memory for the quad that is going to be drawn and
+                #set all the elevations to what the elevation function wants
+                q.floor_pointer = self.chunks[z_chunk][x_chunk].vh.add_vertex([x*self.properties["horizontal_stretch"],elevation_function(z,x),z*self.properties["horizontal_stretch"]])
+                self.chunks[z_chunk][x_chunk].vh.add_vertex([(x+1)*self.properties["horizontal_stretch"],elevation_function(z, x+1),z*self.properties["horizontal_stretch"]])
+                self.chunks[z_chunk][x_chunk].vh.add_vertex([(x+1)*self.properties["horizontal_stretch"],elevation_function(z+1, x+1),(z+1)*self.properties["horizontal_stretch"]])
+                self.chunks[z_chunk][x_chunk].vh.add_vertex([x*self.properties["horizontal_stretch"],elevation_function(z+1, x),(z+1)*self.properties["horizontal_stretch"]])
+                self.reset_floor_color(z, x)
+                    
+            
+                
+        
+        """
+        do not worry about allocating all the pan chunk squares
+        they will be allocated during the step function
+        """
+                
+        
+        
+        
+        #other stuff
         self.add(FPS(0))
-        for z in range(height):
-            for x in range(width):
-                self.set_elevation(z, x, 0)
+        
+        
+        
+        """
+        setup_3d
+        
+        used to tell opengl to draw our objects from the proper angles
+        """
         def setup_3d():
-            p = self.player
             gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 0.1, 50000.0)
             try:
-                glRotate(rad_to_deg(-(p.hor_rot-math.pi/2)), 0, 1, 0)
-                glRotate(rad_to_deg(-p.vert_rot), math.cos(p.hor_rot - math.pi/2), 0, -math.sin(p.hor_rot - math.pi/2))
-                glTranslate(-p.x, -p.y, -p.z)
-            except:
+                glRotate(rad_to_deg(-(self.view.hor_rot-math.pi/2)), 0, 1, 0)
+                glRotate(rad_to_deg(-self.view.vert_rot), math.cos(self.view.hor_rot - math.pi/2), 0, -math.sin(self.view.hor_rot - math.pi/2))
+                glTranslate(-self.view.x, -self.view.y, -self.view.z)
+            except Exception as e:
                 pass
+            #print(self.view.x)
         self.setup_3d = setup_3d
+        
+        
+        return self
+        #END INIT
+        
+###################################
+#END init stuff
+###################################
+
+
+
+###################################
+#ELEVATIONS
+###################################
+    """
+    get_elevation
     
-    def step(self):
-        self.menu_option()
-        self.update_line_of_sight()
-    def paint(self):
-        #draw all immobile vertices
-        self.draw_quad_array_3d(self.vertex_handler.get_vertices(), self.vertex_handler.get_colors(), setup_3d=self.setup_3d)
-        #self.draw_quad_3d(-1,1,-5, 1,1,-5, 1,-1,-5, -1,-1,-5, black, setup_3d=self.setup_3d)
-        #self.draw_text(100,100, str(self.vertex_handler.capacity()))
+    finds the UNSCALED elevation of the POINT z, x that you input
+        must unscale the elevation
+    """
+    def get_elevation(self, z, x, scaled=False):
+        if z < self.get_height_floors() and x < self.get_width_floors():#is the point we're looking for NOT on the last row or col?
+            #then we can just find the corresponding floor z, x and get it's upper left hand corner 
+            chunk_z, chunk_x = self.convert_to_chunk_coords(z, x)
+            chunk_obj = self.chunks[chunk_z][chunk_x]
+            floor_pointer = self.quads[z][x].floor_pointer
+            point = chunk_obj.vh.vertices[floor_pointer+0]#+0 for upper left
+            return point[1] if scaled else point[1]/self.properties["vertical_stretch"]#1 for the y elevation
+        else:# we are either on the last row, or the last column, or both
+            #so we will have to access other corners and be smart about it
+            if x == 0:#then we are on the last row, first (0th) column
+                #so ill just go to that floor and get the lower left point
+                chunk_z, chunk_x = self.convert_to_chunk_coords(z-1, x)
+                chunk_obj = self.chunks[chunk_z][chunk_x]
+                floor_pointer = self.quads[z-1][x].floor_pointer
+                point = chunk_obj.vh.vertices[floor_pointer+3]#+0 for lower left
+                return point[1] if scaled else point[1]/self.properties["vertical_stretch"]
+            elif z == 0:#then we are on the last column, first (0th) row
+                #so ill just go to that floor and get the upper right point
+                chunk_z, chunk_x = self.convert_to_chunk_coords(z, x-1)
+                chunk_obj = self.chunks[chunk_z][chunk_x]
+                floor_pointer = self.quads[z][x-1].floor_pointer
+                point = chunk_obj.vh.vertices[floor_pointer+1]#+1 for upper right
+                return point[1] if scaled else point[1]/self.properties["vertical_stretch"]
+            else:#then we can just go to the corresponding floor z-1,x-1 and get it's lower right corner
+                chunk_z, chunk_x = self.convert_to_chunk_coords(z-1, x-1)
+                chunk_obj = self.chunks[chunk_z][chunk_x]
+                floor_pointer = self.quads[z-1][x-1].floor_pointer
+                point = chunk_obj.vh.vertices[floor_pointer+2]#+1 for lower right
+                return point[1] if scaled else point[1]/self.properties["vertical_stretch"]
+                
+                
+    """
+    set_elevation
+    
+    void set_elevation(z, x, unscaled_elevation, reset_color?)
+        goes to the quadrilateral array and finds the four (or fewer) quadrilaterals that are touching 
+            this point
+        using the information inside each quadrilateral,
+            finds out which indexes inside which chunk's numpy buffer need to be modified
+        scales the elevation
+        gives the elevation to the right chunks at the right indexes
         
+        recolor if requested
+    
+    
+    UNTESTED
+    """
+    def set_elevation(self, z, x, elevation, adjust_floot_color=True):
         
-        #self.add_quad([-1,1,-5],[1,1,-5],[1,-1,-5],[-1,-1,-5], Color(0,0,1))
-        #draw mobile vertices
-        if len(self.mobile_vertices) > 0:
-            mobile_vertices = numpy.array(self.mobile_vertices)
-            mobile_colors = numpy.array(self.mobile_colors)
-            self.draw_quad_array_3d(mobile_vertices, mobile_colors, setup_3d=self.setup_3d)
-            self.mobile_vertices = []
-            self.mobile_colors = []
+        elevation *= self.properties["vertical_stretch"]
         
-    def menu_option(self):
-        if self.key("escape", "pressed"):
-            result = easygui.indexbox(msg="Game Paused", title="", choices=("Exit", "Resume"), default_choice="Resume", cancel_choice="Resume")
+        #upper left floor
+        if self.valid_floor(z-1, x-1):
+            chunk_z, chunk_x = self.convert_to_chunk_coords(z-1, x-1)
+            chunk_obj = self.chunks[chunk_z][chunk_x]
+            floor_pointer = self.quads[z][x].floor_pointer
+            point = chunk_obj.vh.vertices[floor_pointer+2]#+2 for upper left floor's LOWER RIGHT point
+            point[1] = elevation
             
-            if result == 0:
-                rooms.main_menu()
-    
-    def add_quad(self, vertex1, vertex2, vertex3, vertex4, color):
-        self.mobile_vertices.append(vertex1)
-        self.mobile_vertices.append(vertex2)
-        self.mobile_vertices.append(vertex3)
-        self.mobile_vertices.append(vertex4)
-        if type(color) == type(Color(0,0,0)):
-            color = color.to_tuple()
-            self.mobile_colors.append(color)
-            self.mobile_colors.append(color)
-            self.mobile_colors.append(color)
-            self.mobile_colors.append(color)
-        elif type(color) == type([]):
-            for i in range(4):
-                #self.mobile_colors.append(int(i/4 * len(color)))
-                self.mobile_colors.append(color)
-    
-    #unused
-    def _add_all_points(self):
-        for z in range(0, self.get_height()-1):
-            for x in range(0, self.get_width()-1):
-                color = random()*.5 +.5# for now we're just doing random colors
-                color = [color, color, color]
-                self.grid[z][x].floor_vert_handler_index = self.vertex_handler.add_vertex(
-                        [x*self.unit_length, 
-                        self.vertical_stretch * self.get_elevation(z,x),
-                        z*self.unit_length]
-                        , color) 
-                _should_be_previous_plus_1 = self.vertex_handler.add_vertex(
-                    [(x+1)*self.unit_length, 
-                    self.vertical_stretch * self.get_elevation(z,x+1),
-                    z*self.unit_length]
-                    , color) 
-                _should_be_last_plus_2 = self.vertex_handler.add_vertex(
-                    [(x+1)*self.unit_length, 
-                    self.vertical_stretch * self.get_elevation(z+1,x+1),
-                    (z+1)*self.unit_length]
-                    , color) 
-                _should_be_plus_3 = self.vertex_handler.add_vertex(
-                    [(x)*self.unit_length, 
-                    self.vertical_stretch * self.get_elevation(z+1,x),
-                    (z+1)*self.unit_length]
-                    , color) 
-    def update_line_of_sight(self):
-        sc = self.line_of_sight_update_box_size_scalar
-        los = self.player.line_of_sight
-        player_z = int(self.player.z/self.unit_length)
-        player_x = int(self.player.x/self.unit_length)
+            if reset_color:
+                self.reset_floor_color(z-1,x-1)
+            
+        #upper right floor
+        if self.valid_floor(z-1, x):
+            chunk_z, chunk_x = self.convert_to_chunk_coords(z-1, x)
+            chunk_obj = self.chunks[chunk_z][chunk_x]
+            floor_pointer = self.quads[z][x].floor_pointer
+            point = chunk_obj.vh.vertices[floor_pointer+3]#+3 for upper right floor's LOWER LEFT point
+            point[1] = elevation
+            
+            if reset_color:
+                self.reset_floor_color(z-1,x)
+            
+        #lower right floor
+        if self.valid_floor(z, x):
+            chunk_z, chunk_x = self.convert_to_chunk_coords(z, x)
+            chunk_obj = self.chunks[chunk_z][chunk_x]
+            floor_pointer = self.quads[z][x].floor_pointer
+            point = chunk_obj.vh.vertices[floor_pointer+0]#+0 for lower right floor's UPPER LEFT point
+            point[1] = elevation
+            
+            if reset_color:
+                self.reset_floor_color(z,x)
+            
+        #lower left floor
+        if self.valid_floor(z, x-1):
+            chunk_z, chunk_x = self.convert_to_chunk_coords(z, x-1)
+            chunk_obj = self.chunks[chunk_z][chunk_x]
+            floor_pointer = self.quads[z][x].floor_pointer
+            point = chunk_obj.vh.vertices[floor_pointer+1]#+1 for upper left floor's UPPER RIGHT point
+            point[1] = elevation
+            
+            if reset_color:
+                self.reset_floor_color(z,x-1)
         
-        #for z in range(player_z-int(los*sc), player_z+int(los*sc), self.chunk_size):
-        #    for x in range(player_x-int(los*sc), player_x+int(los*sc), self.chunk_size):
-        for z in range(0, self.get_height(), self.chunk_size):
-            for x in range(0, self.get_width(), self.chunk_size):
-                #loop through all nearby chunks
+            
+            
+    
                 
-                
-                chunk_corner_x = (x // self.chunk_size)* self.chunk_size
-                chunk_corner_z = (z // self.chunk_size)* self.chunk_size
-                chunk_center_x = (x // self.chunk_size)* self.chunk_size + self.chunk_size/2
-                chunk_center_z = (z // self.chunk_size)* self.chunk_size + self.chunk_size/2
-                
-                #check if the chunk has any blocks in it (by checking the upper left corner (if U L corner has nothing, then it's empty/ off the screen))
-                if chunk_corner_z >= 0 and chunk_corner_x >= 0 and chunk_corner_z < self.get_height()-1 and chunk_corner_x < self.get_width()-1:
-                    
-                    #check if the chunk is within the player's los
-                    if (  ( (chunk_center_z-player_z)**2 + (chunk_center_x-player_x)**2 ) ** .5  ) <= (los):
-                        #yes it is within the player's los
-                        
-                        #is it added?
-                        if self.grid[chunk_corner_z][chunk_corner_x].floor_vert_handler_index == None:
-                            #sweet niblets we have a square inside the los and not added
-                            #we must add it
-                            #if the probability test passes
-                            if random() < self.update_probability:
-                                for z in range(chunk_corner_z, chunk_corner_z+self.chunk_size):
-                                    for x in range(chunk_corner_x, chunk_corner_x+self.chunk_size):
-                                        if z < self.get_height()-1 and x <  self.get_width()-1: #if it's a bottom or right edge chunk, make sure that I am only attempting to add the squares that actually exist 
-                                            #color = random()*.5 +.5# for now we're just doing random colors
-                                            #color = [color, color, color]
-                                            
-                                            color = self.grid[z][x].color#self.get_floor_color_zx(z, x)
-                                            
-                                            #ADD FLOOR QUADRILATERAL
-                                            self.grid[z][x].floor_vert_handler_index = self.vertex_handler.add_vertex(
-                                                [x*self.unit_length, 
-                                                self.vertical_stretch * self.get_elevation(z,x),
-                                                z*self.unit_length]
-                                                , color) 
-                                            _should_be_previous_plus_1 = self.vertex_handler.add_vertex(
-                                                [(x+1)*self.unit_length, 
-                                                self.vertical_stretch * self.get_elevation(z,x+1),
-                                                z*self.unit_length]
-                                                , color) 
-                                            _should_be_last_plus_2 = self.vertex_handler.add_vertex(
-                                                [(x+1)*self.unit_length, 
-                                                self.vertical_stretch * self.get_elevation(z+1,x+1),
-                                                (z+1)*self.unit_length]
-                                                , color) 
-                                            _should_be_plus_3 = self.vertex_handler.add_vertex(
-                                                [(x)*self.unit_length, 
-                                                self.vertical_stretch * self.get_elevation(z+1,x),
-                                                (z+1)*self.unit_length]
-                                                , color) 
-                                            if self.grid[z][x].tree_obj != None:
-                                                #print("tree at %d %d" % (z,x))
-                                                if not self.grid[z][x].tree_obj.added: self.grid[z][x].tree_obj.add_to_vertex_handler(self.vertex_handler)
-                                            
-                                                
-                        else:
-                            #kay that's fine, square inside the los and also added to vertex handler. good
-                            pass
-                        
-                        #is the pan-chunk square added?
-                        if self.grid[chunk_corner_z][chunk_corner_x].chunk_vert_handler_index != None:
-                            #yeah it's added, but we need to get rid of it because the chunk is actually within the los of player now
-                            self.vertex_handler.rm_vertex(self.grid[chunk_corner_z][chunk_corner_x].chunk_vert_handler_index)
-                            self.vertex_handler.rm_vertex(self.grid[chunk_corner_z][chunk_corner_x].chunk_vert_handler_index+1)
-                            self.vertex_handler.rm_vertex(self.grid[chunk_corner_z][chunk_corner_x].chunk_vert_handler_index+2)
-                            self.vertex_handler.rm_vertex(self.grid[chunk_corner_z][chunk_corner_x].chunk_vert_handler_index+3)
-                            self.grid[chunk_corner_z][chunk_corner_x].chunk_vert_handler_index = None
-                    else:
-                        #this square is outside the los
-                        
-                        #is it added?
-                        if self.grid[chunk_corner_z][chunk_corner_x].floor_vert_handler_index == None:
-                            #kay that's fine, square outside the los and also not added to vertex handler. good
-                            pass
-                        else:
-                            #sweet niblets we have a square outside the los and IS added
-                            #we must remove it
-                            #if the probability test passes
-                            if random() < self.update_probability:
-                                for z in range(chunk_corner_z, chunk_corner_z+self.chunk_size):
-                                    for x in range(chunk_corner_x, chunk_corner_x+self.chunk_size):
-                                        if z < self.get_height()-1 and x <  self.get_width()-1: #if it's a bottom or right edge chunk, make sure that I am only attempting to rm the squares that actually exist 
-                                            self.vertex_handler.rm_vertex(self.grid[z][x].floor_vert_handler_index)
-                                            self.vertex_handler.rm_vertex(self.grid[z][x].floor_vert_handler_index+1)
-                                            self.vertex_handler.rm_vertex(self.grid[z][x].floor_vert_handler_index+2)
-                                            self.vertex_handler.rm_vertex(self.grid[z][x].floor_vert_handler_index+3)
-                                            self.grid[z][x].floor_vert_handler_index = None
-                                            
-                                            
-                                            if self.grid[z][x].tree_obj != None:
-                                                if self.grid[z][x].tree_obj.added: self.grid[z][x].tree_obj.remove_from_vertex_handler(self.vertex_handler)
-                                            
-                        
-                        #is the pan-chunk square added?
-                        if self.grid[chunk_corner_z][chunk_corner_x].chunk_vert_handler_index == None:
-                            #it is not added, but we must add it
-                            bottom_right_z = chunk_corner_z + self.chunk_size
-                            bottom_right_x = chunk_corner_x + self.chunk_size
-                            
-                            
-                            if bottom_right_z >= self.get_height() or bottom_right_x >= self.get_width():
-                                pass #nevermind, I'm not drawing a pan chunk square for a chunk that's half off the world
-                            else:
-                                #okay we'll draw the pan chunk square
-                                #color = random()*.5 +.5# for now we're just doing random colors
-                                #color = [color, color, color]
-                                
-                                
-                                color = self.get_floor_color(
-                                    chunk_corner_x*self.unit_length, 
-                                    self.vertical_stretch * self.get_elevation(chunk_corner_z,chunk_corner_x),
-                                    chunk_corner_z*self.unit_length,
-                                    (chunk_corner_x+self.chunk_size)*self.unit_length, 
-                                    self.vertical_stretch * self.get_elevation(chunk_corner_z,chunk_corner_x+self.chunk_size),
-                                    chunk_corner_z*self.unit_length,
-                                    (chunk_corner_x+self.chunk_size)*self.unit_length, 
-                                    self.vertical_stretch * self.get_elevation(chunk_corner_z+self.chunk_size,chunk_corner_x+self.chunk_size),
-                                    (chunk_corner_z+self.chunk_size)*self.unit_length)
-                                
-                                
-                                #make the chunk green
-                                color_adjust = 0
-                                for zz in range(chunk_corner_z, bottom_right_z):
-                                    for xx in range(chunk_corner_x, bottom_right_x):
-                                        if self.grid[zz][xx].tree_obj != None:
-                                            color_adjust += .005
-                                if color_adjust > .15: color_adjust = .25
-                                if color_adjust > .1:
-                                    color[1] -= color_adjust
-                                    color[0] -= color_adjust*2
-                                    color[2] -= color_adjust*2
-                                if color[1] > 1: color[1] = 1
-                                if color[0] < 0: color[2] = 0
-                                if color[2] < 0: color[2] = 0
-                                        
-                                
-                                
-                                self.grid[chunk_corner_z][chunk_corner_x].chunk_vert_handler_index = self.vertex_handler.add_vertex(
-                                    [chunk_corner_x*self.unit_length, 
-                                    self.vertical_stretch * self.get_elevation(chunk_corner_z,chunk_corner_x),
-                                    chunk_corner_z*self.unit_length]
-                                    , color) 
-                                _should_be_previous_plus_1 = self.vertex_handler.add_vertex(
-                                    [(chunk_corner_x+self.chunk_size)*self.unit_length, 
-                                    self.vertical_stretch * self.get_elevation(chunk_corner_z,chunk_corner_x+self.chunk_size),
-                                    chunk_corner_z*self.unit_length]
-                                    , color) 
-                                _should_be_last_plus_2 = self.vertex_handler.add_vertex(
-                                    [(chunk_corner_x+self.chunk_size)*self.unit_length, 
-                                    self.vertical_stretch * self.get_elevation(chunk_corner_z+self.chunk_size,chunk_corner_x+self.chunk_size),
-                                    (chunk_corner_z+self.chunk_size)*self.unit_length]
-                                    , color) 
-                                _should_be_plus_3 = self.vertex_handler.add_vertex(
-                                    [(chunk_corner_x)*self.unit_length, 
-                                    self.vertical_stretch * self.get_elevation(chunk_corner_z+self.chunk_size,chunk_corner_x),
-                                    (chunk_corner_z+self.chunk_size)*self.unit_length]
-                                    , color) 
-                    
-    def reset_floor_colors(self):
-        for x in range(self.get_width()-1):
-            for z in range(self.get_height()-1):
-                self.grid[z][x].reset_floor_color()
-    def get_floor_color_zx(self, z, x):
-        return self.get_floor_color(
-                        x*self.unit_length, 
-                        self.vertical_stretch * self.get_elevation(z,x),
-                        z*self.unit_length,
-                        (x+1)*self.unit_length, 
-                        self.vertical_stretch * self.get_elevation(z,x+1),
-                        z*self.unit_length,
-                        (x+1)*self.unit_length, 
-                        self.vertical_stretch * self.get_elevation(z+1,x+1),
-                        (z+1)*self.unit_length)
-    def get_floor_color(self, x1, y1, z1, x2, y2, z2, x3, y3, z3):
-        hr, vr = normal.get_plane_rotation(x1,y1,z1,x2,y2,z2,x3,y3,z3)
+###################################
+#END elevations
+###################################
+
+
+###################################
+#BASIC GETTERS SETTERS
+###################################
+    def get_width_floors(self): return self.properties["width"]
+    def get_height_floors(self): return self.properties["height"]
+    def get_width_chunks(self): return self.properties["width_chunks"]
+    def get_height_chunks(self): return self.properties["height_chunks"]
+    def get_width_points(self): return self.get_width_floors()+1
+    def get_height_points(self): return self.get_height_floors()+1
+        
+    
+###################################
+#END basic getters setters
+###################################
+    
+    
+###################################
+#CHECKS
+###################################
+    def valid_point(self, z, x): return z < self.get_height_points() and x < self.get_width_points() and z >= 0 and x >= 0
+    def valid_floor(self, z, x): return z < self.get_height_floors() and x < self.get_width_floors() and z >= 0 and x >= 0
+    def valid_chunk(self, z, x): return z < self.get_height_chunks() and x < self.get_width_chunks() and z >= 0 and x >= 0
+###################################
+#END checks
+###################################
+
+
+###################################
+#FLOOR COLOR
+###################################
+    """
+    get_floor_color
+    
+    finds the floor, and gives you its color
+    """
+    def get_floor_color(self, floor_z, floor_x):
+        floor = self.quads[floor_z][floor_x]
+        chunk = self.chunks[floor.my_chunk_z][floor.my_chunk_x]
+        
+        return chunk.vh.vertex_colors[floor.floor_pointer]
+    
+    
+    
+    """
+    set_floor_color
+    
+    finds the floor that we're dealing with
+    goes to the floor pointer in the floor's chunk's vertexhandler and sets the color
+    """
+    def set_floor_color(self, floor_z, floor_x, color):
+        floor = self.quads[floor_z][floor_x]
+        chunk = self.chunks[floor.my_chunk_z][floor.my_chunk_x]
+        
+        chunk.vh.vertex_colors[floor.floor_pointer] = color
+        chunk.vh.vertex_colors[floor.floor_pointer+1] = color
+        chunk.vh.vertex_colors[floor.floor_pointer+2] = color
+        chunk.vh.vertex_colors[floor.floor_pointer+3] = color
+        
+        chunk.colors_changed = True
+    
+    """
+    reset_floor_color
+    
+    calls get_proper_floor_color and sets this floor to whatever color
+    we just got out of that function
+    """
+    def reset_floor_color(self, floor_z, floor_x):
+        floor = self.quads[floor_z][floor_x]
+        self.set_floor_color(floor_z, floor_x, self.get_proper_floor_color(floor_z, floor_x))
+    
+    """
+    get_proper_floor_color
+    
+    goes to the correct quadrilateral z,x
+    looks at the four corners and calculates color based on angle
+    gets the corresponding chunk's vertex handler
+    uses the indices of the four corners to set the color to the new color in the vertex handler
+    """
+    def get_proper_floor_color(self, floor_z, floor_x):
+        #find the floor object and the chunk object
+        floor = self.quads[floor_z][floor_x]
+        chunk = self.chunks[floor.my_chunk_z][floor.my_chunk_x]
+        
+        
+        #find the coordinates of all the 
+        ul = chunk.vh.vertices[floor.floor_pointer]
+        ur = chunk.vh.vertices[floor.floor_pointer+1]
+        lr = chunk.vh.vertices[floor.floor_pointer+2]
+        ll = chunk.vh.vertices[floor.floor_pointer+3]
+        
+        #find hr and vr or the floor so we can use that to calculate the color
+        hr, vr = normal.get_plane_rotation(ul[0],ul[1],ul[2],ur[0],ur[1],ur[2],lr[0],lr[1],lr[2])
         if vr < 0:
             vr = -vr
             hr = hr + math.pi
             
+        return self.calculate_floor_color(hr, vr)
+    """
+    calculate_floor_color
+    
+    takes in the hr and vr and calculates a floor color based on that
+    """
+    def calculate_floor_color(self, hr, vr):
         sun = math.pi/4
         angle_distance_from_sun = normal.angle_distance(hr, sun)/math.pi
         inverse_angle_distance_from_sun = 1 - angle_distance_from_sun
@@ -381,352 +522,188 @@ class World(LooiObject):
         
         color = [color_value]*3
         return color
-    def get_width(self):
-        if len(self.grid) == 0:
-            return 0
-        return len(self.grid[0])
-    def get_height(self):
-        return len(self.grid)
     
     
+###################################
+#END floor color
+###################################
+
+
+
+
+
+
+###################################
+#STEP AND PAINT STUFF
+###################################
+    def step(self):
+        pass
+    def paint(self):
+        self.draw(self.get_chunk_load_grid())
+        self.draw_mobile()
+        
+        
+        
+    def get_chunk_load_grid(self):
+        chunk_load_grid =[]
+        for r in range(self.get_height_chunks()):
+            chunk_load_grid.append([0]*self.get_width_chunks())
+        
+        unscaled_view_z = self.view.z/self.properties["horizontal_stretch"]
+        unscaled_view_x = self.view.x/self.properties["horizontal_stretch"]
+        
+        
+        player_z_chunk, player_x_chunk = self.convert_to_chunk_coords(unscaled_view_z, unscaled_view_x)
+        for r in range(player_z_chunk - self.view.line_of_sight, player_z_chunk + self.view.line_of_sight):
+            for c in range(player_x_chunk - self.view.line_of_sight, player_x_chunk + self.view.line_of_sight):
+                if self.valid_chunk(r, c):
+                    if ( (r-player_z_chunk) ** 2 + (c-player_x_chunk) ** 2 ) ** .5 <= self.view.line_of_sight:
+                        try:
+                            chunk_load_grid[r][c] = 1
+                        except:
+                            print("%d, %d out of range of %d, %d" %(r, c, len(chunk_load_grid), len(chunk_load_grid[0])))
+                        
+        return chunk_load_grid
+    def draw_mobile(self):
+        mobile_vertices = numpy.array(self.mobile_vertices)
+        mobile_colors = numpy.array(self.mobile_colors)
+        
+        
+        self.draw_quad_array_3d(mobile_vertices, mobile_colors, setup_3d=self.setup_3d)
+        self.mobile_vertices = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        self.mobile_colors = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     """
-    Use set_elevation to change the elevation of any point
-    If a coordinate outside of the world's bounds is given,
-    the world will be automatically expanded
-    """
-    def set_elevation(self, z, x, elevation):
-        #flat_floor_color = self.get_floor_color(0,0,0, 1,0,0, 0,0,1)
-        while self.get_height() <= z:
-            new_row = []
-            new_color_row = []
-            for i in range(self.get_width()):
-                new_row.append(FloorVertex(x=i, z=self.get_height(), world=self))#elevation, floor first corner index in vertex handler, chunk floor first corner index in vertex handler,tree object
-                #new_color_row.append(flat_floor_color)
-            self.grid.append(new_row)
-        
-        
-        while self.get_width() <= x:
-            x_of_following_floor_vertices = self.get_width()
-            for z in range(len(self.grid)):
-                self.grid[z].append(FloorVertex(x=x_of_following_floor_vertices, z=z, world=self))
-        ###
-        self.grid[z][x].elevation = elevation
-        if z % 100 == 0 and x == 0:
-            print(z,x)
-        ###
-        self._update_quad(z, x) #update the quad that this vertex is responsible for (lower right)
-        self._update_quad(z-1, x) #update the quad to the up right
-        self._update_quad(z-1, x-1) #update the quad to the up left
-        self._update_quad(z, x-1) #update the quad to the down left
-    
-    #only call this when you change the elevation of a point. Don't call to refresh line of sight
-    #this function only updates the vertex handler if the quad is being displayed
-    def _update_quad(self, z, x):
-        #color = random()*.5 +.5# for now we're just doing random colors
-        #color = [color, color, color]
-        
-        
-        player_z = int(self.player.z/self.unit_length)#in units (not opengl coordinates; that's why we divide by unit_length)
-        player_x = int(self.player.x/self.unit_length)
-        
-        #make sure that the point z,x ACTUALLY HAS a quad that it's responsible for. If not, just ignore this call
-        #if we're on the last row or last column, this point actually isn't responsible for any quad
-        if z >= 0 and x >= 0 and z < self.get_height()-1 and x < self.get_width()-1:
+    draw(chunk_load_grid)
             
-            #check if the square this vertex is responsible for is within the line of sight
-            if (  ( (z-player_z)**2 + (x*-player_x)**2 ) ** .5  ) <= (self.player.line_of_sight):
-                #So we are in the player's los
-                
-                #now check if this square is already added
-                if self.grid[z][x].floor_vert_handler_index != None:
-                    
-                    #Okay so this square is already added. We just have to update the four vertexes
-                    
-                    
-                    
-                    color = [0,0,0]
-                    self.vertex_handler.update_vertex(self.grid[z][x].floor_vert_handler_index,
-                        [x*self.unit_length, 
-                        self.vertical_stretch * self.get_elevation(z,x),#this confirms the height is up to date
-                        z*self.unit_length]
-                        , color) 
-                    self.vertex_handler.update_vertex(self.grid[z][x].floor_vert_handler_index+1,
-                        [(x+1)*self.unit_length, 
-                        self.vertical_stretch * self.get_elevation(z,x+1),#this confirms the height is up to date
-                        z*self.unit_length]
-                        , color) 
-                    self.vertex_handler.update_vertex(self.grid[z][x].floor_vert_handler_index+2,
-                        [(x+1)*self.unit_length, 
-                        self.vertical_stretch * self.get_elevation(z+1,x+1),#this confirms the height is up to date
-                        (z+1)*self.unit_length]
-                        , color) 
-                    self.vertex_handler.update_vertex(self.grid[z][x].floor_vert_handler_index+3,
-                        [(x)*self.unit_length, 
-                        self.vertical_stretch * self.get_elevation(z+1,x),#this confirms the height is up to date
-                        (z+1)*self.unit_length]
-                        , color) 
-                    
-                
-
-    def __str__(self):
-        ret = "World: " + str(self.name) + "\n"
-        ret += "Width: " + str(self.width) + "\n"
-        ret += "Height: " + str(self.height) + "\n"
-        
-        for z in range(self.height):
-            ret += str(self.grid[z]) + '\n'
-            if z > 100:
-                ret += "...\n"
-                break
-        return ret
-    def get_elevation(self, z, x):
-        return self.grid[z][x].elevation
-    def get_real_elevation(self, z, x):
-        return self.grid[z][x].elevation * self.vertical_stretch
-    def grid_to_real(self, xz):
-        return xz*self.unit_length + self.unit_length/2
-    def real_to_grid(self, xz):
-        return int((xz - self.unit_length/2)/self.unit_length)
-    def subworld(self, z1, x1, z2, x2):
-        w = World(self.name, x2-x1, z2-z1)
-        
-        
-        
-        w_z = 0
-        w_x = 0
-        for my_z in range(z1, z2):
-            for my_x in range(x1, x2):
-                #print(w_z,w_x)
-                w.grid[w_z][w_x] = self.grid[my_z][my_x].copy_move(w_z, w_x)
-                
-                w_x += 1
-            w_x = 0
-            w_z += 1
+    new empty numpy array vertices_draw (going to be put into gl draw array by the caller)
+    iterates through all the chunks
+        if the chunk load grid for that chunk says 1:
+            take the vertex handler from that chunk and add it's numpy
+            buffer to vertices_draw
             
-        return w
-    def smooth(self, z1, x1, z2, x2, strength=.8):
-        new_elevations = array_2d(z2-z1, x2-x1)
-        
-        weight_this_vertex = 1-strength
-        weight_each_other_vertex = (1-weight_this_vertex)/8
-        
-        print(z1, x1, z2, x2, self.get_width(), self.get_height())
-        
-        for z in range(z1, z2):
-            for x in range(x1, x2):
-                if z < 0 or z > self.get_height()-1 or x < 0 or x > self.get_width()-1:
-                    continue
-                if z == 0 or z == self.get_height()-1 or x == 0 or x == self.get_width()-1:
-                    new_elevations[z-z1][x-x1] = self.get_elevation(z, x)
-                    continue
-                new_elevations[z-z1][x-x1] = (self.get_elevation(z, x) * weight_this_vertex 
-                                                + self.get_elevation(z-1, x-1) * weight_each_other_vertex
-                                                + self.get_elevation(z-1, x) * weight_each_other_vertex
-                                                + self.get_elevation(z-1, x+1) * weight_each_other_vertex
-                                                + self.get_elevation(z, x-1) * weight_each_other_vertex
-                                                + self.get_elevation(z, x+1) * weight_each_other_vertex
-                                                + self.get_elevation(z+1, x-1) * weight_each_other_vertex
-                                                + self.get_elevation(z+1, x) * weight_each_other_vertex
-                                                + self.get_elevation(z+1, x+1) * weight_each_other_vertex)
-                                                
-        for z in range(z1, z2):
-            for x in range(x1, x2):
-                if z < 0 or z > self.get_height()-1 or x < 0 or x > self.get_width()-1:
-                    continue
-                self.set_elevation(z, x, new_elevations[z-z1][x-x1])
-    def add_tree(self, z, x):
-        if z < 0 or x < 0 or z >= self.get_height() or x >= self.get_width():
-            return
-        t = Tree(z, x, self)
-        chunk_corner_x = (x // self.chunk_size)* self.chunk_size
-        chunk_corner_z = (z // self.chunk_size)* self.chunk_size
-        chunk_center_x = (x // self.chunk_size)* self.chunk_size + self.chunk_size/2
-        chunk_center_z = (z // self.chunk_size)* self.chunk_size + self.chunk_size/2
-        
-        self.grid[z][x].tree_obj = t
-        #t.add_to_vertex_handler(self.vertex_handler)
-    def add_trees(self, z1, x1, z2, x2, density=.5):
-        for z in range(z1, z2):
-            for x in range(x1, x2):
-                if random() < density:
-                    self.add_tree(z, x)
-    def add_trees_elevation(self, z1, x1, z2, x2, density=.5):
-        lowest = 999999999999999999999999999999999999
-        highest = -999999999999999999999999999999999999
-        for z in range(0, self.get_height()):
-            for x in range(0, self.get_width()):
-                if self.get_elevation(z, x) > highest:
-                    highest = self.get_elevation(z, x)
-                if self.get_elevation(z, x) < lowest:
-                    lowest = self.get_elevation(z, x)
-                    
-        for z in range(z1, z2):
-            for x in range(x1, x2):
-                elevation = self.get_elevation(z, x)
-                if highest-lowest == 0:
-                    elevation_frac = .5
-                else:
-                    elevation_frac = (elevation-lowest)/(highest-lowest)
-                if random() < density:
-                    if random() > elevation_frac:
-                        self.add_tree(z, x)
-    def get_player_pointing(self):
-        player = self.player
-        hr = player.hor_rot
-        vr = player.vert_rot
-        step_size = .5
-        ray = [player.x, player.y, player.z]
-        while True:
-            if ( (ray[0]-player.x)**2 + (ray[2]-player.z)**2 ) ** .5 > player.line_of_sight*self.unit_length + 2:
-                return None
-            grid_x = self.real_to_grid(ray[0])
-            grid_z = self.real_to_grid(ray[2])
+            make sure that the vertex buffer for all chunk squares does not contain this chunk
+        if it's 0:
+            if the vertex buffer for all chunk squares does not contain this chunk
+                generate the chunk square by calling the function owned by the chunk to generate color
+                uses information from the chunk (and the chunk size property) to calculate the four corners
+                add the pan chunk square to the vertex buffer for all chunk squares
+    
+    do all the same for the colors of the quads
+    
+    does not return anything
+    just draws all the chunks
             
-            if grid_x >= self.get_width()-1 or grid_z >= self.get_height()-1 or grid_x < 0 or grid_z < 0:
-                pass#not inside world
-            else:
-                four_corners = [self.get_real_elevation(grid_z, grid_x), 
-                    self.get_real_elevation(grid_z+1, grid_x), 
-                    self.get_real_elevation(grid_z+1, grid_x+1), 
-                    self.get_real_elevation(grid_z, grid_x+1)]
-                highest = max(four_corners) + step_size*self.unit_length
-                lowest = min(four_corners) - step_size*self.unit_length*3
-                if ray[1] <= highest and ray[1] >= lowest: 
-                    if self.grid[grid_z][grid_x].floor_vert_handler_index == None:
-                        return None
-                    else:
-                        return grid_z, grid_x
-                
-            ray[0] += step_size*self.unit_length * math.cos(hr) * math.cos(vr)
-            ray[2] += step_size*self.unit_length * -math.sin(hr) * math.cos(vr)
-            ray[1] += step_size*self.unit_length * math.sin(vr)
-                
-
-def array_2d(rows, cols):
-    ret = []
-    for i in range(rows):
-        ret.append([0]*cols)
-    return ret
-
-
-class FloorVertex:
-    def __init__(self, x=0, z=0, world=None):
-        self.elevation = 0
-        self.z = z
-        self.x = x
+    """
+    def draw(self, chunk_load_grid):
         
-        self.world = world
         
-        self.floor_vert_handler_index = None
-        self.chunk_vert_handler_index = None
+        height = len(chunk_load_grid)
+        width = 0 if height == 0 else len(chunk_load_grid[0])
         
-        self.tree_obj = None
+        #just check that the dimensions of the chunk load grid are same as self.chunks matrix
+        check(height == self.properties["height_chunks"] and width == self.properties["width_chunks"], "Dimensions of chunk_load_grid were %d %d but should have been %d %d" % (width, height, self.properties["width_chunks"], self.properties["height_chunks"]))
         
-        self.color = None#the color of the individual floor tile
-    def reset_floor_color(self):
-        self.color = self.world.get_floor_color_zx(self.z, self.x)
-    def copy_move(self, z, x):
+        #add all the chunks' vertexes and colors here (if the chunk load grid is a 1)
+        vertices_draw = []
+        colors_draw = []
         
-        ret = FloorVertex()
+        #if the chunk load grid is not 1, make sure the pan chunk square is added to self.pan_chunk_squares
         
-        ret.x = x
-        ret.z = z
         
-        x_moved = x - self.x
-        z_moved = z - self.z
         
-        ret.elevation = self.elevation
+        #iterate through every single chunk
+        for z in range(height):
+            for x in range(width):
+            
+                #if the chunk load grid says that the chunk should be loaded
+                if chunk_load_grid[z][x] == 1:
+                    
+                    #add this chunk's vertices and colors to the stuff that's gonna be drawn
+                    vertices_draw.append(self.chunks[z][x].vh.vertices)
+                    colors_draw.append(self.chunks[z][x].vh.vertex_colors)
+                    
+                    
+                    #if the pan chunk square is showing, get rid of it
+                    if self.chunks[z][x].pan_chunk_square_pointer != -1:
+                        self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer)
+                        self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer+1)
+                        self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer+2)
+                        self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer+3)
+                        self.chunks[z][x].pan_chunk_square_pointer = -1
+                else:#if the chunk load grid says to not load that chunk
+                    #if the pan chunk square is not added then add it
+                    if self.chunks[z][x].pan_chunk_square_pointer == -1:
+                        p1,p2,p3,p4,color = self.chunks[z][x].get_pan_chunk_square(z, x)
+                        self.chunks[z][x].pan_chunk_square_pointer = self.pan_chunk_squares.add_vertex(p1, color)
+                        self.pan_chunk_squares.add_vertex(p2, color)
+                        self.pan_chunk_squares.add_vertex(p3, color)
+                        self.pan_chunk_squares.add_vertex(p4, color)
         
-        ret.floor_vert_handler_index = self.floor_vert_handler_index
-        ret.chunk_vert_handler_index = self.chunk_vert_handler_index
         
-        ret.tree_obj = self.tree_obj.copy_move(self.tree_obj.z + z_moved, self.tree_obj.x + x_moved)
+        #add the pan_chunk_squares to all the stuff that's gonna be drawn
+        vertices_draw.append(self.pan_chunk_squares.vertices)
+        colors_draw.append(self.pan_chunk_squares.vertex_colors)
+        
+        ###NOW vertices draw and colors draw contain all the static objects we want to draw
+        
+        vertices_draw = numpy.vstack(tuple(vertices_draw))
+        colors_draw = numpy.vstack(tuple(colors_draw))
+        
+        #print(vertices_draw)
+        
+        #draw the stuff using opengl
+        self.draw_quad_array_3d(vertices_draw, colors_draw, setup_3d=self.setup_3d)
+        
+                        
+        
+        
+###################################
+#END paint stuff
+###################################
     
+    """
+    input coordinates referring to a specific quad, and it outputs chunk coordinates
+    referring to which chunk that quad resides in
+    """
+    def convert_to_chunk_coords(self, z, x):
+        return int(z/self.properties["chunk_size"]), int(x/self.properties["chunk_size"])
+    
+    
+    """
+    add_quad
+    
+    adds a mobile quad
+    """
+    def add_mobile_quad(self, vertex1, vertex2, vertex3, vertex4, color):
+        self.mobile_vertices.append(vertex1)
+        self.mobile_vertices.append(vertex2)
+        self.mobile_vertices.append(vertex3)
+        self.mobile_vertices.append(vertex4)
+        if type(color) == type(Color(0,0,0)):
+            color = color.to_tuple()
+            self.mobile_colors.append(color)
+            self.mobile_colors.append(color)
+            self.mobile_colors.append(color)
+            self.mobile_colors.append(color)
+        elif type(color) == type([]):
+            for i in range(4):
+                self.mobile_colors.append(color)
+    
+    
+    def add_fixed_quad(self, vertex1, vertex2, vertex3, vertex4, color, anchor_z, anchor_x, object=None):
+        chunk_z, chunk_x = convert_to_chunk_coords(anchor_z, anchor_x)
+        ret = self.chunks[chunk_z][chunk_x].vh.add_vertex(vertex1, color)
+        self.chunks[chunk_z][chunk_x].vh.add_vertex(vertex2, color)
+        self.chunks[chunk_z][chunk_x].vh.add_vertex(vertex3, color)
+        self.chunks[chunk_z][chunk_x].vh.add_vertex(vertex4, color)
+        
+        if object != None:
+            self.quads[anchor_z][anchor_x].containedObjects.append(object)
+
         return ret
+    def remove_fixed_quad
 
 
-class Chunk:
-    def __init__(self, z, x, width, height):
-        self.z = z
-        self.x = x
-        self.width = width#width as in number of vertices not number of squares
-        self.height = height#height as in number of vertices not number of squares
-        num_squares = (width-1) * (height-1) 
-        
-        
-        """
-        This is directly fed into the OPENGL draw arrays function, so this is
-        literally all the corners of all the quadrilaterals in this chunk. Now,
-        if you wanted to change the elevation of one vertex, you would actually
-        have to change four items in this buffer array, because each point is 
-        connected to four squares (unless on the edge of course)
-        
-        buffer is 1d array containing all the quads
-        
-        
-        [
-        quad 1 upper left, 
-        quad 1 upper right, 
-        quad 1 lower right, 
-        quad 1 lower left, 
-        quad 2 upper left, 
-        quad 2 upper right, 
-        quad 2 lower right, 
-        quad 2 lower left... ]
-        """
-        self.chunk_points_buffer = numpy.zeros(num_squares * 4)
-        self.chunk_colors_buffer = numpy.zeros(num_squares * 4)
-    """
-    conv 
-    
-    input z and x coordinates of a vertex within this chunk
-    this outputs the list of all the indices in the chunk_points_buffer
-    that correspond to this z x vertex. There are multiple because
-    for each vertex, there may be multiple quadrilaterals that 
-    touch it, so for each quadrilateral that touches it it is going
-    to have to have its own array spot for that
-    
-    These vertices work for the points buffer and the colors buffer
-    """
-    def conv(self, z, x):
-        ret = []
-        up = z-1
-        left = x-1
-        down = z
-        right = x
-        
-        #upper left quadrilateral
-        if self.valid_quad(z-1, x-1):
-            index_of_first_point_of_this_quad_in_2d_flatten_to_1d = ((z-1)*self.width + (x-1))*4 # *4 for four points in a square
-            ret.append(index_of_first_point_of_this_quad_in_2d_flatten_to_1d + 2)#+2 because the lower right of the upper left quad is point z, x. lower right is the 3rd point (0,1,2...))
-        #lower right
-        if self.valid_quad(z, x):
-            index_of_first_point_of_this_quad_in_2d_flatten_to_1d = ((z)*self.width + (x))*4
-            ret.append(index_of_first_point_of_this_quad_in_2d_flatten_to_1d + 0)
-        #lower left
-        if self.valid_quad(z, x-1):
-            index_of_first_point_of_this_quad_in_2d_flatten_to_1d = ((z)*self.width + (x-1))*4
-            ret.append(index_of_first_point_of_this_quad_in_2d_flatten_to_1d + 1)
-        #upper right
-        if self.valid_quad(z-1, x):
-            index_of_first_point_of_this_quad_in_2d_flatten_to_1d = ((z-1)*self.width + (x))*4
-            ret.append(index_of_first_point_of_this_quad_in_2d_flatten_to_1d + 3)
-        return ret
-    
-    
-    """
-    checks if a vertex is inside this chunk (starting at zero, zero for upper left corner
-    """
-    def valid_vertex(self, z, x):
-        return z >= 0 and z < self.height and x >= 0 and x < self.width
-    """
-    checks if a vertex is inside this chunk (starting at zero, zero for upper left corner
-    """
-    def valid_quad(self, z, x):
-        return z >= 0 and z < self.height-1 and x >= 0 and x < self.width-1
-def main():
-     c = Chunk(0,0, 3, 3)
-     print(c.conv(1,1))
 
-
-if __name__ == "__main__": main()
+def rad_to_deg(radians):
+    return radians/(2*math.pi) * 360
