@@ -17,7 +17,7 @@ import math
 
 
 def default_3d_view_setup():
-    gluPerspective(45, (main_window.window_size[0]/main_window.window_size[1]), 0.1, 5000.0)
+    gluPerspective(45, (main_window.window_size[0]/main_window.window_size[1]), 0.2, 4000.0)
 
 
 

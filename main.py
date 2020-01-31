@@ -8,5 +8,4 @@ import rooms
 def main():
     
     w.start()
-
 if __name__ == "__main__": main()

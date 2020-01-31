@@ -129,6 +129,8 @@ class World(LooiObject):
             "height_chunks" : -1,
             "horizontal_stretch" : 2,
             "vertical_stretch" : .15,
+            "background_color" : Color(.7,.7,1),
+            "background_quad_distance" : 3000,
             }
             
             
@@ -152,6 +154,8 @@ class World(LooiObject):
     
         self.mobile_vertices = None
         self.mobile_colors = None
+        
+        
     
     """
     init_csv
@@ -161,12 +165,12 @@ class World(LooiObject):
         lines = []
         f = open(csv_name, "r")
         for line in f:
-            lines.append([int(x) for x in line.split(",")])
+            lines.append([(0 if x=="None" else int(x)) for x in line.split(",")])
         f.close()
         
         height = len(lines)
         width = 0 if height==0 else len(lines[0])
-        return self.init(name, width, height, more_properties, lambda z,x: lines[z][x], view) 
+        return self.init(name, width-1, height-1, more_properties, lambda z,x: lines[z][x], view) 
     
     """
     init 
@@ -541,7 +545,8 @@ class World(LooiObject):
     def paint(self):
         self.draw(self.get_chunk_load_grid())
         self.draw_mobile()
-        
+        d = self.properties["background_quad_distance"]
+        self.draw_quad_3d(-2*d, 2*d, -d, 2*d, 2*d, -d, 2*d, -2*d, -d, -2*d, -2*d, -d, self.properties["background_color"])
         
         
     def get_chunk_load_grid(self):
@@ -701,7 +706,16 @@ class World(LooiObject):
             self.quads[anchor_z][anchor_x].containedObjects.append(object)
 
         return ret
-    def remove_fixed_quad
+    def remove_fixed_quad(self, quad_id, anchor_z, anchor_x, object=None):
+        chunk_z, chunk_x = convert_to_chunk_coords(anchor_z, anchor_x)
+        
+        self.chunks[chunk_z][chunk_x].vh.rm_vertex(quad_id)
+        self.chunks[chunk_z][chunk_x].vh.rm_vertex(quad_id+1)
+        self.chunks[chunk_z][chunk_x].vh.rm_vertex(quad_id+2)
+        self.chunks[chunk_z][chunk_x].vh.rm_vertex(quad_id+3)
+        
+        if object != None:
+            self.quads[anchor_z][anchor_x].containedObjects.remove(object)
 
 
 

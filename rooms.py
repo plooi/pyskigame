@@ -106,9 +106,10 @@ def data_file_world():
     
     if event == None: return
     try:
-        the_world = world.new_world_from_data_file(values[0], "./topographic/" + choice, min_col=300)
+        the_world = world.World().init_csv(values[0], "./topographic/" + choice)
     except Exception as e:
         sleep(1)
+        traceback.print_exc()
         easygui.msgbox(str(e))
         return
     
