@@ -58,7 +58,7 @@ def add_model_to_world_fixed(model, world, anchor_z, anchor_x, object=None):
     keys = []
     for i in range(0, len(model), 5):
         keys.append(
-            world.add_fixed_quad(model[i], model[i+1], model[i+2], model[i+3], model[i+4], anchor_z, anchor_x, object=None)
+            world.add_fixed_quad(model[i], model[i+1], model[i+2], model[i+3], model[i+4], anchor_z, anchor_x, object=object)
             )
         
     return keys

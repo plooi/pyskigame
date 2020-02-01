@@ -4,7 +4,7 @@ from pylooiengine.misc.graphics import VertexHandler
 import math
 import pylooiengine
 import easygui
-import rooms #UNCOMMENT THIS PLEASE!
+import rooms
 import normal
 import numpy
 import copy
@@ -91,9 +91,10 @@ class Chunk:
                 new_pan_chunk_color[1] += self.vh.vertex_colors[i][1]
                 new_pan_chunk_color[2] += self.vh.vertex_colors[i][2]
                 
-            new_pan_chunk_color[0] /= len(self.vh.vertex_colors)
-            new_pan_chunk_color[1] /= len(self.vh.vertex_colors)
-            new_pan_chunk_color[2] /= len(self.vh.vertex_colors)
+            new_pan_chunk_color[0] /= self.vh.num_occupied()
+            new_pan_chunk_color[1] /= self.vh.num_occupied()
+            new_pan_chunk_color[2] /= self.vh.num_occupied()
+            #print("Average color from chunk", chunk_z, chunk_x, "is ", new_pan_chunk_color[0], new_pan_chunk_color[1], new_pan_chunk_color[2], )
             """
             for r in range(ul_z, ul_z+cs):
                 for c in range(ul_x, ul_x+cs):
@@ -169,6 +170,13 @@ class World(LooiObject):
         self.mobile_colors = None
         
         
+        #this keeps track of how to save and load the world next time
+        #keys are the IDs (id function) of objects such as trees and
+        #lifts, values are strings which contain python code describing
+        #how to recreate that object
+        self.object_account = {}
+        
+        
     
     """
     init_csv
@@ -178,7 +186,7 @@ class World(LooiObject):
         lines = []
         f = open(csv_name, "r")
         for line in f:
-            lines.append([(0 if x=="None" else int(x)) for x in line.split(",")])
+            lines.append([(0 if x=="None" else float(x)) for x in line.split(",")])
         f.close()
         
         height = len(lines)
@@ -796,6 +804,39 @@ class World(LooiObject):
             ray[0] += step_size*self.properties["horizontal_stretch"] * math.cos(hr) * math.cos(vr)
             ray[2] += step_size*self.properties["horizontal_stretch"] * -math.sin(hr) * math.cos(vr)
             ray[1] += step_size*self.properties["horizontal_stretch"] * math.sin(vr)
-
+    """
+    add_object_account
+    
+    accounts for this object so that when the world is saved to a file, 
+    this object can be recreated the next time this world is made
+    
+    the creation code should be one (or more if you use semicolons) lines of 
+    code that create, setup, and add the appropriate object into the world.
+    This code will be invoked when the world is being loaded next time.
+    
+    This code can assume that the variable "world" contains the world we will
+    be adding to
+    """
+    def add_object_account(self, object, creation_code):
+        self.object_account[id(object)] = creation_code
+    """
+    When you delete an object in game, you want it so that when you save
+    the world, that object is never saved. Use delete_object_account to
+    remove the object from the save list
+    """
+    def delete_object_account(self, object):
+        del self.object_account[id(object)]
 def rad_to_deg(radians):
     return radians/(2*math.pi) * 360
+
+
+
+
+
+
+
+
+
+
+
+

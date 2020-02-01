@@ -198,6 +198,8 @@ class Lift(LooiObject):
         
         self.do_rope()
         
+        
+        self.world.add_object_account(self, "Lift(world).build(%s)"%(str(chairlift_array)))
     def do_rope(self):
         objs = [self.start_terminal] + self.poles_midpoints_objects + [self.end_terminal]
         i = 0
@@ -243,26 +245,26 @@ class Lift(LooiObject):
         
         
         move_model(model,start[0], start[1], start[2])
-        id = add_model_to_world_fixed(model, self.world, int(start[2]/self.world.properties["horizontal_stretch"]), int(start[0]/self.world.properties["horizontal_stretch"]), None)
-        self.rope.append(id)
+        
+        anchor_z, anchor_x = int(start[2]/self.world.properties["horizontal_stretch"]), int(start[0]/self.world.properties["horizontal_stretch"])
+        
+        keys = add_model_to_world_fixed(model, self.world, anchor_z, anchor_x, None)
+        self.rope.append((keys, anchor_z, anchor_x))
                     
             
         
-    
-    """
-    def travel(self, time):
-        for segment in self.track:
-            time_duration = segment.get_time_duration()
-            #print("time duration: " + str(time_duration))
-            if time > time_duration:
-                time -= time_duration
-                continue
-            else:
-                return (segment.travel(time), segment.horizontal_angle())
-        else:
-            raise TimeOverflowException(time)
+    def delete(self):
+        self.start_terminal.delete()
+        self.end_terminal.delete()
+        for polemid in self.poles_midpoints_objects:
+            polemid.delete()
             
-    """
+            
+        for keys, anchor_z, anchor_x in self.rope:
+            rm_model_from_world_fixed(keys, self.world, anchor_z, anchor_x)
+            
+        self.deactivate()
+        self.world.delete_object_account(self)
     def round_trip_time(self):
         ret = 0
         for segment in self.track:
@@ -564,12 +566,14 @@ class Pole:
         self.model,self.up_point,self.down_point = pole_design_1()
         horizontal_rotate_model_around_origin(self.model, self.angle)
         move_model(self.model, self.real_x, self.real_y, self.real_z)
-        add_model_to_world_fixed(self.model, self.chairlift.world, int(self.z), int(self.x), self)
+        self.vhkeys = add_model_to_world_fixed(self.model, self.chairlift.world, int(self.z), int(self.x), self)
         
         horizontal_rotate_around_origin(self.up_point, self.angle)
         horizontal_rotate_around_origin(self.down_point, self.angle)
         move_point(self.up_point, self.real_x, self.real_y, self.real_z)
         move_point(self.down_point, self.real_x, self.real_y, self.real_z)
+    def delete(self):
+        rm_model_from_world_fixed(self.vhkeys, self.chairlift.world, int(self.z), int(self.x), self)
 class Terminal:
     def __init__(self, chairlift, top_or_bot):
         self.chairlift = chairlift
@@ -595,11 +599,12 @@ class Terminal:
         self.model,self.track = terminal_design_1(rope_speed=chairlift.rope_speed, terminal_speed=chairlift.terminal_speed)
         horizontal_rotate_model_around_origin(self.model, self.angle)
         move_model(self.model, self.real_x, self.real_y, self.real_z)
-        add_model_to_world_fixed(self.model, self.chairlift.world, int(self.z), int(self.x), self)
+        self.vhkeys = add_model_to_world_fixed(self.model, self.chairlift.world, int(self.z), int(self.x), self)
         
         horizontal_rotate_track_around_origin(self.track, self.angle)
         move_track(self.track, self.real_x, self.real_y, self.real_z)
-
+    def delete(self):
+        rm_model_from_world_fixed(self.vhkeys, self.chairlift.world, int(self.z), int(self.x), self)
 if __name__ == "__main__": main()
     
     

@@ -15,6 +15,7 @@ import traceback
 from random import random
 from math import sin,cos
 from tree import Tree
+import world_save
 
 class Launcher(LooiObject):
     def step(self):
@@ -30,11 +31,11 @@ def kill_all():
 
 def main_menu():
     kill_all()
-    new = Button(800, 200, 400, 100, "New World", new_world_1, Color(.6,.6,.6), black, 64)
-    new.button_depth = 10
+    map_editor = Button(800, 200, 400, 100, "Map Editor", new_world_1, Color(.6,.6,.6), black, 64)
+    map_editor.button_depth = 10
     
-    load = Button(800, 300, 400, 100, "Load", load_room, Color(.6,.6,.6), black, 64)
-    load.button_depth = 10
+    ski_mode = Button(800, 300, 400, 100, "Ski", load_room, Color(.6,.6,.6), black, 64)
+    ski_mode.button_depth = 10
     
     abort = Button(800, 400, 400, 100, "Quit", lambda:quit(), Color(.6,.6,.6), black, 64)
     abort.button_depth = 10
@@ -50,11 +51,15 @@ def load_room():
     
 def new_world_1():
     kill_all()
-    blank = Button(800, 250, 400, 100, "Blank", blank_world, Color(.6,.6,.6), black, 64)
+    blank = Button(700, 250, 600, 100, "New Blank", blank_world, Color(.6,.6,.6), black, 64)
     blank.button_depth = 10
-    data_file = Button(800, 350, 400, 100, "Data File", data_file_world, Color(.6,.6,.6), black, 64)
+    data_file = Button(700, 350, 600, 100, "New From Topology", data_file_world, Color(.6,.6,.6), black, 64)
     data_file.button_depth = 10
-    back = Button(800, 450, 400, 100, "<--", main_menu, Color(.6,.6,.6), black, 64)
+    copy = Button(700, 450, 600, 100, "New Copy", lambda:1, Color(.6,.6,.6), black, 64)
+    copy.button_depth = 10
+    load = Button(700, 550, 600, 100, "Load", load_existing_map_editor, Color(.6,.6,.6), black, 64)
+    load.button_depth = 10
+    back = Button(700, 650, 600, 100, "<--", main_menu, Color(.6,.6,.6), black, 64)
     back.button_depth = 10
     
 def blank_world():
@@ -76,7 +81,23 @@ def blank_world():
         easygui.msgbox(str(e))
         return
     init_game_room(the_world)
+def load_existing_map_editor():
+    col = []
+    for d in os.listdir("./worlds"):
+        if os.path.isdir("./worlds/"+d):
+            col.append([sg.Button(d)])
+    col = sg.Column(col, size=(500,800), scrollable=True)
+            
+    layout = [[sg.Text('                Choose World to Load:                ')],
+                [col]]
     
+    window = sg.Window('', layout, size=(500,800))
+    event, values = window.Read()
+    window.close()
+    if event == None: return
+    
+    the_world = world_save.read("./worlds/"+event)
+    init_game_room(the_world)
 def data_file_world():
     
     col = []

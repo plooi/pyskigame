@@ -1,6 +1,14 @@
-1. Test with only loading squares that are in front of player
-2. How to get lifts to not be so laggy
-    Yeah, each chair is starting from the BEGINNING and travelling all the way around
-    so that's O(n^2) lol
-    
 
+'''1. should I move the trees to the center of the box?'''
+'''1.5 delete lifts'''
+'''2. Save and load worlds'''
+2.5 Create new world as copy
+2.7 Prevent overwriting worlds by giving a warning
+2.8 new worlds instantly create a save file upon creation
+2.9 loading bar
+3. ALL SETTINGS
+4. C2, C3, C4, D-6C, D-8G, Tram, rope two, t bar
+5. buildings, rocks, cliffs, shrubs, bushes, grass
+5.5 CLEAN UP THE UGLY MENU
+
+6. ski mode
