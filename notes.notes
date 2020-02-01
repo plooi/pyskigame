@@ -1,11 +1,6 @@
-Chairlift
-trees
-ray tracing for user clicking
-terrain mods
-input file scaling
-in-game performance setting change (ex chunk size)
-...
+1. Test with only loading squares that are in front of player
+2. How to get lifts to not be so laggy
+    Yeah, each chair is starting from the BEGINNING and travelling all the way around
+    so that's O(n^2) lol
+    
 
-
-
-currently working on the tree brightless/lighting

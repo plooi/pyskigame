@@ -54,25 +54,21 @@ def move_model(model, x_mov, y_mov, z_mov):
         model[i+3][0] += x_mov
         model[i+3][1] += y_mov
         model[i+3][2] += z_mov
-def add_model_to_vertex_handler(model, vertex_handler):
+def add_model_to_world_fixed(model, world, anchor_z, anchor_x, object=None):
     keys = []
     for i in range(0, len(model), 5):
+        keys.append(
+            world.add_fixed_quad(model[i], model[i+1], model[i+2], model[i+3], model[i+4], anchor_z, anchor_x, object=None)
+            )
         
-        keys.append( vertex_handler.add_vertex(model[i], model[i+4]) )
-        vertex_handler.add_vertex(model[i+1], model[i+4])
-        vertex_handler.add_vertex(model[i+2], model[i+4])
-        vertex_handler.add_vertex(model[i+3], model[i+4])
     return keys
-def rm_model_from_vertex_handler(keys, vertex_handler):
+def rm_model_from_world_fixed(keys, world, anchor_z, anchor_x, object=None):
     for key in keys:
-        vertex_handler.rm_vertex(key)
-        vertex_handler.rm_vertex(key+1)
-        vertex_handler.rm_vertex(key+2)
-        vertex_handler.rm_vertex(key+3)
+        world.remove_fixed_quad(key, anchor_z, anchor_x, object)
         
-def add_model_to_world(model, world):
+def add_model_to_world_mobile(model, world):
     for i in range(0, len(model), 5):
-        world.add_quad(model[i], model[i+1], model[i+2], model[i+3], model[i+4])
+        world.add_mobile_quad(model[i], model[i+1], model[i+2], model[i+3], model[i+4])
     
         
             

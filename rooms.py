@@ -14,7 +14,7 @@ import PySimpleGUI as sg
 import traceback
 from random import random
 from math import sin,cos
-
+from tree import Tree
 
 class Launcher(LooiObject):
     def step(self):
@@ -146,7 +146,7 @@ def init_game_room(world):
         pass
     """
     world.activate()
-    game_ui.UI(world).activate()
+    game_ui.UI(world, "map editor").activate()
 
 
 

@@ -40,7 +40,7 @@ class Label(LooiObject):
 
 no_action_parameter = ["no_action_parameter"]
 class Button(LooiObject):
-    def __init__(self, x=0, y=0, width=100, height=100, text="Button", action=lambda: 0, color=light_gray, text_color=black, font_size=50, font="Microsoft Sans Serif", action_parameter=no_action_parameter):
+    def __init__(self, x=0, y=0, width=100, height=100, text="Button", action=lambda: 0, color=light_gray, text_color=black, font_size=50, font="Microsoft Sans Serif", action_parameter=no_action_parameter, image=None):
         super().__init__()
         self.x = x
         self.y = y
@@ -55,6 +55,7 @@ class Button(LooiObject):
         self.bot_color_lit = None
         self.right_color_lit = None
         self.color_lit = None
+        self.image = image
         
         self.button_depth = width/20
         self.set_color(color)
@@ -97,7 +98,10 @@ class Button(LooiObject):
         
         self.do_text()
         if self.pressed:
-            self.draw_rect(self.x + self.button_depth, self.y + self.button_depth, self.x + self.button_depth + self.width, self.y + self.button_depth + self.height, self.color)
+            if self.image == None:
+                self.draw_rect(self.x + self.button_depth, self.y + self.button_depth, self.x + self.button_depth + self.width, self.y + self.button_depth + self.height, self.color)
+            else:
+                self.draw_image(self.x + self.button_depth, self.y + self.button_depth, self.x + self.button_depth + self.width, self.y + self.button_depth + self.height, self.image)
             self.draw_quad(
                             self.x, self.y, 
                             self.x + self.button_depth, self.y + self.button_depth, 
@@ -111,7 +115,10 @@ class Button(LooiObject):
                             self.x + self.width + self.button_depth, self.y, 
                             self.bot_color)
         elif self.mouse_on:
-            self.draw_rect(self.x, self.y, self.x + self.width, self.y + self.height, self.color_lit)
+            if self.image == None:
+                self.draw_rect(self.x, self.y, self.x + self.width, self.y + self.height, self.color_lit)
+            else:
+                self.draw_image(self.x, self.y, self.x + self.width, self.y + self.height, self.image)
             self.draw_quad(
                             self.x + self.width, self.y, 
                             self.x + self.width + self.button_depth, self.y, 
@@ -125,7 +132,10 @@ class Button(LooiObject):
                             self.x + self.width, self.y + self.height, 
                             self.bot_color_lit)
         else:
-            self.draw_rect(self.x, self.y, self.x + self.width, self.y + self.height, self.color)
+            if self.image == None:
+                self.draw_rect(self.x, self.y, self.x + self.width, self.y + self.height, self.color)
+            else:
+                self.draw_image(self.x, self.y, self.x + self.width, self.y + self.height, self.image)
             self.draw_quad(
                             self.x + self.width, self.y, 
                             self.x + self.width + self.button_depth, self.y, 

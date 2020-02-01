@@ -17,7 +17,7 @@ import math
 
 
 def default_3d_view_setup():
-    gluPerspective(45, (main_window.window_size[0]/main_window.window_size[1]), 0.2, 4000.0)
+    gluPerspective(45, (main_window.window_size[0]/main_window.window_size[1]), 0.1, 5000.0)
 
 
 
@@ -233,10 +233,17 @@ class Window():
     def get_unlayered_looi_objects(self):
         return self.unlayered_looi_objects
     def layer_switch(self, looi_object):
+        
         if strict_in(looi_object, self.unlayered_looi_objects) and is_num(looi_object.get_layer()):
             self.transfer_to_layered_looi_objects.append(looi_object)
         elif strict_in(looi_object, self.layered_looi_objects) and (looi_object.get_layer()==None):
             self.transfer_to_unlayered_looi_objects.append(looi_object)
+        elif strict_in(looi_object, self.transfer_to_unlayered_looi_objects) and is_num(looi_object.get_layer()):
+            self.transfer_to_layered_looi_objects.append(looi_object)
+            strict_remove(looi_object, self.transfer_to_unlayered_looi_objects)
+        elif strict_in(looi_object, self.transfer_to_layered_looi_objects) and (looi_object.get_layer()==None):
+            self.transfer_to_unlayered_looi_objects.append(looi_object)
+            strict_remove(looi_object, self.transfer_to_layered_looi_objects)
     def remove_looi_object(self, looi_object):
         if strict_in(looi_object, self.transfer_to_unlayered_looi_objects):
             strict_remove(looi_object, self.transfer_to_unlayered_looi_objects)
@@ -590,6 +597,7 @@ class LooiObject:
         #gluPerspective(45, (self.get_my_window().window_size[0]/self.get_my_window().window_size[1]), 0.1, 50.0)
         
         glBegin(GL_QUADS)
+        """
         glTexCoord2f(0.0, 0.0)
         glVertex2fv((x1,y1))
         glTexCoord2f(1.0, 0.0)
@@ -598,7 +606,15 @@ class LooiObject:
         glVertex2fv((x2,y2))
         glTexCoord2f(0.0, 1.0)
         glVertex2fv((x1,y2))
-        
+        """
+        glTexCoord2f(0.0, 1.0)
+        glVertex2fv((x1,y1))
+        glTexCoord2f(1.0, 1.0)
+        glVertex2fv((x2,y1))
+        glTexCoord2f(1.0, 0.0)
+        glVertex2fv((x2,y2))
+        glTexCoord2f(0.0, 0.0)
+        glVertex2fv((x1,y2))
         glEnd()
         
         glDeleteTextures([ID])

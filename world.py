@@ -27,7 +27,7 @@ class FPS(LooiObject):
         self.frames += 1
         
     def paint(self):
-        self.draw_text(300,200,"FPS: " + str(self.fps))
+        self.draw_text(300,100,"FPS: " + str(self.fps))
 
 class View:
     def __init__(self):
@@ -85,8 +85,20 @@ class Chunk:
             #recalculate a new pan chunk square color
             new_pan_chunk_color = [0,0,0]
             self.colors_changed = False
+            
+            for i in range(len(self.vh.vertex_colors)):
+                new_pan_chunk_color[0] += self.vh.vertex_colors[i][0]
+                new_pan_chunk_color[1] += self.vh.vertex_colors[i][1]
+                new_pan_chunk_color[2] += self.vh.vertex_colors[i][2]
+                
+            new_pan_chunk_color[0] /= len(self.vh.vertex_colors)
+            new_pan_chunk_color[1] /= len(self.vh.vertex_colors)
+            new_pan_chunk_color[2] /= len(self.vh.vertex_colors)
+            """
             for r in range(ul_z, ul_z+cs):
                 for c in range(ul_x, ul_x+cs):
+                    self.world.quads[r][c]
+                    
                     each_floor_color = self.world.get_floor_color(r, c)
                     new_pan_chunk_color[0] += each_floor_color[0]
                     new_pan_chunk_color[1] += each_floor_color[1]
@@ -94,6 +106,7 @@ class Chunk:
             new_pan_chunk_color[0] /= cs**2#the pan chunk color is the average of all the colors of it's floor tiles
             new_pan_chunk_color[1] /= cs**2#the pan chunk color is the average of all the colors of it's floor tiles
             new_pan_chunk_color[2] /= cs**2#the pan chunk color is the average of all the colors of it's floor tiles
+            """
             self.last_pan_chunk_color = new_pan_chunk_color
         
         return (
@@ -223,13 +236,16 @@ class World(LooiObject):
                 row.append(c)
             self.chunks.append(row)
             
-            
+        """    
         #create a temp elevation grid
         elevation_grid = [None]*(self.properties["height"]+1)
         for z in range(self.properties["height"]+1):#+1 because the height in points is one plus the height in quads
             elevation_grid[z] = [elevation_function(z, x) for x in range(self.properties["width"]+1)]
         elevation_function = lambda z,x: elevation_grid[z][x]*self.properties["vertical_stretch"]
-            
+        """
+        elevation_function_orig = elevation_function
+        elevation_function = lambda z,x: elevation_function_orig(z,x)*self.properties["vertical_stretch"]
+        
         #initialize quads 
         for z in range(self.properties["height"]):
             row = []
@@ -272,7 +288,7 @@ class World(LooiObject):
         used to tell opengl to draw our objects from the proper angles
         """
         def setup_3d():
-            gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 0.1, 50000.0)
+            gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 0.5, (self.properties["width"]**2 + self.properties["height"]**2)**.5 * 2.5 * self.properties["horizontal_stretch"] )
             try:
                 glRotate(rad_to_deg(-(self.view.hor_rot-math.pi/2)), 0, 1, 0)
                 glRotate(rad_to_deg(-self.view.vert_rot), math.cos(self.view.hor_rot - math.pi/2), 0, -math.sin(self.view.hor_rot - math.pi/2))
@@ -428,6 +444,16 @@ class World(LooiObject):
     def valid_point(self, z, x): return z < self.get_height_points() and x < self.get_width_points() and z >= 0 and x >= 0
     def valid_floor(self, z, x): return z < self.get_height_floors() and x < self.get_width_floors() and z >= 0 and x >= 0
     def valid_chunk(self, z, x): return z < self.get_height_chunks() and x < self.get_width_chunks() and z >= 0 and x >= 0
+    
+    
+    
+    #los in chunks
+    def in_los(self, z, x, scaled=False, los=None):
+        if los == None: los = self.view.line_of_sight
+        if not scaled:
+            z *= self.properties["horizontal_stretch"]
+            x *= self.properties["horizontal_stretch"]
+        return ( (z - self.view.z)**2 + (x - self.view.x)**2 ) ** .5 <= los*self.properties["chunk_size"]*self.properties["horizontal_stretch"]
 ###################################
 #END checks
 ###################################
@@ -545,8 +571,11 @@ class World(LooiObject):
     def paint(self):
         self.draw(self.get_chunk_load_grid())
         self.draw_mobile()
+        
+        
+        #draw sky
         d = self.properties["background_quad_distance"]
-        self.draw_quad_3d(-2*d, 2*d, -d, 2*d, 2*d, -d, 2*d, -2*d, -d, -2*d, -2*d, -d, self.properties["background_color"])
+        self.draw_quad_3d(-2*d, 2*d, -d, 2*d, 2*d, -d, 2*d, -2*d, -d, -2*d, -2*d, -d, self.properties["background_color"], setup_3d=lambda: gluPerspective(45, (main_window.window_size[0]/main_window.window_size[1]), 0.2, 10000.0))
         
         
     def get_chunk_load_grid(self):
@@ -559,14 +588,30 @@ class World(LooiObject):
         
         
         player_z_chunk, player_x_chunk = self.convert_to_chunk_coords(unscaled_view_z, unscaled_view_x)
+
+        
         for r in range(player_z_chunk - self.view.line_of_sight, player_z_chunk + self.view.line_of_sight):
             for c in range(player_x_chunk - self.view.line_of_sight, player_x_chunk + self.view.line_of_sight):
                 if self.valid_chunk(r, c):
-                    if ( (r-player_z_chunk) ** 2 + (c-player_x_chunk) ** 2 ) ** .5 <= self.view.line_of_sight:
-                        try:
-                            chunk_load_grid[r][c] = 1
-                        except:
-                            print("%d, %d out of range of %d, %d" %(r, c, len(chunk_load_grid), len(chunk_load_grid[0])))
+                    if ( (r-player_z_chunk) ** 2 + (c-player_x_chunk) ** 2 ) ** .5 <= self.view.line_of_sight:#check that the chunk is within the player's los
+                        
+                        if (    ( (r-player_z_chunk) ** 2 + (c-player_x_chunk) ** 2 ) ** .5 <= 3#!!!the chunk must either be super close to the player (3 chunks)
+                                
+                            or
+                                
+                                math.pi/2 > normal.angle_distance( 
+                                                                            normal.get_angle( 
+                                                                                unscaled_view_x, 
+                                                                                -unscaled_view_z, 
+                                                                                (c+.5)*self.properties["chunk_size"], 
+                                                                                -(r+.5)*self.properties["chunk_size"] ) , 
+                                                                                
+                                                                            self.view.hor_rot)#!!!or the player must be looking at the chunk
+                                                                            ):
+                            try:
+                                chunk_load_grid[r][c] = 1
+                            except:
+                                print("%d, %d out of range of %d, %d" %(r, c, len(chunk_load_grid), len(chunk_load_grid[0])))
                         
         return chunk_load_grid
     def draw_mobile(self):
@@ -696,28 +741,61 @@ class World(LooiObject):
     
     
     def add_fixed_quad(self, vertex1, vertex2, vertex3, vertex4, color, anchor_z, anchor_x, object=None):
-        chunk_z, chunk_x = convert_to_chunk_coords(anchor_z, anchor_x)
+        chunk_z, chunk_x = self.convert_to_chunk_coords(anchor_z, anchor_x)
         ret = self.chunks[chunk_z][chunk_x].vh.add_vertex(vertex1, color)
         self.chunks[chunk_z][chunk_x].vh.add_vertex(vertex2, color)
         self.chunks[chunk_z][chunk_x].vh.add_vertex(vertex3, color)
         self.chunks[chunk_z][chunk_x].vh.add_vertex(vertex4, color)
+        
+        self.chunks[chunk_z][chunk_x].colors_changed = True
         
         if object != None:
             self.quads[anchor_z][anchor_x].containedObjects.append(object)
 
         return ret
     def remove_fixed_quad(self, quad_id, anchor_z, anchor_x, object=None):
-        chunk_z, chunk_x = convert_to_chunk_coords(anchor_z, anchor_x)
+        chunk_z, chunk_x = self.convert_to_chunk_coords(anchor_z, anchor_x)
         
         self.chunks[chunk_z][chunk_x].vh.rm_vertex(quad_id)
         self.chunks[chunk_z][chunk_x].vh.rm_vertex(quad_id+1)
         self.chunks[chunk_z][chunk_x].vh.rm_vertex(quad_id+2)
         self.chunks[chunk_z][chunk_x].vh.rm_vertex(quad_id+3)
         
+        self.chunks[chunk_z][chunk_x].colors_changed = True
+        
         if object != None:
             self.quads[anchor_z][anchor_x].containedObjects.remove(object)
 
-
+    def get_view_pointing(self):
+        view = self.view
+        hr = view.hor_rot
+        vr = view.vert_rot
+        step_size = .5
+        ray = [view.x, view.y, view.z]
+        while True:
+            if ( (ray[0]-view.x)**2 + (ray[2]-view.z)**2 ) ** .5 > view.line_of_sight*self.properties["chunk_size"]*self.properties["horizontal_stretch"] + 2:
+                return None
+            grid_x = int(ray[0] / self.properties["horizontal_stretch"])
+            grid_z = int(ray[2] / self.properties["horizontal_stretch"])
+            
+            if grid_x >= self.get_width_floors()-1 or grid_z >= self.get_height_floors()-1 or grid_x < 0 or grid_z < 0:
+                pass#not inside world
+            else:
+                four_corners = [self.get_elevation(grid_z, grid_x, scaled=True), 
+                    self.get_elevation(grid_z+1, grid_x, scaled=True), 
+                    self.get_elevation(grid_z+1, grid_x+1, scaled=True), 
+                    self.get_elevation(grid_z, grid_x+1, scaled=True)]
+                highest = max(four_corners) + step_size*self.properties["horizontal_stretch"]
+                lowest = min(four_corners) - step_size*self.properties["horizontal_stretch"]*3
+                if ray[1] <= highest and ray[1] >= lowest: 
+                    #if self.grid[grid_z][grid_x].floor_vert_handler_index == None:
+                    #    return None
+                    #else:
+                    return grid_z, grid_x
+                
+            ray[0] += step_size*self.properties["horizontal_stretch"] * math.cos(hr) * math.cos(vr)
+            ray[2] += step_size*self.properties["horizontal_stretch"] * -math.sin(hr) * math.cos(vr)
+            ray[1] += step_size*self.properties["horizontal_stretch"] * math.sin(vr)
 
 def rad_to_deg(radians):
     return radians/(2*math.pi) * 360
