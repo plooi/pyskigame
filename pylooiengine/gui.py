@@ -149,12 +149,13 @@ class Button(LooiObject):
                             self.x + self.width, self.y + self.height, 
                             self.bot_color)
     def do_text(self):
-        if self.pressed:
-            self.draw_text(self.x + 5 + self.button_depth, self.y + self.height/2 + self.button_depth + self.font_size/2, self.text, self.font_size, self.text_color, self.color, self.font)
-        elif self.mouse_on:
-            self.draw_text(self.x + 5, self.y + self.height/2 + self.font_size/2, self.text, self.font_size, self.text_color, self.color_lit, self.font)
-        else:
-            self.draw_text(self.x + 5, self.y + self.height/2 + self.font_size/2, self.text, self.font_size, self.text_color, self.color, self.font)
+        if self.image == None:
+            if self.pressed:
+                self.draw_text(self.x + 5 + self.button_depth, self.y + self.height/2 + self.button_depth + self.font_size/2, self.text, self.font_size, self.text_color, self.color, self.font)
+            elif self.mouse_on:
+                self.draw_text(self.x + 5, self.y + self.height/2 + self.font_size/2, self.text, self.font_size, self.text_color, self.color_lit, self.font)
+            else:
+                self.draw_text(self.x + 5, self.y + self.height/2 + self.font_size/2, self.text, self.font_size, self.text_color, self.color, self.font)
 def do(b):
     print("hi")
 def main():

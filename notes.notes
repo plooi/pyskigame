@@ -2,13 +2,38 @@
 '''1. should I move the trees to the center of the box?'''
 '''1.5 delete lifts'''
 '''2. Save and load worlds'''
-2.5 Create new world as copy
-2.7 Prevent overwriting worlds by giving a warning
-2.8 new worlds instantly create a save file upon creation
-2.9 loading bar
-3. ALL SETTINGS
-4. C2, C3, C4, D-6C, D-8G, Tram, rope two, t bar
+'''2.5 Create new world as copy'''
+'''2.7 Prevent overwriting worlds by giving a warning'''
+'''2.8 new worlds instantly create a save file upon creation'''
+'''2.9 loading bar'''
+'''3. ALL SETTINGS
+    h v stretch 
+    line of sight'''
+'''4. C2, C3, C4, D-6C, D-8G, Tram, rope two, t bar'''
+4.5 chairlift build settings
+    like chair blurring distance
+    '''pole density'''
+    
+    Select the lift, then change settings, then the lift will rebuild itself
+    
+    #OKAY LAH
+    
 5. buildings, rocks, cliffs, shrubs, bushes, grass
-5.5 CLEAN UP THE UGLY MENU
-
+'''5.1 Terrain modification? Run cutting?'''
+'''5.5 CLEAN UP THE UGLY MENU'''
+5.5Space out the menu icons
+See world name from inside the game
 6. ski mode
+
+7. Make vertex handler smaller? Can we make it smaller? Cuz right now it can only go one way
+
+note: Your blurry chair models do not have to account for looking from above or below. this is
+because in order to look directly from above or below, you have to be within line of sight,
+and if thats the case the blurry models wont show
+
+Get rid of the window X button
+
+Remove the quad at 0,0?
+
+
+Why does looi engine NOT call the activate function for a looi object active by default???

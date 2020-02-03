@@ -3,6 +3,7 @@ from pylooiengine import *
 from os import path
 import os
 import traceback
+from models import *
 
 class StringBuffer:
     def __init__(self):
@@ -17,7 +18,7 @@ write
 
 writes a map editor world to a file
 """
-def write(world):
+def write(world,old_vertical_stretch=None):
     if not path.isdir("./worlds"):#worlds is for map editor worlds, ./saves is for ski game saves
         os.mkdir("./worlds")
     if not path.isdir("./worlds/"+world.properties["name"]):
@@ -33,11 +34,20 @@ def write(world):
         for c in range(world.get_width_points()):
             if c > 0:
                 out.append(",")
-            out.append(world.get_elevation(r, c, scaled=False))
+            if old_vertical_stretch == None:
+                #vertical stretch hasn't changed
+                out.append(world.get_elevation(r, c, scaled=False))
+            else:
+                #the vertical stretch that is currently in this world's properties cannot correctly return
+                #the world back to the proper unscaled values. (because the vertical stretch was changed by user)
+                #thus, we must return the world back to its proper unscaled values by 
+                #dividing by the old vertical stretch
+                out.append(world.get_elevation(r, c, scaled=True) / old_vertical_stretch)
         out.append("\n")
     out.append("WAHLAO EH!\n")
     
-    out.append("World().init(%s, %d, %d, %s, elevation_function)"% ('"'+world.properties["name"]+'"', world.properties["width"], world.properties["height"], property_string(world.properties)))
+    v=world.view
+    out.append("World().init(%s, %d, %d, %s, elevation_function, view=new_view(%f,%f,%f,%f,%f,%f,%f,%d,%f))"% ('"'+world.properties["name"]+'"', world.properties["width"], world.properties["height"], property_string(world.properties), v.x,v.y,v.z,v.hor_rot,v.vert_rot,v.speed,v.rot_spd,v.line_of_sight,v.max_vert_rot))
     out.append("\nWAHLAO EH!\n")
     for object_id in world.object_account:
         out.append(world.object_account[object_id])
@@ -71,9 +81,25 @@ object that can be deciphered from that world directory
 For map editor worlds
 """
 def read(path):
-    from world import World
-    from tree import Tree,tree_design_1
-    from lift import Lift,chair_model_1,chair_model_2,chair_model_3,chair_model_4,rope_model_1,terminal_design_1,pole_design_1
+    from world import World,View
+    from tree import Tree
+    from lift import Lift#,chair_model_1,chair_model_2,chair_model_3,chair_model_4,rope_model_1,terminal_design_1,pole_design_1
+    from rock import Rock
+    
+    def new_view(x,y,z,hr,vr,spd,rotspd,los,maxvrot):
+        v = View()
+        v.x = x
+        v.y = y
+        v.z = z
+        v.hor_rot = hr
+        v.vert_rot = vr
+        v.rot_spd = rotspd
+        v.line_of_sight = los
+        v.max_vert_rot = maxvrot
+        v.speed = spd
+        return v
+    
+    
     
     
     

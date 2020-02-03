@@ -4,6 +4,8 @@ import pyautogui
 import pygame
 import map_edit_menu
 import pylooiengine
+
+kljlkj
 class Player(LooiObject):
     def __init__(self):
         super().__init__()

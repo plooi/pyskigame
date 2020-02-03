@@ -1,5 +1,5 @@
 from pylooiengine import *
-from player import *
+#from player import *
 from pylooiengine.misc.graphics import VertexHandler
 import math
 import pylooiengine
@@ -8,8 +8,15 @@ import rooms
 import normal
 import numpy
 import copy
-from tree import Tree
+from tree import *
 from game_ui import UI
+import loading
+import PySimpleGUI as sg
+from rock import Rock
+from models import *
+
+from OpenGL.GL import *
+from OpenGL.GLU import *
 
 #TESTING PURPOSES ONLY FPS
 class FPS(LooiObject):
@@ -31,9 +38,9 @@ class FPS(LooiObject):
 
 class View:
     def __init__(self):
-        self.x = 0
-        self.y = 0
-        self.z = 0
+        self.x = -10
+        self.y = 10
+        self.z = -10
         self.hor_rot = -math.pi/4
         self.vert_rot = 0
         self.speed = 4
@@ -145,9 +152,31 @@ class World(LooiObject):
             "vertical_stretch" : .15,
             "background_color" : Color(.7,.7,1),
             "background_quad_distance" : 3000,
+            
+            #the settings below have nothing to do with the world itself,
+            #they're just in here because it's more efficient to put them all together
+            "line_thickness(map_editor)" : 5, #in unscaled distance
+            "terrain_mod_step_size(map_editor)" : 15, #in unscaled height
+            "chair_time_distance_detachable" : 210,#in terms of ticks
+            "chair_time_distance_gondola" : 300,#in terms of ticks
+            "chair_time_distance_fixed" : 390, #in terms of ticks
+            "build_chair_pole_distance(map_editor)" : 23, #in real distance
+            "chair_ride_distance" : 10, #in terms of real distance. How far away you need to be from a chair in order to get on it
+            
+            #the settings below are just for ski mode
+            "walk_speed" : .5,
+            "x_momentum" : 0,
+            "y_momentum" : 0,
+            "z_momentum" : 0,
+            "player_height" : 1.1,
+            "ski_direction" : 0,
+            
             }
             
-            
+        self.set_layer(-1999999) #because the front layer will be drawn first. So 
+        #then so the world draws first, and then I can clear the bit buffer and then let the other stuff draw
+        
+        
         #2D Array where each element denotes one quadrilateral
         self.quads = []
         
@@ -175,6 +204,8 @@ class World(LooiObject):
         #lifts, values are strings which contain python code describing
         #how to recreate that object
         self.object_account = {}
+        
+        
         
         
     
@@ -207,8 +238,8 @@ class World(LooiObject):
         tells each quadrilateral which chunk it's in
         allocates a spot in the current chunk's buffer for the floor square, and hands that pointer over to the quadrilateral
     """
-    def init(self, name, width, height, more_properties={}, elevation_function=lambda z,x:0, view=None):
-        
+    def init(self, name, width, height, more_properties={}, elevation_function=lambda z,x:0, view=None, prog_bar=True):
+        if prog_bar: loading.progress_bar()
         
         
         #set properties properly
@@ -273,6 +304,8 @@ class World(LooiObject):
                 self.chunks[z_chunk][x_chunk].vh.add_vertex([(x+1)*self.properties["horizontal_stretch"],elevation_function(z+1, x+1),(z+1)*self.properties["horizontal_stretch"]])
                 self.chunks[z_chunk][x_chunk].vh.add_vertex([x*self.properties["horizontal_stretch"],elevation_function(z+1, x),(z+1)*self.properties["horizontal_stretch"]])
                 self.reset_floor_color(z, x)
+                
+            if prog_bar and z % 7 == 0: loading.update(z/self.properties["height"]*100)
                     
             
                 
@@ -296,7 +329,7 @@ class World(LooiObject):
         used to tell opengl to draw our objects from the proper angles
         """
         def setup_3d():
-            gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 0.5, (self.properties["width"]**2 + self.properties["height"]**2)**.5 * 2.5 * self.properties["horizontal_stretch"] )
+            gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), .5, (self.properties["width"]**2 + self.properties["height"]**2)**.5 * 2.5 * self.properties["horizontal_stretch"] )
             try:
                 glRotate(rad_to_deg(-(self.view.hor_rot-math.pi/2)), 0, 1, 0)
                 glRotate(rad_to_deg(-self.view.vert_rot), math.cos(self.view.hor_rot - math.pi/2), 0, -math.sin(self.view.hor_rot - math.pi/2))
@@ -306,7 +339,7 @@ class World(LooiObject):
             #print(self.view.x)
         self.setup_3d = setup_3d
         
-        
+        if prog_bar: loading.update(100)
         return self
         #END INIT
         
@@ -373,7 +406,7 @@ class World(LooiObject):
     
     UNTESTED
     """
-    def set_elevation(self, z, x, elevation, adjust_floot_color=True):
+    def set_elevation(self, z, x, elevation, reset_color=True, move_trees=True):
         
         elevation *= self.properties["vertical_stretch"]
         
@@ -381,23 +414,38 @@ class World(LooiObject):
         if self.valid_floor(z-1, x-1):
             chunk_z, chunk_x = self.convert_to_chunk_coords(z-1, x-1)
             chunk_obj = self.chunks[chunk_z][chunk_x]
-            floor_pointer = self.quads[z][x].floor_pointer
+            floor_pointer = self.quads[z-1][x-1].floor_pointer
             point = chunk_obj.vh.vertices[floor_pointer+2]#+2 for upper left floor's LOWER RIGHT point
             point[1] = elevation
             
             if reset_color:
                 self.reset_floor_color(z-1,x-1)
+                
+            if move_trees:
+                for obj in self.quads[z-1][x-1].containedObjects:
+                    if isinstance(obj,Tree):
+                        recreate_string = self.object_account[id(obj)]
+                        obj.delete()
+                        world=self
+                        exec(recreate_string)
             
         #upper right floor
         if self.valid_floor(z-1, x):
             chunk_z, chunk_x = self.convert_to_chunk_coords(z-1, x)
             chunk_obj = self.chunks[chunk_z][chunk_x]
-            floor_pointer = self.quads[z][x].floor_pointer
+            floor_pointer = self.quads[z-1][x].floor_pointer
             point = chunk_obj.vh.vertices[floor_pointer+3]#+3 for upper right floor's LOWER LEFT point
             point[1] = elevation
             
             if reset_color:
                 self.reset_floor_color(z-1,x)
+            if move_trees:
+                for obj in self.quads[z-1][x].containedObjects:
+                    if isinstance(obj,Tree):
+                        recreate_string = self.object_account[id(obj)]
+                        obj.delete()
+                        world=self
+                        exec(recreate_string)
             
         #lower right floor
         if self.valid_floor(z, x):
@@ -409,18 +457,33 @@ class World(LooiObject):
             
             if reset_color:
                 self.reset_floor_color(z,x)
+            if move_trees:
+                for obj in self.quads[z][x].containedObjects:
+                    if isinstance(obj,Tree):
+                        recreate_string = self.object_account[id(obj)]
+                        obj.delete()
+                        world=self
+                        exec(recreate_string)
             
         #lower left floor
         if self.valid_floor(z, x-1):
             chunk_z, chunk_x = self.convert_to_chunk_coords(z, x-1)
             chunk_obj = self.chunks[chunk_z][chunk_x]
-            floor_pointer = self.quads[z][x].floor_pointer
+            floor_pointer = self.quads[z][x-1].floor_pointer
             point = chunk_obj.vh.vertices[floor_pointer+1]#+1 for upper left floor's UPPER RIGHT point
             point[1] = elevation
             
             if reset_color:
                 self.reset_floor_color(z,x-1)
+            if move_trees:
+                for obj in self.quads[z][x-1].containedObjects:
+                    if isinstance(obj,Tree):
+                        recreate_string = self.object_account[id(obj)]
+                        obj.delete()
+                        world=self
+                        exec(recreate_string)
         
+            
             
             
     
@@ -536,7 +599,15 @@ class World(LooiObject):
             vr = -vr
             hr = hr + math.pi
             
-        return self.calculate_floor_color(hr, vr)
+        color1 = self.calculate_floor_color(hr, vr)
+        
+        hr, vr = normal.get_plane_rotation(ul[0],ul[1],ul[2],ll[0],ll[1],ll[2],lr[0],lr[1],lr[2])
+        if vr < 0:
+            vr = -vr
+            hr = hr + math.pi
+            
+        color2 = self.calculate_floor_color(hr, vr)
+        return [(color1[0]+color2[0])/2, (color1[1]+color2[1])/2, (color1[2]+color2[2])/2]
     """
     calculate_floor_color
     
@@ -552,11 +623,11 @@ class World(LooiObject):
         inverse_vertical_rotation_0_to_1 = 1 - vertical_rotation_0_to_1
         
         neutral_floor_color = .8
-        extremity = .5
+        extremity = .7
         
         color_value = neutral_floor_color + inverse_angle_distance_from_sun_m1_to_p1*inverse_vertical_rotation_0_to_1*extremity
         if color_value > 1: color_value = 1
-        if color_value < 0: color_value = 0
+        if color_value < .2: color_value = .2
         
         color = [color_value]*3
         return color
@@ -584,6 +655,11 @@ class World(LooiObject):
         #draw sky
         d = self.properties["background_quad_distance"]
         self.draw_quad_3d(-2*d, 2*d, -d, 2*d, 2*d, -d, 2*d, -2*d, -d, -2*d, -2*d, -d, self.properties["background_color"], setup_3d=lambda: gluPerspective(45, (main_window.window_size[0]/main_window.window_size[1]), 0.2, 10000.0))
+        
+        
+        glClear(GL_DEPTH_BUFFER_BIT)#clear the depth buffer bit so that the 2d stuff renders on top
+        
+        
         
         
     def get_chunk_load_grid(self):

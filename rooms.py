@@ -4,7 +4,7 @@ import pylooiengine
 import easygui
 import world
 from lift import Lift
-from lift import TimeOverflowException
+
 from model_3d import *
 import os
 from time import sleep
@@ -24,10 +24,14 @@ class Launcher(LooiObject):
 Launcher()        
 
 def kill_all():
+    for looi_object in pylooiengine.main_window.unlayered_looi_objects+main_window.layered_looi_objects:
+        looi_object.deactivate()
+    """
     for l in main_window.unlayered_looi_objects:
         l.deactivate()
     for l in main_window.layered_looi_objects:
         l.deactivate()
+    """
 
 def main_menu():
     kill_all()
@@ -55,7 +59,7 @@ def new_world_1():
     blank.button_depth = 10
     data_file = Button(700, 350, 600, 100, "New From Topology", data_file_world, Color(.6,.6,.6), black, 64)
     data_file.button_depth = 10
-    copy = Button(700, 450, 600, 100, "New Copy", lambda:1, Color(.6,.6,.6), black, 64)
+    copy = Button(700, 450, 600, 100, "New Copy", create_copy, Color(.6,.6,.6), black, 64)
     copy.button_depth = 10
     load = Button(700, 550, 600, 100, "Load", load_existing_map_editor, Color(.6,.6,.6), black, 64)
     load.button_depth = 10
@@ -63,25 +67,46 @@ def new_world_1():
     back.button_depth = 10
     
 def blank_world():
-    layout = [
-              [sg.Text('Name:'), sg.Input("My World")],
-              [sg.Text('Width:'), sg.Input("100")],
-              [sg.Text('Height:'), sg.Input("100")],
-              [sg.OK()] ]
-    window = sg.Window('', layout, size = (500,800))
-    event, values = window.Read()
-    window.close()
     
-    if event==None: return
+    values = ["My World", "100", "100"]
+    while 1:
+        layout = [
+                  [sg.Text('Name:'), sg.Input(str(values[0]))],
+                  [sg.Text('Width:'), sg.Input(str(values[1]))],
+                  [sg.Text('Height:'), sg.Input(str(values[2]))],
+                  [sg.OK()] ]
+        window = sg.Window('', layout, size = (500,800))
+        event, values = window.Read()
+        window.close()
+        if event==None: return
+    
+    
+    
+        if values[0] in os.listdir("./worlds/"):
+            layout = [
+                          [sg.Text('A world of this name already exists. Would you like to OVERWRITE it?')],
+                          [sg.Yes(), sg.No()] ]
+            window = sg.Window('', layout)
+            event, _values = window.Read()
+            window.close()
+            if event == None or event == "No":
+                #reprompt the thing again
+                continue
+            elif event == "Yes":
+                break
+        else:
+            break
+            
     try:
-        the_world = world.World().init(values[0], int(values[1]), int(values[2]), elevation_function=lambda z,x:sin(x/30)*300+sin(z/15)*150)
+        the_world = world.World().init(values[0], int(values[1]), int(values[2]))#, elevation_function=lambda z,x:sin(x/30)*300+sin(z/15)*150
+        world_save.write(the_world)
     except Exception as e:
         sleep(1)
         traceback.print_exc()
         easygui.msgbox(str(e))
         return
     init_game_room(the_world)
-def load_existing_map_editor():
+def create_copy():
     col = []
     for d in os.listdir("./worlds"):
         if os.path.isdir("./worlds/"+d):
@@ -95,6 +120,53 @@ def load_existing_map_editor():
     event, values = window.Read()
     window.close()
     if event == None: return
+    
+    
+    while 1:
+        layout = [
+                  [sg.Text('Name:'), sg.Input(event)],
+                  [sg.OK()] ]
+        window = sg.Window('', layout)
+        _event, values = window.Read()
+        window.close()
+        if _event == None: return
+        
+        if values[0] in os.listdir("./worlds/"):
+            layout = [
+                          [sg.Text('A world of this name already exists. Would you like to OVERWRITE it?')],
+                          [sg.Yes(), sg.No()] ]
+            window = sg.Window('', layout)
+            _event, _values = window.Read()
+            window.close()
+            if _event == None or _event == "No":
+                continue
+            elif _event == "Yes":
+                break
+        else:
+            break
+    
+    the_world = world_save.read("./worlds/"+event)
+    the_world.properties["name"] = values[0]
+    world_save.write(the_world)
+    init_game_room(the_world)
+    
+def load_existing_map_editor():
+    col = []
+    for d in os.listdir("./worlds"):
+        if os.path.isdir("./worlds/"+d):
+            col.append([sg.Button(d)])
+    col = sg.Column(col, size=(500,800), scrollable=True)
+            
+    layout = [[sg.Text('                Choose World to Copy:                ')],
+                [col]]
+    
+    window = sg.Window('', layout, size=(500,800))
+    event, values = window.Read()
+    window.close()
+    if event == None: return
+    
+    
+    
     
     the_world = world_save.read("./worlds/"+event)
     init_game_room(the_world)
@@ -116,18 +188,33 @@ def data_file_world():
     choice = event
             
     if event == None: return
+    while 1:
+        layout = [
+                  [sg.Text('Name:'), sg.Input(event)],
+                  [sg.OK()] ]
+        window = sg.Window('', layout)
+        event, values = window.Read()
+        window.close()
+        if event == None: return
+        
+        if values[0] in os.listdir("./worlds/"):
+            layout = [
+                          [sg.Text('A world of this name already exists. Would you like to OVERWRITE it?')],
+                          [sg.Yes(), sg.No()] ]
+            window = sg.Window('', layout)
+            event, _values = window.Read()
+            window.close()
+            if event == None or event == "No":
+                continue
+            elif event == "Yes":
+                break
+        else:
+            break
     
-    layout = [
-              [sg.Text('Name:'), sg.Input(event)],
-              [sg.OK()] ]
-    window = sg.Window('', layout)
-    event, values = window.Read()
-    window.close()
     
-    
-    if event == None: return
     try:
         the_world = world.World().init_csv(values[0], "./topographic/" + choice)
+        world_save.write(the_world)
     except Exception as e:
         sleep(1)
         traceback.print_exc()
