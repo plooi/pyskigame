@@ -1,5 +1,5 @@
 
-import lift_util as lift
+import lift_util
 import math
 
 from model_3d import *
@@ -409,7 +409,7 @@ def terminal_design_1(
     ):
     
     bullwheel_radius = terminal_roof_width/2-terminal_track_indent
-    track = lift.Track()
+    track = lift_util.Track()
     
     speed_diff = rope_speed-terminal_speed
     
@@ -418,19 +418,19 @@ def terminal_design_1(
         percent_round_up = x/(slow_down_segments-1) if slow_down_segments > 1 else 1
         x_pos = (1 - percent_round_down) * terminal_roof_length/2 
         vel = terminal_speed + (1 - percent_round_up) * speed_diff
-        track.add_point(lift.Point(x_pos, pole_height, -terminal_roof_width/2+terminal_track_indent, vel))
+        track.add_point(lift_util.Point(x_pos, pole_height, -terminal_roof_width/2+terminal_track_indent, vel))
     for bws in range(0, bullwheel_segments+1):
         theta = bws / bullwheel_segments * math.pi + math.pi/2
         z = -math.sin(theta) * bullwheel_radius
         x = math.cos(theta) * bullwheel_radius
         x -= bullwheel_distance_from_pole
-        track.add_point(lift.Point(x, pole_height, z, terminal_speed))
+        track.add_point(lift_util.Point(x, pole_height, z, terminal_speed))
     for x in range(0, slow_down_segments):
         percent_round_down = x/slow_down_segments
         percent_round_up = x/(slow_down_segments-1) if slow_down_segments > 1 else 1
         x_pos = (percent_round_up) * terminal_roof_length/2 
         vel = terminal_speed + (percent_round_up) * speed_diff
-        track.add_point(lift.Point(x_pos, pole_height, terminal_roof_width/2-terminal_track_indent, vel))
+        track.add_point(lift_util.Point(x_pos, pole_height, terminal_roof_width/2-terminal_track_indent, vel))
     #WORKING HERE
     return [
     [-pole_length/2,0,-pole_width/2], [pole_length/2,0,-pole_width/2], [pole_length/2,pole_height,-pole_width/2], [-pole_length/2,pole_height,-pole_width/2], pole_color,
@@ -483,7 +483,7 @@ def terminal_design_2(
     ):
     
     bullwheel_radius = terminal_roof_width/2-terminal_track_indent
-    track = lift.Track()
+    track = lift_util.Track()
     
     speed_diff = rope_speed-terminal_speed
     
@@ -493,19 +493,19 @@ def terminal_design_2(
         x_pos = (1 - percent_round_down) * distance_between_bullwheel_and_wheels
         vel = terminal_speed + (1 - percent_round_up) * speed_diff
         
-        track.add_point(lift.Point(x_pos, pole_height, -terminal_roof_width/2+terminal_track_indent, vel))
+        track.add_point(lift_util.Point(x_pos, pole_height, -terminal_roof_width/2+terminal_track_indent, vel))
     for bws in range(0, bullwheel_segments+1):
         theta = bws / bullwheel_segments * math.pi + math.pi/2
         z = -math.sin(theta) * bullwheel_radius
         x = math.cos(theta) * bullwheel_radius
         x -= bullwheel_distance_from_pole
-        track.add_point(lift.Point(x, pole_height, z, terminal_speed))
+        track.add_point(lift_util.Point(x, pole_height, z, terminal_speed))
     for x in range(0, slow_down_segments):
         percent_round_down = x/slow_down_segments
         percent_round_up = x/(slow_down_segments-1) if slow_down_segments > 1 else 1
         x_pos = (percent_round_up) * distance_between_bullwheel_and_wheels
         vel = terminal_speed + (percent_round_up) * speed_diff
-        track.add_point(lift.Point(x_pos, pole_height, terminal_roof_width/2-terminal_track_indent, vel))
+        track.add_point(lift_util.Point(x_pos, pole_height, terminal_roof_width/2-terminal_track_indent, vel))
     
     
     #draw bullwheel

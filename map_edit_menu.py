@@ -7,13 +7,13 @@ from world_operations import *
 from model_3d import *
 import lift
 import lift_util
+
 import world_save
 import rooms
 from collections import OrderedDict
 from models import *
 from util import get_angle
 from rock import *
-
 
 class Menu(LooiObject):
     def __init__(self, ui):
@@ -49,15 +49,15 @@ class Menu(LooiObject):
         self.btn15.set_layer(-8)
         self.add(self.btn15)
         
-        self.btn2 = Button(x = 520, y=200, width=80, height=80, font_size=10, text="", image=image("Tree Icon.png"), action=TreeAdd, action_parameter=(self, .1))
+        self.btn2 = Button(x = 520, y=200, width=80, height=80, font_size=10, text="", image=image("Tree Icon.png"), action=TreeAdd, action_parameter=(self, .01))
         self.btn2.set_layer(-2)
         self.add(self.btn2)
         
-        self.btn3 = Button(x = 600, y=200, width=80, height=80, font_size=10, text="", image=image("Tree Icon2.png"), action=TreeAdd, action_parameter=(self, .3))
+        self.btn3 = Button(x = 600, y=200, width=80, height=80, font_size=10, text="", image=image("Tree Icon2.png"), action=TreeAdd, action_parameter=(self, .06))
         self.btn3.set_layer(-2)
         self.add(self.btn3)
         
-        self.btn4 = Button(x = 680, y=200, width=80, height=80, font_size=10, text="", image=image("Tree Icon3.png"), action=TreeAdd, action_parameter=(self, .5))
+        self.btn4 = Button(x = 680, y=200, width=80, height=80, font_size=10, text="", image=image("Tree Icon3.png"), action=TreeAdd, action_parameter=(self, .2))
         self.btn4.set_layer(-2)
         self.add(self.btn4)
         
@@ -127,6 +127,8 @@ def settings(menu):
     setting["Horizontal Stretch"] = menu.ui.world.properties["horizontal_stretch"]
     setting["Vertical Stretch"] = menu.ui.world.properties["vertical_stretch"]
     setting["Line of Sight"] = menu.ui.world.view.line_of_sight
+    setting["Texture Distance"] = menu.ui.world.properties["texture_distance"]
+    setting["Texture Radius"] = menu.ui.world.properties["texture_radius"]
     setting["Movement Speed"] = menu.ui.world.view.speed
     setting["Rotation Speed"] = menu.ui.world.view.rot_spd
     setting["Chair Time Interval Detachable"] = menu.ui.world.properties["chair_time_distance_detachable"]
@@ -174,6 +176,8 @@ def settings(menu):
     if event == "OK":
         #do all the non-reload settings first...
         menu.ui.world.view.line_of_sight = int(new_settings["Line of Sight"])
+        menu.ui.world.properties["texture_distance"] = float(new_settings["Texture Distance"])
+        menu.ui.world.properties["texture_radius"] = float(new_settings["Texture Radius"])
         menu.ui.world.view.speed = float(new_settings["Movement Speed"])
         menu.ui.world.view.rot_spd = float(new_settings["Rotation Speed"])
         menu.ui.world.properties["chair_time_distance_detachable"] = float(new_settings["Chair Time Interval Detachable"])
@@ -232,6 +236,8 @@ def exit(menu):
     
     if event == "Yes":
         save(menu)
+    elif event == None:
+        return
         
     #code for exiting:
     for looi_object in pylooiengine.main_window.unlayered_looi_objects+main_window.layered_looi_objects+main_window.transfer_to_unlayered_looi_objects+main_window.transfer_to_layered_looi_objects:
@@ -382,7 +388,7 @@ class GondolaBuild(TwoPointEdit):
         
         
         
-class C4Build(TwoPointEdit):
+class C4Build(TwoPointEdit):#quad moves a bit faster than the other fixed grip chairs
     def __init__(self, menu):
         super().__init__(menu, "Select bottom", "Select top")
     def execute(self, p1, p2):
@@ -398,7 +404,7 @@ class C4Build(TwoPointEdit):
         distance_between_poles = self.world().properties["build_chair_pole_distance(map_editor)"]
         #end
         
-        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed=.06, rope_speed=.06, terminal_model=terminal_design_2, chair_time_distance = self.world().properties["chair_time_distance_fixed"])
+        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed=.09, rope_speed=.09, terminal_model=terminal_design_2, chair_time_distance = self.world().properties["chair_time_distance_fixed"])
 class D_6CBuild(TwoPointEdit):
     def __init__(self, menu):
         super().__init__(menu, "Select bottom", "Select top")
@@ -433,7 +439,7 @@ class C3Build(TwoPointEdit):
         distance_between_poles = self.world().properties["build_chair_pole_distance(map_editor)"]
         #end
         
-        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed=.06, rope_speed=.06, terminal_model=terminal_design_2, chair_model = triple_model_1, blurry_chair_model = triple_model_2, super_blurry_chair_model=triple_model_3, chair_time_distance = self.world().properties["chair_time_distance_fixed"])
+        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed=.08, rope_speed=.08, terminal_model=terminal_design_2, chair_model = triple_model_1, blurry_chair_model = triple_model_2, super_blurry_chair_model=triple_model_3, chair_time_distance = self.world().properties["chair_time_distance_fixed"])
 class C2Build(TwoPointEdit):
     def __init__(self, menu):
         super().__init__(menu, "Select bottom", "Select top")
@@ -450,7 +456,7 @@ class C2Build(TwoPointEdit):
         distance_between_poles = self.world().properties["build_chair_pole_distance(map_editor)"]
         #end
         
-        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed=.06, rope_speed=.06, terminal_model=terminal_design_2, chair_model = double_model_1, blurry_chair_model = double_model_2, super_blurry_chair_model=double_model_3, chair_time_distance = self.world().properties["chair_time_distance_fixed"])
+        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed=.08, rope_speed=.08, terminal_model=terminal_design_2, chair_model = double_model_1, blurry_chair_model = double_model_2, super_blurry_chair_model=double_model_3, chair_time_distance = self.world().properties["chair_time_distance_fixed"])
 class TBarBuild(TwoPointEdit):
     def __init__(self, menu):
         super().__init__(menu, "Select bottom", "Select top")
@@ -467,7 +473,7 @@ class TBarBuild(TwoPointEdit):
         distance_between_poles = self.world().properties["build_chair_pole_distance(map_editor)"]
         #end
         
-        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed=.06, rope_speed=.06, terminal_model=terminal_design_2, chair_model = tbar_model_1, blurry_chair_model = tbar_model_1, super_blurry_chair_model=tbar_model_1,pole_model=pole_design_2, chair_time_distance = self.world().properties["chair_time_distance_fixed"])
+        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed=.08, rope_speed=.08, terminal_model=terminal_design_2, chair_model = tbar_model_1, blurry_chair_model = tbar_model_1, super_blurry_chair_model=tbar_model_1,pole_model=pole_design_2, chair_time_distance = self.world().properties["chair_time_distance_fixed"])
 
 
 #terminal_design_2

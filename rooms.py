@@ -38,11 +38,85 @@ def main_menu():
     map_editor = Button(800, 200, 400, 100, "Map Editor", new_world_1, Color(.6,.6,.6), black, 64)
     map_editor.button_depth = 10
     
-    ski_mode = Button(800, 300, 400, 100, "Ski", load_room, Color(.6,.6,.6), black, 64)
+    ski_mode = Button(800, 300, 400, 100, "Ski", ski_room, Color(.6,.6,.6), black, 64)
     ski_mode.button_depth = 10
     
     abort = Button(800, 400, 400, 100, "Quit", lambda:quit(), Color(.6,.6,.6), black, 64)
     abort.button_depth = 10
+def ski_room():
+    kill_all()
+    new = Button(700, 250, 600, 100, "New Game", new_ski_world, Color(.6,.6,.6), black, 64)
+    new.button_depth = 10
+    load = Button(700, 350, 600, 100, "Load", load_existing_ski_world, Color(.6,.6,.6), black, 64)
+    load.button_depth = 10
+    back = Button(700, 650, 600, 100, "<--", main_menu, Color(.6,.6,.6), black, 64)
+    back.button_depth = 10
+
+def new_ski_world():
+    col = []
+    for d in os.listdir("./worlds"):
+        if os.path.isdir("./worlds/"+d):
+            col.append([sg.Button(d)])
+    col = sg.Column(col, size=(500,800), scrollable=True)
+            
+    layout = [[sg.Text('                Choose World to Ski On:                ')],
+                [col]]
+    
+    window = sg.Window('', layout, size=(500,800))
+    event, values = window.Read()
+    window.close()
+    if event == None: return
+    
+    
+    while 1:
+        layout = [
+                  [sg.Text('Name:'), sg.Input(event)],
+                  [sg.OK()] ]
+        window = sg.Window('', layout)
+        _event, values = window.Read()
+        window.close()
+        if _event == None: return
+        
+        if values[0] in os.listdir("./saves/"):
+            layout = [
+                          [sg.Text('A world of this name already exists. Would you like to OVERWRITE it?')],
+                          [sg.Yes(), sg.No()] ]
+            window = sg.Window('', layout)
+            _event, _values = window.Read()
+            window.close()
+            if _event == None or _event == "No":
+                continue
+            elif _event == "Yes":
+                break
+        else:
+            break
+    
+    the_world = world_save.read("./worlds/"+event)
+    the_world.properties["name"] = values[0]
+    world_save.write(the_world, writepath="./saves/")
+    init_ski_room(the_world)
+def load_existing_ski_world():
+    col = []
+    for d in os.listdir("./saves"):
+        if os.path.isdir("./saves/"+d):
+            col.append([sg.Button(d)])
+    col = sg.Column(col, size=(500,800), scrollable=True)
+            
+    layout = [[sg.Text('                Choose World to Load:                ')],
+                [col]]
+    
+    window = sg.Window('', layout, size=(500,800))
+    event, values = window.Read()
+    window.close()
+    if event == None: return
+    
+    
+    
+    
+    the_world = world_save.read("./saves/"+event)
+    init_ski_room(the_world)
+
+
 def load_room():
     layout = [[sg.Text('Enter a Number')],
           [sg.Input()],
@@ -113,7 +187,7 @@ def create_copy():
             col.append([sg.Button(d)])
     col = sg.Column(col, size=(500,800), scrollable=True)
             
-    layout = [[sg.Text('                Choose World to Load:                ')],
+    layout = [[sg.Text('                Choose World to Copy:                ')],
                 [col]]
     
     window = sg.Window('', layout, size=(500,800))
@@ -157,7 +231,7 @@ def load_existing_map_editor():
             col.append([sg.Button(d)])
     col = sg.Column(col, size=(500,800), scrollable=True)
             
-    layout = [[sg.Text('                Choose World to Copy:                ')],
+    layout = [[sg.Text('                Choose World to Load:                ')],
                 [col]]
     
     window = sg.Window('', layout, size=(500,800))
@@ -240,21 +314,17 @@ def new_world():
 """
 def init_game_room(world):
     game_ui.set_mouse_mode("3D")
-
-    pylooiengine.main_window.set_fps(30)
-    
-    
+    pylooiengine.main_window.set_fps(30)#REDUNDANT but i'm too scared to remove it lol
     kill_all()
-    
-    #world.add_trees_elevation(1, 1,world.get_height()-1,world.get_width()-1)
-    """try:
-        l = Lift(world)
-        l.build([100,100,[x/100 for x in range(10,100,7)],100,300], rope_speed = .2, terminal_speed = .05, chair_time_distance=50)
-    except:
-        pass
-    """
     world.activate()
     game_ui.UI(world, "map editor").activate()
+    
+def init_ski_room(world):
+    game_ui.set_mouse_mode("3D")
+    pylooiengine.main_window.set_fps(30)#REDUNDANT but i'm too scared to remove it lol
+    kill_all()
+    world.activate()
+    game_ui.UI(world, "ski").activate()
 
 
 

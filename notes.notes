@@ -19,21 +19,46 @@
     #OKAY LAH
     
 5. buildings, rocks, cliffs, shrubs, bushes, grass
+REMOVE ROCKS!
 '''5.1 Terrain modification? Run cutting?'''
 '''5.5 CLEAN UP THE UGLY MENU'''
 5.5Space out the menu icons
-See world name from inside the game
-6. ski mode
+5.7 There's no way to delete a rock
+Cancel Map edit
+Find elevations of points in game
+I think high speed quads and especially gondolas need to be a little faster
+'''player is too short'''
+'''Make the "Path" Map editor tool not so jagged'''
+Gondola see through
+MAKE LIFTS FASTER AGAIN!!!!!!!!
+'''See world name from inside the game'''
+'''6. ski mode'''
 
-7. Make vertex handler smaller? Can we make it smaller? Cuz right now it can only go one way
+'''PICK WHICH THINGS YOU WANT TO SAVE, AND WHICH THINGS YOU #DONT
+WANT TO SAVE
+    Dont save lift speeds, or ski mode walk speed'''
+
+7. Make vertex handler smaller once it is made large? Can we make it smaller? Cuz right now it can only go one way
+
+8. Sun angle
 
 note: Your blurry chair models do not have to account for looking from above or below. this is
 because in order to look directly from above or below, you have to be within line of sight,
 and if thats the case the blurry models wont show
 
+
+there should be like a min speed and a max speed to make the skiing mechanic easier
+Depending on how many degrees per frame you turn, that affects your MAX cap speed.
+THen when you come out of the turn and you're going straight, you max speed is now 
+the ultimate max again, but your momentum has already been slowed down from the turn.
+But you can accelerate now. And if you accelerate too much, then just turn again.
 Get rid of the window X button
+FRICTION SHOULD BE HIGHER FOR HIGHER SPEEDS
 
-Remove the quad at 0,0?
 
+Make the "Select" function a circle not a lasso rectangle
+
+'''Remove the quad at 0,0?'''
+'''Make thickenss NOT the radius, make it diameter'''
 
 Why does looi engine NOT call the activate function for a looi object active by default???

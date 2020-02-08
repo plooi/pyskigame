@@ -7,6 +7,7 @@ import math
 from random import random
 from models import *
 from lift_util import *
+from constants import x as constants
 
 def main():
     l = Lift(None)
@@ -65,7 +66,7 @@ class Lift(LooiObject):
     [startZ, startX, [array of pole percentage values, negatives mean midpoints], endZ, endX]
     [z1, x1, [.1, .2, .3, .4, .5, .6, -.7, .8], z2, x2]
     """
-    def build(self, chairlift_array, rope_speed = .12, terminal_speed = .02, chair_time_distance = 210,
+    def build(self, chairlift_array, rope_speed = "detachable_rope_speed", terminal_speed = "detachable_terminal_speed", chair_time_distance = 210,
                         chair_model = chair_model_2, blurry_chair_model = chair_model_3, super_blurry_chair_model=chair_model_4, rope_model=rope_model_1,terminal_model=terminal_design_1, pole_model=pole_design_1):
         self.chair_model = chair_model
         self.blurry_chair_model = blurry_chair_model
@@ -102,7 +103,7 @@ class Lift(LooiObject):
             
         for pole_midpoint in self.poles_midpoints_objects:
             if isinstance(pole_midpoint, Pole):
-                self.track.add_point(Point(pole_midpoint.up_point[0], pole_midpoint.up_point[1], pole_midpoint.up_point[2], self.rope_speed))
+                self.track.add_point(Point(pole_midpoint.up_point[0], pole_midpoint.up_point[1], pole_midpoint.up_point[2], constants[self.rope_speed]))
             elif isinstance(pole_midpoint, Midpoint):
                 #add midpoint...
                 #WIP
@@ -113,7 +114,7 @@ class Lift(LooiObject):
             
         for pole_midpoint in self.poles_midpoints_objects[::-1]:
             if isinstance(pole_midpoint, Pole):
-                self.track.add_point(Point(pole_midpoint.down_point[0], pole_midpoint.down_point[1], pole_midpoint.down_point[2], self.rope_speed))
+                self.track.add_point(Point(pole_midpoint.down_point[0], pole_midpoint.down_point[1], pole_midpoint.down_point[2], constants[self.rope_speed]))
             elif isinstance(pole_midpoint, Midpoint):
                 #add midpoint...
                 #WIP
@@ -129,7 +130,8 @@ class Lift(LooiObject):
         
         self.do_rope()
         
-        self.world.add_object_account(self, "Lift(world).build(%s, %f, %f, %f, %s, %s, %s,terminal_model=%s,pole_model=%s)"%(str(chairlift_array), self.rope_speed, self.terminal_speed, self.chair_time_distance, find_name(self.chair_model), find_name(self.blurry_chair_model), find_name(self.super_blurry_chair_model), find_name(self.terminal_model), find_name(self.pole_model)))
+        #self.world.add_object_account(self, "Lift(world).build(%s, %f, %f, %f, %s, %s, %s,terminal_model=%s,pole_model=%s)"%(str(chairlift_array), self.rope_speed, self.terminal_speed, self.chair_time_distance, find_name(self.chair_model), find_name(self.blurry_chair_model), find_name(self.super_blurry_chair_model), find_name(self.terminal_model), find_name(self.pole_model)))
+        self.update_object_account()
         
         self.activate()
     def set_chair_time_distance(self, chair_time_distance):
@@ -146,7 +148,7 @@ class Lift(LooiObject):
         self.chair_positions = [[-9999999,-9999999,-9999999]] * len(self.chairs)
         self.chair_angles = [0] * len(self.chairs)
     def update_object_account(self):
-        self.world.add_object_account(self, "Lift(world).build(%s, %f, %f, %f, %s, %s, %s,terminal_model=%s,pole_model=%s)"%(str(self.chairlift_array), self.rope_speed, self.terminal_speed, self.chair_time_distance, find_name(self.chair_model), find_name(self.blurry_chair_model), find_name(self.super_blurry_chair_model), find_name(self.terminal_model), find_name(self.pole_model)))
+        self.world.add_object_account(self, "Lift(world).build(%s, '%s', '%s', %f, %s, %s, %s,terminal_model=%s,pole_model=%s)"%(str(self.chairlift_array), self.rope_speed, self.terminal_speed, self.chair_time_distance, find_name(self.chair_model), find_name(self.blurry_chair_model), find_name(self.super_blurry_chair_model), find_name(self.terminal_model), find_name(self.pole_model)))
         
     def do_rope(self):
         objs = [self.start_terminal] + self.poles_midpoints_objects + [self.end_terminal]
@@ -346,7 +348,7 @@ class Terminal:
         self.real_x = self.x * self.chairlift.world.properties["horizontal_stretch"]
         self.real_z = self.z * self.chairlift.world.properties["horizontal_stretch"]
         
-        self.model,self.track = terminal_model(rope_speed=chairlift.rope_speed, terminal_speed=chairlift.terminal_speed)
+        self.model,self.track = terminal_model(rope_speed=constants[chairlift.rope_speed], terminal_speed=constants[chairlift.terminal_speed])
         horizontal_rotate_model_around_origin(self.model, self.angle)
         move_model(self.model, self.real_x, self.real_y, self.real_z)
         self.vhkeys = add_model_to_world_fixed(self.model, self.chairlift.world, int(self.z), int(self.x), self)

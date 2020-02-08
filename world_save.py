@@ -18,13 +18,17 @@ write
 
 writes a map editor world to a file
 """
-def write(world,old_vertical_stretch=None):
-    if not path.isdir("./worlds"):#worlds is for map editor worlds, ./saves is for ski game saves
-        os.mkdir("./worlds")
-    if not path.isdir("./worlds/"+world.properties["name"]):
-        os.mkdir("./worlds/"+world.properties["name"])
+def write(world,old_vertical_stretch=None,writepath="./worlds/"):
+    if writepath.endswith("/") or writepath.endswith("\\"):
+        pass#okay
+    else:
+        writepath+="/"
+    if not path.isdir(writepath):#worlds is for map editor worlds, ./saves is for ski game saves
+        os.mkdir(writepath)
+    if not path.isdir(writepath+world.properties["name"]):
+        os.mkdir(writepath+world.properties["name"])
         
-    f = open("./worlds/"+world.properties["name"]+"/save", "w")
+    f = open(writepath+world.properties["name"]+"/save", "w")
     
     out = StringBuffer()
     

@@ -147,9 +147,11 @@ def smooth(world, z1, x1, z2, x2):
                 world.reset_floor_color(z,x)
                         
     
-    
+#THICKNESS IS THE  DIAMETER 
 def chainsaw_straight(world, z1, x1, z2, x2, thickness):
     distance = ((z1-z2)**2 + (x1-x2)**2)**.5
+    
+    thickness = thickness/2
     
     def travel(fraction):
         inverted_fraction = 1-fraction
@@ -178,9 +180,10 @@ def chainsaw_straight(world, z1, x1, z2, x2, thickness):
     
             
     
-    
+#thickness is the DIAMETER
 #thickness in unscaled length
 def path(world, z1, x1, z2, x2, thickness):
+    thickness = thickness/2
     elevation1 = world.get_elevation(z1, x1, scaled=False)
     elevation2 = world.get_elevation(z2, x2, scaled=False)
     distance = ((z1-z2)**2 + (x1-x2)**2)**.5
@@ -223,8 +226,18 @@ def path(world, z1, x1, z2, x2, thickness):
         #at each step along the path, set all the squares around you to the same elevation as the center of the path
         for zz in range(int(z-thickness), int(z+thickness)):
             for xx in range(int(x-thickness), int(x+thickness)):
-                if ((zz-z)**2 + (xx-x)**2)**.5 < thickness and world.valid_point(zz,xx):
-                    world.set_elevation(zz,xx,y,False)
+                if world.valid_point(zz,xx):
+                    dist_frm_ctr = ((zz-z)**2 + (xx-x)**2)**.5
+                    
+                    if dist_frm_ctr < thickness - 3:
+                        world.set_elevation(zz,xx,y,False)
+                    elif dist_frm_ctr < thickness - 2:
+                        world.set_elevation(zz,xx,(y*3+1*world.get_elevation(zz,xx,scaled=False))/4,False)
+                    elif dist_frm_ctr < thickness - 1:
+                        world.set_elevation(zz,xx,(y*2+2*world.get_elevation(zz,xx,scaled=False))/4,False)
+                    elif dist_frm_ctr < thickness:
+                        world.set_elevation(zz,xx,(y*1+3*world.get_elevation(zz,xx,scaled=False))/4,False)
+                            
     thickness += 2 
     for i in range(0, int(distance), 2):
         loc = travel(i/distance)

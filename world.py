@@ -6,6 +6,7 @@ import pylooiengine
 import easygui
 import rooms
 import normal
+
 import numpy
 import copy
 from tree import *
@@ -14,9 +15,34 @@ import loading
 import PySimpleGUI as sg
 from rock import Rock
 from models import *
+import util
 
 from OpenGL.GL import *
 from OpenGL.GLU import *
+
+
+
+
+snow_textures = {}
+snow_textures_keys = []
+
+for target in range(15, 255, 5):
+    snow_textures[target] = image("./textures/SnowTexture-lighting-"+str(target)+".png")
+    snow_textures_keys.append(target)
+snow_textures_keys.reverse()
+def get_snow_texture(lighting):
+    lighting = lighting * 255
+    def abs(x): return x if x >= 0 else -x
+    closest = None
+    closest_distance = 999999
+    for key in snow_textures_keys:
+        distance = abs(key-lighting)
+        if distance < closest_distance:
+            closest = key
+            closest_distance = distance
+    return snow_textures[closest]
+
+
 
 #TESTING PURPOSES ONLY FPS
 class FPS(LooiObject):
@@ -34,7 +60,8 @@ class FPS(LooiObject):
         self.frames += 1
         
     def paint(self):
-        self.draw_text(300,100,"FPS: " + str(self.fps))
+        pass
+        #
 
 class View:
     def __init__(self):
@@ -152,6 +179,8 @@ class World(LooiObject):
             "vertical_stretch" : .15,
             "background_color" : Color(.7,.7,1),
             "background_quad_distance" : 3000,
+            "texture_distance" : 8, #distance at which we start drawing the snow texture in quads not chunks
+            "texture_radius" : 3, #distance at which floors are guaranteed to be textured, regardless of whether you're looking or not
             
             #the settings below have nothing to do with the world itself,
             #they're just in here because it's more efficient to put them all together
@@ -161,15 +190,19 @@ class World(LooiObject):
             "chair_time_distance_gondola" : 300,#in terms of ticks
             "chair_time_distance_fixed" : 390, #in terms of ticks
             "build_chair_pole_distance(map_editor)" : 23, #in real distance
-            "chair_ride_distance" : 10, #in terms of real distance. How far away you need to be from a chair in order to get on it
+            "chair_ride_distance" : 1.5, #in terms of real distance. How far away you need to be from a chair in order to get on it
             
             #the settings below are just for ski mode
-            "walk_speed" : .5,
+            
             "x_momentum" : 0,
             "y_momentum" : 0,
             "z_momentum" : 0,
-            "player_height" : 1.1,
+            "player_height" : 1.5,
             "ski_direction" : 0,
+            "momentum" : 0,
+            "momentum_direction" : 0,
+            "ski_model" : "Red Basic"
+            
             
             }
             
@@ -217,7 +250,7 @@ class World(LooiObject):
         lines = []
         f = open(csv_name, "r")
         for line in f:
-            lines.append([(0 if x=="None" else float(x)) for x in line.split(",")])
+            lines.append([(0 if x.strip()=="None" else float(x)) for x in line.split(",")])
         f.close()
         
         height = len(lines)
@@ -319,7 +352,8 @@ class World(LooiObject):
         
         
         #other stuff
-        self.add(FPS(0))
+        self.fps = FPS(0)
+        self.add(self.fps)
         
         
         
@@ -658,7 +692,7 @@ class World(LooiObject):
         
         
         glClear(GL_DEPTH_BUFFER_BIT)#clear the depth buffer bit so that the 2d stuff renders on top
-        
+        pylooiengine.main_window.draw_borders()
         
         
         
@@ -785,10 +819,40 @@ class World(LooiObject):
         
         #print(vertices_draw)
         
+        
         #draw the stuff using opengl
         self.draw_quad_array_3d(vertices_draw, colors_draw, setup_3d=self.setup_3d)
         
+        
+        
+        
+        #draw textures
+        hs = self.properties["horizontal_stretch"]
+        vs = self.properties["vertical_stretch"]
+        
+        offset = .08
+        
+        pz = self.view.z/hs
+        px = self.view.x/hs
+        for z in range(round(pz-self.properties["texture_distance"]), round(pz+self.properties["texture_distance"])):
+            for x in range(round(px-self.properties["texture_distance"]), round(px+self.properties["texture_distance"])):
+                if ( (z+.5-pz)**2 + (x+.5-px)**2 ) ** .5 <= self.properties["texture_distance"] and self.valid_floor(z, x):
+                    
+                    if ( (z+.5-pz)**2 + (x+.5-px)**2 ) ** .5 < self.properties["texture_radius"] or normal.angle_distance(util.get_angle(pz, px, z, x), self.view.hor_rot) < math.pi/3:
                         
+                        texture = get_snow_texture(self.get_proper_floor_color(z, x)[0])
+                        
+                        
+                    
+                        self.draw_image_3d(
+                                    x*hs, self.get_elevation(z,x,scaled=True) + offset, z*hs,
+                                    (x+1)*hs, self.get_elevation(z,x+1,scaled=True) + offset, z*hs,
+                                    (x+1)*hs, self.get_elevation(z+1,x+1,scaled=True) + offset, (z+1)*hs,
+                                    x*hs, self.get_elevation(z+1,x,scaled=True) + offset, (z+1)*hs,
+                                    texture,
+                                    setup_3d=self.setup_3d
+                                    )
+    
         
         
 ###################################
@@ -904,7 +968,8 @@ class World(LooiObject):
         del self.object_account[id(object)]
 def rad_to_deg(radians):
     return radians/(2*math.pi) * 360
-
+def round(x):
+    return int(x + .5)
 
 
 
