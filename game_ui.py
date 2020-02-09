@@ -11,6 +11,7 @@ from constants import x as constants
 class UI(LooiObject):
     def __init__(self, world, game_mode):
         super().__init__(active=False)
+        self.set_layer(100)
         self.world = world
         self.crosshairs = False
         self.crosshair_length = 30
@@ -25,11 +26,10 @@ class UI(LooiObject):
         self.can_load = False
         self.load_icon = image("Chair Load Icon.png")
         
-        self.chair_sit_under_distance = .6
         self.chair_sit_forward_distance = 0
     def chairlift_ride(self):
         self.can_load = False
-        chair_ride_distance = self.world.properties["chair_ride_distance"]
+        chair_ride_distance = constants["chair_ride_distance"]
         x = self.world.view.x
         y = self.world.view.y
         z = self.world.view.z
@@ -43,32 +43,39 @@ class UI(LooiObject):
                     if self.my_lift == None and self.my_chair == None:#if not currently riding
                         for i in range(len(cp)):
                             i = len(cp)-1-i
-                            if ( (cp[i][0]-x)**2 + (cp[i][1]-self.chair_sit_under_distance-y)**2 + (cp[i][2]-z)**2 )**.5 < chair_ride_distance:#if a chair is close
+                            if ( (cp[i][0]-x)**2 + (cp[i][1]-constants["chair_sit_under_distance"]-y)**2 + (cp[i][2]-z)**2 )**.5 < chair_ride_distance:#if a chair is close
                                 self.can_load = True
                                 if self.key("r", "pressed"):
                                     self.my_lift = chairlift
                                     self.my_chair = i
+                                    self.my_lift.player_riding = i
                                     return
                     else:#if currently riding
                         if self.key("r", "pressed"):
+                            self.my_lift.player_riding = None
                             self.my_lift = None
                             self.my_chair = None
+                            
         if self.my_lift != None and self.my_chair != None:
             self.world.view.x = self.my_lift.chair_positions[self.my_chair][0] + math.cos(self.my_lift.chair_angles[self.my_chair]) * self.chair_sit_forward_distance
-            self.world.view.y = self.my_lift.chair_positions[self.my_chair][1] - self.chair_sit_under_distance
+            self.world.view.y = self.my_lift.chair_positions[self.my_chair][1] - constants["chair_sit_under_distance"]
             self.world.view.z = self.my_lift.chair_positions[self.my_chair][2] - math.sin(self.my_lift.chair_angles[self.my_chair]) * self.chair_sit_forward_distance
+            self.world.properties["ski_direction"] = self.my_lift.chair_angles[self.my_chair]
             if self.game_mode == "map editor":
                 if self.key("r", "pressed"):#this should only be available in map editor!!!!!!!!!!!!!!!!!!
                     self.my_lift = None
                     self.my_chair = None
+            return True
+        return False
         
     def step(self):
         self.look_around()
-        self.chairlift_ride()
         self.e_key()
-        if self.game_mode == "map editor": self.map_editor_move()
-        if self.game_mode == "ski" or self.game_mode == "ski test":self.ski_mode_move()
-        
+        if not self.chairlift_ride():
+            
+            if self.game_mode == "map editor": self.map_editor_move()
+            if self.game_mode == "ski" or self.game_mode == "ski test":self.ski_mode_move()
+            
                     
         if self.game_mode.startswith("ski"): ski_draw.draw_skis(self, ski_draw.models[self.world.properties["ski_model"]])
         

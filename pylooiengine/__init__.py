@@ -124,9 +124,9 @@ class Window():
             start_time = time()
             
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    quit()
+                #if event.type == pygame.QUIT:
+                #    pygame.quit()
+                #    quit()
                 if event.type == pygame.VIDEORESIZE:
                     self.window_size = (event.w, event.h)
                     surface = pygame.display.set_mode(self.window_size, DOUBLEBUF|OPENGL|pygame.RESIZABLE)
@@ -249,8 +249,8 @@ class Window():
             strict_remove(looi_object, self.transfer_to_unlayered_looi_objects)
             self.to_remove.append(looi_object)
             return
-        if strict_in(looi_object, self.transfer_to_unlayered_looi_objects):
-            strict_remove(looi_object, self.transfer_to_unlayered_looi_objects)
+        if strict_in(looi_object, self.transfer_to_layered_looi_objects):
+            strict_remove(looi_object, self.transfer_to_layered_looi_objects)
             self.to_remove.append(looi_object)
             return
         if (strict_in(looi_object, self.to_remove) 

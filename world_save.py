@@ -4,6 +4,8 @@ from os import path
 import os
 import traceback
 from models import *
+import loading
+from building import *
 
 class StringBuffer:
     def __init__(self):
@@ -115,6 +117,9 @@ def read(path):
     
     
     mode = "read_elevations"
+    
+    objects_to_load = []
+    
     for line in f:
         line = line.strip()
         if mode == "read_elevations":
@@ -134,11 +139,20 @@ def read(path):
                 traceback.print_exc()
                 raise Exception("Tried to execute:"+line)
         if mode == "load_objects":
+            
             if line == "WAHLAO EH!":
                 break
-            try:
-                eval(line)
-            except:
-                traceback.print_exc()
-                raise Exception("Tried to execute:"+line)
+            
+            objects_to_load.append(line)
+            
+    loading.progress_bar("Loading 2/2")
+    for i in range(len(objects_to_load)):
+        try:
+            eval(objects_to_load[i])
+        except:
+            traceback.print_exc()
+            raise Exception("Tried to execute:"+line)
+        if i %400 == 0:
+            loading.update(i/len(objects_to_load)*100)
+    loading.update(100)
     return world

@@ -3,11 +3,13 @@ x = {
 
     "detachable_rope_speed" : .3,
     "detachable_terminal_speed" : .02,
+    "gondola_terminal_speed" : .01,
     
     "fixed_grip_rope_speed" : .09,
-    "fixed_grip_terminal_speed" : .09,
     "ski_mode_walk_speed" : .075,
     
+    "chair_ride_distance" : 1.5, #in terms of real distance. How far away you need to be from a chair in order to get on it
+    "chair_sit_under_distance" : .5,
 
 
 }

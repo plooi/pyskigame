@@ -56,15 +56,19 @@ def move_model(model, x_mov, y_mov, z_mov):
         model[i+3][2] += z_mov
 def add_model_to_world_fixed(model, world, anchor_z, anchor_x, object=None):
     keys = []
+    if object != None:
+        world.quads[anchor_z][anchor_x].containedObjects.append(object)
     for i in range(0, len(model), 5):
         keys.append(
-            world.add_fixed_quad(model[i], model[i+1], model[i+2], model[i+3], model[i+4], anchor_z, anchor_x, object=object)
+            world.add_fixed_quad(model[i], model[i+1], model[i+2], model[i+3], model[i+4], anchor_z, anchor_x, object=None)
             )
         
     return keys
 def rm_model_from_world_fixed(keys, world, anchor_z, anchor_x, object=None):
+    if object != None:
+        world.quads[anchor_z][anchor_x].containedObjects.remove(object)
     for key in keys:
-        world.remove_fixed_quad(key, anchor_z, anchor_x, object)
+        world.remove_fixed_quad(key, anchor_z, anchor_x, None)
         
 def add_model_to_world_mobile(model, world):
     for i in range(0, len(model), 5):

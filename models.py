@@ -3,7 +3,7 @@ import lift_util
 import math
 
 from model_3d import *
-
+from models2 import *
 
 
 
@@ -41,7 +41,13 @@ def find_name(model):
     if m is pole_design_2: return "pole_design_2"
     
     if m is tree_design_1: return "tree_design_1"
+    if m is tree_design_2: return "tree_design_2"
     if m is rock_design_1:return "rock_design_1"
+    
+    if m is gondola_model_1_riding: return "gondola_model_1_riding"
+    
+    if m is cube_building_model: return "cube_building_model"
+    if m is building_with_slanted_roof:return "building_with_slanted_roof"
     
     raise Exception("Cannot determine name of this model: " + str(model()))
 
@@ -211,6 +217,47 @@ def gondola_model_1(
         
         [width/2+bulge,-hanger_height-h1,-depth/2-front_bulge], [width/2+bulge,-hanger_height-h1, depth/2+front_bulge], [width/2,-hanger_height, depth/2], [width/2,-hanger_height, -depth/2], front_color_up,
         [-width/2-bulge,-hanger_height-h1,-depth/2-front_bulge], [-width/2-bulge,-hanger_height-h1, depth/2+front_bulge], [-width/2,-hanger_height, depth/2], [-width/2,-hanger_height, -depth/2], front_color_up,
+        
+        
+        
+    ]
+def gondola_model_1_riding(
+    hanger_width = .05,
+    hanger_height = .2,
+    hanger_color = [.3,.3,.3],
+    top_color = [.2,.3,.2],
+    bottom_color =[.5,.5,.5],
+    side_color = [.2,.3,.2],
+    side_color_up = [.15,.15,.15],
+    side_color_up2 = [.16,.16,.16],
+    front_color = [.3,.4,.3],
+    front_color_up = [.17,.17,.17],
+    depth = 1,
+    width = 1,
+    bulge = .11,
+    front_bulge = .11,
+    h1 = .8,
+    h2 = .5):
+    
+    
+    
+    h_2 = hanger_width/2
+    return [
+        [0,0,-h_2], [0,0,h_2], [0,-hanger_height,h_2], [0,-hanger_height,-h_2], hanger_color,
+        #[-width/1.3,-hanger_height,-depth/1.3], [width/1.3,-hanger_height,-depth/1.3], [width/1.3,-hanger_height,depth/1.3], [-width/1.3,-hanger_height,depth/1.3], top_color,
+        [-width/2,-hanger_height-h1-h2,-depth/2], [width/2,-hanger_height-h1-h2,-depth/2], [width/2,-hanger_height-h1-h2,depth/2], [-width/2,-hanger_height-h1-h2,depth/2], bottom_color,
+        
+        #[-width/2,-hanger_height,-depth/2], [width/2,-hanger_height,-depth/2], [width/2+bulge,-hanger_height-h1,-depth/2-front_bulge], [-width/2-bulge,-hanger_height-h1,-depth/2-front_bulge], side_color_up,
+        [-width/2,-hanger_height-h1-h2,-depth/2], [width/2,-hanger_height-h1-h2,-depth/2], [width/2+bulge,-hanger_height-h1,-depth/2-front_bulge], [-width/2-bulge,-hanger_height-h1,-depth/2-front_bulge], side_color,
+        
+        #[-width/2,-hanger_height,depth/2], [width/2,-hanger_height,depth/2], [width/2+bulge,-hanger_height-h1,depth/2+front_bulge], [-width/2-bulge,-hanger_height-h1,depth/2+front_bulge], side_color_up2,
+        [-width/2,-hanger_height-h1-h2,depth/2], [width/2,-hanger_height-h1-h2,depth/2], [width/2+bulge,-hanger_height-h1,depth/2+front_bulge], [-width/2-bulge,-hanger_height-h1,depth/2+front_bulge], side_color,
+        
+        [width/2+bulge,-hanger_height-h1,-depth/2-front_bulge], [width/2+bulge,-hanger_height-h1, depth/2+front_bulge], [width/2,-hanger_height-h1-h2, depth/2], [width/2,-hanger_height-h1-h2, -depth/2], front_color,
+        [-width/2-bulge,-hanger_height-h1,-depth/2-front_bulge], [-width/2-bulge,-hanger_height-h1, depth/2+front_bulge], [-width/2,-hanger_height-h1-h2, depth/2], [-width/2,-hanger_height-h1-h2, -depth/2], front_color,
+        
+        #[width/2+bulge,-hanger_height-h1,-depth/2-front_bulge], [width/2+bulge,-hanger_height-h1, depth/2+front_bulge], [width/2,-hanger_height, depth/2], [width/2,-hanger_height, -depth/2], front_color_up,
+        #[-width/2-bulge,-hanger_height-h1,-depth/2-front_bulge], [-width/2-bulge,-hanger_height-h1, depth/2+front_bulge], [-width/2,-hanger_height, depth/2], [-width/2,-hanger_height, -depth/2], front_color_up,
         
         
         
@@ -617,19 +664,6 @@ def pole_design_1(
     
     
 
-def tree_design_1():
-    tree_width = 2
-    tree_height = 9
-    color1 = [0,1,0]
-    color2 = [0,.9,0]
-    
-    
-    return [
-    [-tree_width/2,0,0], [tree_width/2,0,0], [0,tree_height,0], [0,tree_height,0], color1,
-    [0,0,-tree_width/2], [0,0,tree_width/2], [0,tree_height,0], [0,tree_height,0], color2,
-    
-    
-    ]
 
 """
          u1    u2

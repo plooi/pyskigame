@@ -2,6 +2,7 @@ from tree import Tree
 from random import random
 from model_3d import *
 import PySimpleGUI as sg
+from models import *
 
 def fill_trees(world, z1, x1, z2, x2, chance = 1):
     for z in range(min([z1,z2]), max([z1,z2])+1):
@@ -71,11 +72,16 @@ def raise_hill(world, z1, x1, z2, x2, amount):
     
     radius = int(((z1-z2)**2 + (x1-x2)**2)**.5 / 2) + 1
     
+    recreate_strings = []
     
     for z in range(middle_z - radius, middle_z + radius):
         for x in range(middle_x - radius, middle_x + radius):
             if ((z-middle_z)**2 + (x-middle_x)**2)**.5 <= radius and world.valid_point(z, x):
                 increase = amount * (   1   -   ((z-middle_z)**2 + (x-middle_x)**2)**.5 / radius   )
+                for obj in world.quads[z][x].containedObjects:
+                    if isinstance(obj, Tree):
+                        recreate_strings.append(world.object_account[id(obj)])
+                
                 world.set_elevation(z, x, world.get_elevation(z,x) + increase, False)
                 
     radius += 2
@@ -84,6 +90,8 @@ def raise_hill(world, z1, x1, z2, x2, amount):
             if ((z-middle_z)**2 + (x-middle_x)**2)**.5 <= radius and world.valid_floor(z, x):
                 world.reset_floor_color(z,x)
                 
+    for recreate in recreate_strings:
+        eval(recreate)
                 
 def plateau(world, z1, x1, z2, x2, amount):
     middle_z = int((z1+z2)/2)
@@ -92,10 +100,14 @@ def plateau(world, z1, x1, z2, x2, amount):
     radius = int(((z1-z2)**2 + (x1-x2)**2)**.5 / 2) + 1
     y = world.get_elevation(middle_z,middle_x)
     
+    recreate_strings = []
+    
     for z in range(middle_z - radius, middle_z + radius):
         for x in range(middle_x - radius, middle_x + radius):
             if ((z-middle_z)**2 + (x-middle_x)**2)**.5 <= radius and world.valid_point(z, x):
-                
+                for obj in world.quads[z][x].containedObjects:
+                    if isinstance(obj, Tree):
+                        recreate_strings.append(world.object_account[id(obj)])
                 world.set_elevation(z, x, y + amount, False)
                 
     radius += 2
@@ -103,7 +115,10 @@ def plateau(world, z1, x1, z2, x2, amount):
         for x in range(middle_x - radius, middle_x + radius):
             if ((z-middle_z)**2 + (x-middle_x)**2)**.5 <= radius and world.valid_floor(z, x):
                 world.reset_floor_color(z,x)
-                
+    
+    for recreate in recreate_strings:
+        eval(recreate)
+    
 def smooth(world, z1, x1, z2, x2):
     middle_z = int((z1+z2)/2)
     middle_x = int((x1+x2)/2)
@@ -124,6 +139,9 @@ def smooth(world, z1, x1, z2, x2):
     def origval(z, x):
         return original_values[z-boundaryz1][x-boundaryx1]
     
+    recreate_strings = []
+    
+    
     for z in range(middle_z - radius, middle_z + radius):
         for x in range(middle_x - radius, middle_x + radius):
             if ((z-middle_z)**2 + (x-middle_x)**2)**.5 <= radius and world.valid_point(z, x):
@@ -138,6 +156,9 @@ def smooth(world, z1, x1, z2, x2):
                         world.valid_point(z-1,x+1) 
                         
                         ): 
+                    for obj in world.quads[z][x].containedObjects:
+                        if isinstance(obj, Tree):
+                            recreate_strings.append(world.object_account[id(obj)])
                     world.set_elevation(z, x, ( origval(z-1,x)+origval(z-1,x-1)+origval(z,x-1)+origval(z+1,x-1)+origval(z+1,x)+origval(z+1,x+1)+origval(z,x+1)+origval(z-1,x+1)+origval(z,x))/9    , reset_color=False)
                     #world.set_elevation(z,x, origval(z,x), False)
     radius += 2
@@ -145,7 +166,8 @@ def smooth(world, z1, x1, z2, x2):
         for x in range(middle_x - radius, middle_x + radius):
             if ((z-middle_z)**2 + (x-middle_x)**2)**.5 <= radius and world.valid_floor(z, x):
                 world.reset_floor_color(z,x)
-                        
+    for recreate in recreate_strings:
+        eval(recreate)
     
 #THICKNESS IS THE  DIAMETER 
 def chainsaw_straight(world, z1, x1, z2, x2, thickness):
@@ -214,7 +236,7 @@ def path(world, z1, x1, z2, x2, thickness):
                     z1 * inverted_fraction + z2 * fraction,
                     ]
     
-    
+    recreate_strings = []
     for i in range(0, int(distance), 1):
         loc = travel(i/distance)
         
@@ -223,11 +245,20 @@ def path(world, z1, x1, z2, x2, thickness):
         z = loc[2]
         
         
+        
         #at each step along the path, set all the squares around you to the same elevation as the center of the path
         for zz in range(int(z-thickness), int(z+thickness)):
             for xx in range(int(x-thickness), int(x+thickness)):
-                if world.valid_point(zz,xx):
+                if world.valid_floor(zz,xx):
                     dist_frm_ctr = ((zz-z)**2 + (xx-x)**2)**.5
+                    
+                    if dist_frm_ctr < thickness:
+                        for zzz in range(zz-1, zz+1):
+                            for xxx in range(xx-1, xx+1):
+                                for obj in world.quads[zzz][xxx].containedObjects:
+                                    if isinstance(obj, Tree):
+                                        if world.object_account[id(obj)] not in recreate_strings:
+                                            recreate_strings.append(world.object_account[id(obj)])
                     
                     if dist_frm_ctr < thickness - 3:
                         world.set_elevation(zz,xx,y,False)
@@ -237,6 +268,8 @@ def path(world, z1, x1, z2, x2, thickness):
                         world.set_elevation(zz,xx,(y*2+2*world.get_elevation(zz,xx,scaled=False))/4,False)
                     elif dist_frm_ctr < thickness:
                         world.set_elevation(zz,xx,(y*1+3*world.get_elevation(zz,xx,scaled=False))/4,False)
+                        
+                    
                             
     thickness += 2 
     for i in range(0, int(distance), 2):
@@ -251,5 +284,6 @@ def path(world, z1, x1, z2, x2, thickness):
                 if ((zz-z)**2 + (xx-x)**2)**.5 < thickness and world.valid_floor(zz,xx):
                     world.reset_floor_color(zz,xx)
     
-    
+    for recreate in recreate_strings:
+        eval(recreate)
     

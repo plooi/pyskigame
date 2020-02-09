@@ -14,7 +14,9 @@ from collections import OrderedDict
 from models import *
 from util import get_angle
 from rock import *
-
+from stop_selecting_exception import StopSelectingException
+import traceback
+import building
 class Menu(LooiObject):
     def __init__(self, ui):
         super().__init__()
@@ -108,6 +110,10 @@ class Menu(LooiObject):
         self.btn21.set_layer(-2)
         self.add(self.btn21)
         
+        self.btn22 = Button(x = 520, y=440, width=80, height=80, font_size=10, text="", image=image("Rock Icon.png"), action=Building, action_parameter=self)
+        self.btn22.set_layer(-2)
+        self.add(self.btn22)
+        
         self.x1 = 500
         self.y1 = 100
         self.x2 = 1500
@@ -126,6 +132,7 @@ def settings(menu):
     setting = OrderedDict()
     setting["Horizontal Stretch"] = menu.ui.world.properties["horizontal_stretch"]
     setting["Vertical Stretch"] = menu.ui.world.properties["vertical_stretch"]
+    setting["Sun Angle"] = menu.ui.world.properties["sun_angle"]
     setting["Line of Sight"] = menu.ui.world.view.line_of_sight
     setting["Texture Distance"] = menu.ui.world.properties["texture_distance"]
     setting["Texture Radius"] = menu.ui.world.properties["texture_radius"]
@@ -174,52 +181,70 @@ def settings(menu):
         return not same(key)
     
     if event == "OK":
-        #do all the non-reload settings first...
-        menu.ui.world.view.line_of_sight = int(new_settings["Line of Sight"])
-        menu.ui.world.properties["texture_distance"] = float(new_settings["Texture Distance"])
-        menu.ui.world.properties["texture_radius"] = float(new_settings["Texture Radius"])
-        menu.ui.world.view.speed = float(new_settings["Movement Speed"])
-        menu.ui.world.view.rot_spd = float(new_settings["Rotation Speed"])
-        menu.ui.world.properties["chair_time_distance_detachable"] = float(new_settings["Chair Time Interval Detachable"])
-        menu.ui.world.properties["chair_time_distance_gondola"] = float(new_settings["Chair Time Interval Gondola"])
-        menu.ui.world.properties["chair_time_distance_fixed"] = float(new_settings["Chair Time Interval Fixed Grip"])
-        menu.ui.world.properties["line_thickness(map_editor)"] = float(new_settings["Map Editor: Line Thickness"])
-        menu.ui.world.properties["terrain_mod_step_size(map_editor)"] = float(new_settings["Map Editor: Terrain Mod Step Size"])
-        menu.ui.world.properties["build_chair_pole_distance(map_editor)"] = float(new_settings["Map Editor: Lift Build Pole Distance"])
-        
-        
-        
-        
-        #then do the settings that require lifts to redo chairs
-        if nsame("Chair Time Interval Detachable") or nsame("Chair Time Interval Gondola") or nsame("Chair Time Interval Fixed Grip"):
-            for chairlift in lift.active_lifts:
-                if chairlift.rope_speed != chairlift.terminal_speed:#if detachable
-                    if chairlift.super_blurry_chair_model == gondola_model_4:#if gondola
-                        chairlift.set_chair_time_distance(menu.ui.world.properties["chair_time_distance_gondola"])
-                    else:
-                        chairlift.set_chair_time_distance(menu.ui.world.properties["chair_time_distance_detachable"])
-                else:#if fixed grip
-                    chairlift.set_chair_time_distance(menu.ui.world.properties["chair_time_distance_fixed"])
-                chairlift.update_object_account()
+        try:
+            #do all the non-reload settings first...
+            menu.ui.world.view.line_of_sight = int(new_settings["Line of Sight"])
+            menu.ui.world.properties["texture_distance"] = float(new_settings["Texture Distance"])
+            menu.ui.world.properties["texture_radius"] = float(new_settings["Texture Radius"])
+            menu.ui.world.view.speed = float(new_settings["Movement Speed"])
+            menu.ui.world.view.rot_spd = float(new_settings["Rotation Speed"])
+            menu.ui.world.properties["chair_time_distance_detachable"] = float(new_settings["Chair Time Interval Detachable"])
+            menu.ui.world.properties["chair_time_distance_gondola"] = float(new_settings["Chair Time Interval Gondola"])
+            menu.ui.world.properties["chair_time_distance_fixed"] = float(new_settings["Chair Time Interval Fixed Grip"])
+            menu.ui.world.properties["line_thickness(map_editor)"] = float(new_settings["Map Editor: Line Thickness"])
+            menu.ui.world.properties["terrain_mod_step_size(map_editor)"] = float(new_settings["Map Editor: Terrain Mod Step Size"])
+            menu.ui.world.properties["build_chair_pole_distance(map_editor)"] = float(new_settings["Map Editor: Lift Build Pole Distance"])
+            
+            
+            
+            
+            #then do the settings that require lifts to redo chairs
+            if nsame("Chair Time Interval Detachable") or nsame("Chair Time Interval Gondola") or nsame("Chair Time Interval Fixed Grip"):
+                for chairlift in lift.active_lifts:
+                    if chairlift.rope_speed != chairlift.terminal_speed:#if detachable
+                        if chairlift.super_blurry_chair_model == gondola_model_4:#if gondola
+                            chairlift.set_chair_time_distance(menu.ui.world.properties["chair_time_distance_gondola"])
+                        else:
+                            chairlift.set_chair_time_distance(menu.ui.world.properties["chair_time_distance_detachable"])
+                    else:#if fixed grip
+                        chairlift.set_chair_time_distance(menu.ui.world.properties["chair_time_distance_fixed"])
+                    chairlift.update_object_account()
+                            
                         
+            
+            
+            #then do the settings that require a reload
+            if nsame("Sun Angle"):
+                layout = [[sg.Text("Changing the sun angle will require a short wait. Confirm can?")],
+                            [sg.OK(), sg.Cancel()]]
+                window = sg.Window('', layout, size = (500,300))
+                event2, _ = window.Read()
+                window.close()
+                if event2 == "OK":
+                    menu.ui.world.properties["sun_angle"] = float(new_settings["Sun Angle"])
+                    for z in range(menu.ui.world.get_height_floors()):
+                        for x in range(menu.ui.world.get_width_floors()):
+                            menu.ui.world.reset_floor_color(z, x)
+                            for obj in menu.ui.world.quads[z][x].containedObjects:
+                                if isinstance(obj, Tree):
+                                    obj.reset()
+            if nsame("Horizontal Stretch") or nsame("Vertical Stretch"):
+                layout = [[sg.Text("Changing the horizontal or vertical stretch will require a reload. Confirm can?")],
+                            [sg.OK(), sg.Cancel()]]
+                window = sg.Window('', layout, size = (500,300))
+                event2, _ = window.Read()
+                window.close()
+                if event2 == "OK":
+                    name = menu.ui.world.properties["name"]
+                    menu.ui.world.properties["horizontal_stretch"] = float(new_settings["Horizontal Stretch"])
+                    menu.ui.world.properties["vertical_stretch"] = float(new_settings["Vertical Stretch"])
+                    world_save.write(menu.ui.world, old_vertical_stretch = float(setting["Vertical Stretch"]))
                     
-        
-        
-        #then do the settings that require a reload
-        if nsame("Horizontal Stretch") or nsame("Vertical Stretch"):
-            layout = [[sg.Text("Changing the horizontal or vertical stretch will require a reload. Confirm can?")],
-                        [sg.OK(), sg.Cancel()]]
-            window = sg.Window('', layout, size = (500,300))
-            event2, _ = window.Read()
-            window.close()
-            if event2 == "OK":
-                name = menu.ui.world.properties["name"]
-                menu.ui.world.properties["horizontal_stretch"] = float(new_settings["Horizontal Stretch"])
-                menu.ui.world.properties["vertical_stretch"] = float(new_settings["Vertical Stretch"])
-                world_save.write(menu.ui.world, old_vertical_stretch = float(setting["Vertical Stretch"]))
-                
-                the_world = world_save.read("./worlds/"+name)
-                rooms.init_game_room(the_world)
+                    the_world = world_save.read("./worlds/"+name)
+                    rooms.init_game_room(the_world)
+        except Exception as e:
+            traceback.print_exc()
+            sg.Popup(str(e))
                 
                 
         
@@ -346,7 +371,35 @@ class TwoPointEdit(MapEdit):
 """
 Start Map Edits
 """
-
+class Building(TwoPointEdit):
+    def __init__(self, menu):
+        super().__init__(menu, "Select location", "Select angle")
+      
+    def execute(self, p1, p2):
+        game_ui.set_mouse_mode("normal")
+        layout = [
+            [sg.Text("Design:"), sg.Combo(values=building_models, size=(50,10))],
+            [sg.Text("Params:"), sg.Multiline(default_text="{}", size=(300,10))],
+            [sg.OK()]
+            
+            ]
+        window = sg.Window('', layout, size = (500,800))
+        event, values = window.Read()
+        window.close()
+        if event == "OK":
+            try:
+                #print(values)
+                rot = get_angle(p1[0], p1[1], p2[0], p2[1])
+                design = eval(values[0])
+                params = eval(values[1])
+                b = building.Building(p1[0], p1[1], self.world(), design, params, rot)
+            except Exception as e:
+                sg.Popup(str(e))
+                traceback.print_exc()
+                
+                
+            
+        
 
 class LiftBuild(TwoPointEdit):
     def __init__(self, menu):
@@ -384,7 +437,7 @@ class GondolaBuild(TwoPointEdit):
         distance_between_poles = self.world().properties["build_chair_pole_distance(map_editor)"]
         #end
         
-        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], chair_model=gondola_model_1, blurry_chair_model=gondola_model_2, super_blurry_chair_model=gondola_model_4, chair_time_distance = self.world().properties["chair_time_distance_gondola"], terminal_speed=.01)
+        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], chair_model=gondola_model_1, blurry_chair_model=gondola_model_2, super_blurry_chair_model=gondola_model_4, chair_riding_model = gondola_model_1_riding, chair_time_distance = self.world().properties["chair_time_distance_gondola"], terminal_speed="gondola_terminal_speed")
         
         
         
@@ -404,7 +457,7 @@ class C4Build(TwoPointEdit):#quad moves a bit faster than the other fixed grip c
         distance_between_poles = self.world().properties["build_chair_pole_distance(map_editor)"]
         #end
         
-        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed=.09, rope_speed=.09, terminal_model=terminal_design_2, chair_time_distance = self.world().properties["chair_time_distance_fixed"])
+        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed="fixed_grip_rope_speed", rope_speed="fixed_grip_rope_speed", terminal_model=terminal_design_2, chair_time_distance = self.world().properties["chair_time_distance_fixed"])
 class D_6CBuild(TwoPointEdit):
     def __init__(self, menu):
         super().__init__(menu, "Select bottom", "Select top")
@@ -421,7 +474,7 @@ class D_6CBuild(TwoPointEdit):
         distance_between_poles = self.world().properties["build_chair_pole_distance(map_editor)"]
         #end
         
-        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], chair_model = sixpack_model_1, blurry_chair_model = sixpack_model_2, super_blurry_chair_model=sixpack_model_3, chair_time_distance = self.world().properties["chair_time_distance_detachable"])
+        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], chair_model = sixpack_model_1, blurry_chair_model = sixpack_model_2, super_blurry_chair_model=sixpack_model_3, chair_time_distance = self.world().properties["chair_time_distance_detachable"], chair_riding_model = sixpack_model_1)
 
 class C3Build(TwoPointEdit):
     def __init__(self, menu):
@@ -439,7 +492,7 @@ class C3Build(TwoPointEdit):
         distance_between_poles = self.world().properties["build_chair_pole_distance(map_editor)"]
         #end
         
-        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed=.08, rope_speed=.08, terminal_model=terminal_design_2, chair_model = triple_model_1, blurry_chair_model = triple_model_2, super_blurry_chair_model=triple_model_3, chair_time_distance = self.world().properties["chair_time_distance_fixed"])
+        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed="fixed_grip_rope_speed", rope_speed="fixed_grip_rope_speed", terminal_model=terminal_design_2, chair_model = triple_model_1, blurry_chair_model = triple_model_2, super_blurry_chair_model=triple_model_3, chair_time_distance = self.world().properties["chair_time_distance_fixed"], chair_riding_model = triple_model_1)
 class C2Build(TwoPointEdit):
     def __init__(self, menu):
         super().__init__(menu, "Select bottom", "Select top")
@@ -456,7 +509,7 @@ class C2Build(TwoPointEdit):
         distance_between_poles = self.world().properties["build_chair_pole_distance(map_editor)"]
         #end
         
-        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed=.08, rope_speed=.08, terminal_model=terminal_design_2, chair_model = double_model_1, blurry_chair_model = double_model_2, super_blurry_chair_model=double_model_3, chair_time_distance = self.world().properties["chair_time_distance_fixed"])
+        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed="fixed_grip_rope_speed", rope_speed="fixed_grip_rope_speed", terminal_model=terminal_design_2, chair_model = double_model_1, blurry_chair_model = double_model_2, super_blurry_chair_model=double_model_3, chair_time_distance = self.world().properties["chair_time_distance_fixed"], chair_riding_model = double_model_1)
 class TBarBuild(TwoPointEdit):
     def __init__(self, menu):
         super().__init__(menu, "Select bottom", "Select top")
@@ -473,7 +526,7 @@ class TBarBuild(TwoPointEdit):
         distance_between_poles = self.world().properties["build_chair_pole_distance(map_editor)"]
         #end
         
-        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed=.08, rope_speed=.08, terminal_model=terminal_design_2, chair_model = tbar_model_1, blurry_chair_model = tbar_model_1, super_blurry_chair_model=tbar_model_1,pole_model=pole_design_2, chair_time_distance = self.world().properties["chair_time_distance_fixed"])
+        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed="fixed_grip_rope_speed", rope_speed="fixed_grip_rope_speed", terminal_model=terminal_design_2, chair_model = tbar_model_1, blurry_chair_model = tbar_model_1, super_blurry_chair_model=tbar_model_1,pole_model=pole_design_2, chair_time_distance = self.world().properties["chair_time_distance_fixed"], chair_riding_model = tbar_model_1)
 
 
 #terminal_design_2
@@ -507,38 +560,31 @@ class Select(TwoPointEdit):
         
         z2 = p2[0]
         x2 = p2[1]
-        for z in range(min([z1,z2]), max([z1,z2])+1):
-            for x in range(min([x1,x2]), max([x1,x2])+1):
-                objs = self.world().quads[z][x].containedObjects
-                for obj in objs:
-                    
-                    if isinstance(obj, Terminal):
-                        game_ui.set_mouse_mode("normal")
-                        the_lift = obj.chairlift
-                        layout = [
-                            [sg.Button("Delete"), sg.Text("                              ")],
-                            [sg.Text("             ")] ,
-                            [sg.Text("             ")] ,
-                            [sg.Text("             ")] ,
-                            [sg.Text("             ")] ,
-                            [sg.Text("             ")] ,
-                        
-                        
-                        
-                        ]
-                        
-                        
-                        window = sg.Window("Chairlift", layout, size=(500,800))
-                        event, values = window.Read()
-                        
-                        #insert code that affects the chairlift here
-                        if event == "Delete":
-                            the_lift.delete()
-                        
-                        
-                        
-                        window.close()
-                        return
+        
+        midz = (z1+z2)/2
+        midx = (x1+x2)/2
+        
+        radius = ((midz-z1)**2 + (midx-x1)**2)**.5
+        
+        try:
+            for z in range(int(midz-radius), int(midz+radius)+1):
+                for x in range(int(midx-radius), int(midx+radius)+1):
+                    if ((z-midz)**2 + (x-midx)**2)**.5 <= radius:
+                        objs = self.world().quads[z][x].containedObjects
+                        for obj in objs:
+                            
+                            if isinstance(obj, Terminal):
+                                game_ui.set_mouse_mode("normal")
+                                the_lift = obj.chairlift
+                                the_lift.open_menu()
+                            elif isinstance(obj, Selectable):
+                                game_ui.set_mouse_mode("normal")
+                                obj.open_menu()
+        except StopSelectingException:
+            layout = [[sg.Text("aborted")]]
+            window = sg.Window("", layout, size=(250, 150))
+            event, values = window.Read()
+            window.close()
 
 """
 terrain edits
@@ -686,7 +732,7 @@ class Pointer(LooiObject):
         add_model_to_world_mobile(model, self.world)
         self.rotation += self.rotation_speed
         
-        
+
 
 
 

@@ -7,7 +7,9 @@ import math
 from random import random
 from models import *
 from lift_util import *
+from selectable import Selectable
 from constants import x as constants
+import PySimpleGUI as sg
 
 def main():
     l = Lift(None)
@@ -33,9 +35,10 @@ def rope_model_1(elevation, horizontal_dist,
 
 active_lifts = []
 
-class Lift(LooiObject):
+class Lift(LooiObject, Selectable):
     def __init__(self, world):
         super().__init__()
+        self.set_layer(0)
         self.world = world
         self.z1 = None
         self.x1 = None
@@ -56,9 +59,12 @@ class Lift(LooiObject):
         self.chair_model = None
         self.blurry_chair_model = None
         self.super_blurry_chair_model = None
+        self.chair_riding_model = None
         
         self.chair_positions=None#at each step, gets updated with the positions of each chair
         self.chair_angles = None
+        
+        self.player_riding = None#which chair is the player riding
         
         self.track = Track()
         
@@ -67,8 +73,9 @@ class Lift(LooiObject):
     [z1, x1, [.1, .2, .3, .4, .5, .6, -.7, .8], z2, x2]
     """
     def build(self, chairlift_array, rope_speed = "detachable_rope_speed", terminal_speed = "detachable_terminal_speed", chair_time_distance = 210,
-                        chair_model = chair_model_2, blurry_chair_model = chair_model_3, super_blurry_chair_model=chair_model_4, rope_model=rope_model_1,terminal_model=terminal_design_1, pole_model=pole_design_1):
+                        chair_model = chair_model_2, blurry_chair_model = chair_model_3, super_blurry_chair_model=chair_model_4, rope_model=rope_model_1,terminal_model=terminal_design_1, pole_model=pole_design_1, chair_riding_model=chair_model_2):
         self.chair_model = chair_model
+        self.chair_riding_model = chair_riding_model
         self.blurry_chair_model = blurry_chair_model
         self.super_blurry_chair_model = super_blurry_chair_model
         self.chair_time_distance = chair_time_distance
@@ -134,6 +141,7 @@ class Lift(LooiObject):
         self.update_object_account()
         
         self.activate()
+        return self
     def set_chair_time_distance(self, chair_time_distance):
         self.chairs = []
         self.chair_time_distance = chair_time_distance
@@ -147,8 +155,75 @@ class Lift(LooiObject):
         
         self.chair_positions = [[-9999999,-9999999,-9999999]] * len(self.chairs)
         self.chair_angles = [0] * len(self.chairs)
+
+    def fix_underground_spots(self, rep=0):
+        if rep > 15:
+            return
+        travel = 0
+        segment_index = 0
+        for i in range(0,int(self.round_trip_time())):
+            position, angle = self.travel(i)
+            if position[1] < self.world.get_elevation_continuous(position[2]/self.world.properties["horizontal_stretch"], position[0]/self.world.properties["horizontal_stretch"])*self.world.properties["vertical_stretch"]:
+
+                #underground
+                
+                
+                
+                
+                total_distance = ((self.x1-self.x2)**2 + (self.z1-self.z2)**2)**.5 * self.world.properties["horizontal_stretch"]
+                pole_distance = ((self.x1*self.world.properties["horizontal_stretch"]-position[0])**2 + (self.z1*self.world.properties["horizontal_stretch"]-position[2])**2)**.5
+                
+                fraction = pole_distance / total_distance
+                if fraction > 1: fraction = 1
+                #print(fraction)
+                
+                for j in range(len(self.chairlift_array[2])):
+                    if self.chairlift_array[2][j] > fraction:
+                        
+                        self.chairlift_array[2].insert(j, fraction)
+                        self.reset().fix_underground_spots(rep+1)
+                        #print(self.chairlift_array)
+                        return
+                else:
+                    self.chairlift_array[2].append(fraction)
+                    self.reset().fix_underground_spots(rep+1)
+                    #print(self.chairlift_array)
+                    return
+                        
+                        
+    def travel(self, travel_time):
+        time = 0
+        segment_index = 0
+        rtt = self.round_trip_time()
+        while 1:
+                #make sure the time is between 0 and the round trip time, not more.
+                while travel_time >= rtt:
+                    #the chair has already gone around the entire lift
+                    travel_time -= rtt
+                if travel_time < time:
+                    #restart because chair is before this segment
+                    time = 0
+                    segment_index = 0
+                elif travel_time < time + self.track.segments[segment_index].get_time_duration():
+                    #chair is in this segment
+                    position = self.track.segments[segment_index].travel(travel_time - time)
+                    angle = self.track.segments[segment_index].horizontal_angle()
+                    
+                    return position, angle
+                else:
+                    #chair is in a future segment
+                    time += self.track.segments[segment_index].get_time_duration()
+                    segment_index += 1
+        
+    def reset(self):
+        self.update_object_account()
+        recreate = self.world.object_account[id(self)]
+        self.delete()
+        world=self.world
+        return eval(recreate)
+        
     def update_object_account(self):
-        self.world.add_object_account(self, "Lift(world).build(%s, '%s', '%s', %f, %s, %s, %s,terminal_model=%s,pole_model=%s)"%(str(self.chairlift_array), self.rope_speed, self.terminal_speed, self.chair_time_distance, find_name(self.chair_model), find_name(self.blurry_chair_model), find_name(self.super_blurry_chair_model), find_name(self.terminal_model), find_name(self.pole_model)))
+        self.world.add_object_account(self, "Lift(world).build(%s, '%s', '%s', %f, %s, %s, %s,terminal_model=%s,pole_model=%s,chair_riding_model=%s)"%(str(self.chairlift_array), self.rope_speed, self.terminal_speed, self.chair_time_distance, find_name(self.chair_model), find_name(self.blurry_chair_model), find_name(self.super_blurry_chair_model), find_name(self.terminal_model), find_name(self.pole_model), find_name(self.chair_riding_model)))
         
     def do_rope(self):
         objs = [self.start_terminal] + self.poles_midpoints_objects + [self.end_terminal]
@@ -256,7 +331,13 @@ class Lift(LooiObject):
                     
                     #execute the chair drawing
                     if self.world.in_los(chair_i_position[2], chair_i_position[0], scaled=True):
-                        if self.world.in_los(chair_i_position[2], chair_i_position[0], scaled=True, los=self.world.view.line_of_sight/6):
+                        if self.player_riding == i:
+                            model = self.chair_riding_model()
+                            horizontal_rotate_model_around_origin(model, chair_i_angle)
+                            move_model(model, chair_i_position[0], chair_i_position[1], chair_i_position[2])
+                            
+                            add_model_to_world_mobile(model, self.world)
+                        elif self.world.in_los(chair_i_position[2], chair_i_position[0], scaled=True, los=self.world.view.line_of_sight/6):
                             model = self.chair_model()
                             horizontal_rotate_model_around_origin(model, chair_i_angle)
                             move_model(model, chair_i_position[0], chair_i_position[1], chair_i_position[2])
@@ -294,7 +375,46 @@ class Lift(LooiObject):
         if self in active_lifts:
             active_lifts.remove(self)
           
-
+    def open_menu(self):
+        
+        layout = [
+            
+            [sg.Button("Delete")],
+            [sg.Button("Reset")] ,
+            [sg.Button("Fix Underground Spots")],
+            [sg.Text("Pole Locations:"), sg.Multiline(default_text=str(self.chairlift_array[2]), size=(300,10))],
+            [sg.OK()]
+        ]
+        
+        
+        window = sg.Window("Chairlift", layout, size=(500,800))
+        event, values = window.Read()
+        
+        if event == "Delete":
+            self.delete()
+        elif event == "Reset":
+            self.reset()
+        elif event == "Fix Underground Spots":
+            self.fix_underground_spots()
+        elif event == "OK":
+            try:
+                new_pole_locations = eval(values[0])
+                if new_pole_locations != self.chairlift_array[2] and type(new_pole_locations) == type([]):
+                    for item in new_pole_locations:
+                        if type(item) == type(1) or type(item) == type(1.0):
+                            pass
+                        else:
+                            raise Exception()
+                    self.chairlift_array[2] = new_pole_locations
+                    self.reset()
+            except:
+                pass
+        
+        
+        
+        
+        
+        window.close()
 
 
     
@@ -311,7 +431,7 @@ class Pole:
         self.x = chairlift.x1 * inverted_lift_line_fraction + chairlift.x2 * lift_line_fraction
         self.z = chairlift.z1 * inverted_lift_line_fraction + chairlift.z2 * lift_line_fraction
         
-        self.real_y = chairlift.world.get_elevation(int(self.z), int(self.x), scaled=True)
+        self.real_y = chairlift.world.get_elevation_continuous(self.z, self.x)*chairlift.world.properties["vertical_stretch"]
         self.real_x = self.x * self.chairlift.world.properties["horizontal_stretch"]
         self.real_z = self.z * self.chairlift.world.properties["horizontal_stretch"]
         
@@ -343,7 +463,7 @@ class Terminal:
         self.top_or_bot = top_or_bot
         
         
-        self.real_y = chairlift.world.get_elevation(int(self.z), int(self.x), scaled=True)
+        self.real_y = chairlift.world.get_elevation_continuous(self.z, self.x)*chairlift.world.properties["vertical_stretch"]
         
         self.real_x = self.x * self.chairlift.world.properties["horizontal_stretch"]
         self.real_z = self.z * self.chairlift.world.properties["horizontal_stretch"]

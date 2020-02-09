@@ -9,8 +9,7 @@ def progress_bar(text="Loading...", window_title = ""):
     global progress,in_use,window
     if in_use:
         layout = [[sg.Text('Progress bar already in use!')]]
-    
-        window = sg.Window('', layout, size=(500,300), non_blocking=True)
+        window = sg.Window('', layout, size=(500,300))
         event, values = window.Read()
         window.close()
         return
