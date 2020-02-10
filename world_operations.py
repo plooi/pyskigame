@@ -3,6 +3,7 @@ from random import random
 from model_3d import *
 import PySimpleGUI as sg
 from models import *
+from rock import Rock
 
 def fill_trees(world, z1, x1, z2, x2, chance = 1):
     for z in range(min([z1,z2]), max([z1,z2])+1):
@@ -78,9 +79,10 @@ def raise_hill(world, z1, x1, z2, x2, amount):
         for x in range(middle_x - radius, middle_x + radius):
             if ((z-middle_z)**2 + (x-middle_x)**2)**.5 <= radius and world.valid_point(z, x):
                 increase = amount * (   1   -   ((z-middle_z)**2 + (x-middle_x)**2)**.5 / radius   )
-                for obj in world.quads[z][x].containedObjects:
-                    if isinstance(obj, Tree):
-                        recreate_strings.append(world.object_account[id(obj)])
+                if world.valid_floor(z, x):
+                    for obj in world.quads[z][x].containedObjects:
+                        if isinstance(obj, Tree):
+                            recreate_strings.append(world.object_account[id(obj)])
                 
                 world.set_elevation(z, x, world.get_elevation(z,x) + increase, False)
                 
@@ -105,9 +107,10 @@ def plateau(world, z1, x1, z2, x2, amount):
     for z in range(middle_z - radius, middle_z + radius):
         for x in range(middle_x - radius, middle_x + radius):
             if ((z-middle_z)**2 + (x-middle_x)**2)**.5 <= radius and world.valid_point(z, x):
-                for obj in world.quads[z][x].containedObjects:
-                    if isinstance(obj, Tree):
-                        recreate_strings.append(world.object_account[id(obj)])
+                if world.valid_floor(z, x):
+                    for obj in world.quads[z][x].containedObjects:
+                        if isinstance(obj, Tree):
+                            recreate_strings.append(world.object_account[id(obj)])
                 world.set_elevation(z, x, y + amount, False)
                 
     radius += 2
@@ -156,9 +159,10 @@ def smooth(world, z1, x1, z2, x2):
                         world.valid_point(z-1,x+1) 
                         
                         ): 
-                    for obj in world.quads[z][x].containedObjects:
-                        if isinstance(obj, Tree):
-                            recreate_strings.append(world.object_account[id(obj)])
+                    if world.valid_floor(z, x):
+                        for obj in world.quads[z][x].containedObjects:
+                            if isinstance(obj, Tree):
+                                recreate_strings.append(world.object_account[id(obj)])
                     world.set_elevation(z, x, ( origval(z-1,x)+origval(z-1,x-1)+origval(z,x-1)+origval(z+1,x-1)+origval(z+1,x)+origval(z+1,x+1)+origval(z,x+1)+origval(z-1,x+1)+origval(z,x))/9    , reset_color=False)
                     #world.set_elevation(z,x, origval(z,x), False)
     radius += 2

@@ -35,21 +35,21 @@ def kill_all():
 
 def main_menu():
     kill_all()
-    map_editor = Button(800, 200, 400, 100, "Map Editor", new_world_1, Color(.6,.6,.6), black, 64)
+    map_editor = Button(800, 200, 400, 85, "Map Editor", new_world_1, Color(.6,.6,.6), black, 64)
     map_editor.button_depth = 10
     
-    ski_mode = Button(800, 300, 400, 100, "Ski", ski_room, Color(.6,.6,.6), black, 64)
+    ski_mode = Button(800, 300, 400, 85, "Ski", ski_room, Color(.6,.6,.6), black, 64)
     ski_mode.button_depth = 10
     
-    abort = Button(800, 400, 400, 100, "Quit", lambda:quit(), Color(.6,.6,.6), black, 64)
+    abort = Button(800, 400, 400, 85, "Quit", lambda:quit(), Color(.6,.6,.6), black, 64)
     abort.button_depth = 10
 def ski_room():
     kill_all()
-    new = Button(700, 250, 600, 100, "New Game", new_ski_world, Color(.6,.6,.6), black, 64)
+    new = Button(700, 250, 600, 85, "New Game", new_ski_world, Color(.6,.6,.6), black, 64)
     new.button_depth = 10
-    load = Button(700, 350, 600, 100, "Load", load_existing_ski_world, Color(.6,.6,.6), black, 64)
+    load = Button(700, 350, 600, 85, "Load", load_existing_ski_world, Color(.6,.6,.6), black, 64)
     load.button_depth = 10
-    back = Button(700, 650, 600, 100, "<--", main_menu, Color(.6,.6,.6), black, 64)
+    back = Button(700, 650, 600, 85, "<--", main_menu, Color(.6,.6,.6), black, 64)
     back.button_depth = 10
 
 def new_ski_world():
@@ -129,15 +129,15 @@ def load_room():
     
 def new_world_1():
     kill_all()
-    blank = Button(700, 250, 600, 100, "New Blank", blank_world, Color(.6,.6,.6), black, 64)
+    blank = Button(700, 250, 600, 85, "New Blank", blank_world, Color(.6,.6,.6), black, 64)
     blank.button_depth = 10
-    data_file = Button(700, 350, 600, 100, "New From Topology", data_file_world, Color(.6,.6,.6), black, 64)
+    data_file = Button(700, 350, 600, 85, "New From Topology", data_file_world, Color(.6,.6,.6), black, 64)
     data_file.button_depth = 10
-    copy = Button(700, 450, 600, 100, "New Copy", create_copy, Color(.6,.6,.6), black, 64)
+    copy = Button(700, 450, 600, 85, "New Copy", create_copy, Color(.6,.6,.6), black, 64)
     copy.button_depth = 10
-    load = Button(700, 550, 600, 100, "Load", load_existing_map_editor, Color(.6,.6,.6), black, 64)
+    load = Button(700, 550, 600, 85, "Load", load_existing_map_editor, Color(.6,.6,.6), black, 64)
     load.button_depth = 10
-    back = Button(700, 650, 600, 100, "<--", main_menu, Color(.6,.6,.6), black, 64)
+    back = Button(700, 650, 600, 85, "<--", main_menu, Color(.6,.6,.6), black, 64)
     back.button_depth = 10
     
 def blank_world():

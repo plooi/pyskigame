@@ -125,7 +125,7 @@ def tree_design_1():
     
     ]
 """
-def tree_design_1():
+def tree_design_1(scale = 1):
     
     
     
@@ -150,13 +150,13 @@ def tree_design_1():
          
           
     """
-    A=2.3
-    B=2.7
-    h1=1.3
-    h2=5
-    h3=9
-    x=.7
-    p=.16
+    A=2.3 * scale
+    B=2.7 * scale
+    h1=1.3 * scale
+    h2=5 * scale
+    h3=9 * scale
+    x=.7 * scale
+    p=.16 * scale
     
     #leaf_color=[0,.95,.45]
     #leaf_color_bot=[0,.92,.42]
@@ -191,7 +191,14 @@ def tree_design_1():
 
 
 
-
+def remove_faces(model, faces):
+    for face in faces:
+        model[face*5] = [0,0,0]
+        model[face*5+1] = [0,0,0]
+        model[face*5+2] = [0,0,0]
+        model[face*5+3] = [0,0,0]
+        model[face*5+4] = [0,0,0]
+    return model
 
 """
 BUILDING MODELS
@@ -207,21 +214,33 @@ def cube_building_model(
         wall_color1 = [.5,.5,.5],
         wall_color2 = [.6,.6,.6],
         floor_color = [.4,.4,.4],
-        roof_color = [.7,.7,.7]
+        roof_color = [.7,.7,.7],
+        door_color = [.34,.26,.21],
+        door_width = .9,
+        door_height = 2,
+        door_sep = .1,
+        door_bulge = .05,
+        face_remove = [],
 
     ):
         length *= scale*hscale
         width *= scale*hscale
         height *= scale
-        return [
+        return remove_faces([
             [-length/2,0,-width/2],[length/2,0,-width/2],[length/2,0,width/2],[-length/2,0,width/2],floor_color,
             [-length/2,height,-width/2],[length/2,height,-width/2],[length/2,height,width/2],[-length/2,height,width/2],roof_color,
             [-length/2,0,-width/2],[length/2,0,-width/2],[length/2,height,-width/2],[-length/2,height,-width/2],wall_color1,
             [-length/2,0,width/2],[length/2,0,width/2],[length/2,height,width/2],[-length/2,height,width/2],wall_color1,
             [-length/2,0,-width/2],[-length/2,0,width/2],[-length/2,height,width/2],[-length/2,height,-width/2],wall_color2,
             [length/2,0,-width/2],[length/2,0,width/2],[length/2,height,width/2],[length/2,height,-width/2],wall_color2,
+            [-door_sep/2,0,-door_bulge+width/2],[-door_sep/2-door_width,0,-door_bulge+width/2],[-door_sep/2-door_width,door_height,-door_bulge+width/2],[-door_sep/2,door_height,-door_bulge+width/2],door_color,
+            [door_sep/2,0,-door_bulge+width/2],[door_sep/2+door_width,0,-door_bulge+width/2],[door_sep/2+door_width,door_height,-door_bulge+width/2],[door_sep/2,door_height,-door_bulge+width/2],door_color,
+            [-door_sep/2,0,door_bulge+width/2],[-door_sep/2-door_width,0,door_bulge+width/2],[-door_sep/2-door_width,door_height,door_bulge+width/2],[-door_sep/2,door_height,door_bulge+width/2],door_color,
+            [door_sep/2,0,door_bulge+width/2],[door_sep/2+door_width,0,door_bulge+width/2],[door_sep/2+door_width,door_height,door_bulge+width/2],[door_sep/2,door_height,door_bulge+width/2],door_color,
+            ], face_remove)
+        
             
-            ]
+        
 def building_with_slanted_roof(
         scale = 1,
         hscale = 1,
@@ -234,9 +253,15 @@ def building_with_slanted_roof(
         wall_color1 = [.5,.5,.5],
         wall_color2 = [.6,.6,.6],
         floor_color = [.4,.45,.4],
-        roof_color1 = [.8,.8,.8],
-        roof_color2 = [.9,.9,.9],
+        roof_color1 = [.7,.7,.7],
+        roof_color2 = [.55,.55,.55],
         sub_roof_wall_color=[.5,.5,.52],
+        door_color = [.34,.26,.21],
+        door_width = .9,
+        door_height = 2,
+        door_sep = .1,
+        door_bulge = .05,
+        face_remove = [],
 
     ):
         length *= scale*hscale
@@ -251,7 +276,7 @@ def building_with_slanted_roof(
         
         
         
-        return [
+        return remove_faces([
             [-length/2,0,-width/2],[length/2,0,-width/2],[length/2,0,width/2],[-length/2,0,width/2],floor_color,
             [-length/2,0,-width/2],[length/2,0,-width/2],[length/2,height,-width/2],[-length/2,height,-width/2],wall_color1,
             [-length/2,0,width/2],[length/2,0,width/2],[length/2,height,width/2],[-length/2,height,width/2],wall_color1,
@@ -261,7 +286,9 @@ def building_with_slanted_roof(
             [length/2+roof_overhang_side, height_roof_overhang_side, -width/2-roof_overhang_front],[length/2+roof_overhang_side, height_roof_overhang_side, width/2+roof_overhang_front],[0,roof_height,width/2+roof_overhang_front],[0,roof_height,-width/2-roof_overhang_front],roof_color1,
             [-length/2,height,-width/2],[length/2,height,-width/2],[0,roof_height,-width/2],[0,roof_height,-width/2],sub_roof_wall_color,
             [-length/2,height,width/2],[length/2,height,width/2],[0,roof_height,width/2],[0,roof_height,width/2],sub_roof_wall_color,
-        
-        
-        ]
+            [-door_sep/2,0,-door_bulge+width/2],[-door_sep/2-door_width,0,-door_bulge+width/2],[-door_sep/2-door_width,door_height,-door_bulge+width/2],[-door_sep/2,door_height,-door_bulge+width/2],door_color,
+            [door_sep/2,0,-door_bulge+width/2],[door_sep/2+door_width,0,-door_bulge+width/2],[door_sep/2+door_width,door_height,-door_bulge+width/2],[door_sep/2,door_height,-door_bulge+width/2],door_color,
+            [-door_sep/2,0,door_bulge+width/2],[-door_sep/2-door_width,0,door_bulge+width/2],[-door_sep/2-door_width,door_height,door_bulge+width/2],[-door_sep/2,door_height,door_bulge+width/2],door_color,
+            [door_sep/2,0,door_bulge+width/2],[door_sep/2+door_width,0,door_bulge+width/2],[door_sep/2+door_width,door_height,door_bulge+width/2],[door_sep/2,door_height,door_bulge+width/2],door_color,
+        ], face_remove)
 

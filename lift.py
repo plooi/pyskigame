@@ -89,6 +89,9 @@ class Lift(LooiObject, Selectable):
         self.x1 = chairlift_array[1]
         self.z2 = chairlift_array[3]
         self.x2 = chairlift_array[4]
+        self.center_x = (self.x1+self.x2)/2
+        self.center_z = (self.z1+self.z2)/2
+        self.distance = ( (self.x1-self.x2)**2 + (self.z1-self.z2)**2 )**.5
         self.angle = get_angle(self.z1,self.x1,self.z2,self.x2)
         self.poles_midpoints = chairlift_array[2]
         if len(self.poles_midpoints) == 0: self.poles_midpoints.append(.5)
@@ -300,6 +303,10 @@ class Lift(LooiObject, Selectable):
     def update(self):
         self.track.generate_segments()
     def step(self):
+        if ( 
+            (self.world.view.x/self.world.properties["horizontal_stretch"]-self.center_x)**2 + 
+            (self.world.view.z/self.world.properties["horizontal_stretch"]-self.center_z)**2 )**.5 > 5 + self.distance/2 + self.world.view.line_of_sight*self.world.properties["chunk_size"]:
+            return
         rtt = self.round_trip_time()
         
         segment_index = 0

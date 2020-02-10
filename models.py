@@ -43,6 +43,7 @@ def find_name(model):
     if m is tree_design_1: return "tree_design_1"
     if m is tree_design_2: return "tree_design_2"
     if m is rock_design_1:return "rock_design_1"
+    if m is rock_design_2:return "rock_design_2"
     
     if m is gondola_model_1_riding: return "gondola_model_1_riding"
     
@@ -677,15 +678,45 @@ def pole_design_1(
 """
 def rock_design_1(
     
-    l1 = [-1,0,-1],
-    l2 = [1.2,0,-1],
-    l3 = [.9,0,1.2],
-    l4 = [-.9,0,1.2],
+    l1 = [-1,-.6,-1],
+    l2 = [1.2,-.6,-1],
+    l3 = [.9,-.6,1.2],
+    l4 = [-.9,-.6,1.2],
     
-    u1 = [-.5,1,-.5],
-    u2 = [.6,1,-.5],
-    u3 = [.45,1.2,.6],
-    u4 = [-.45,1,.6],
+    u1 = [-.5,.4,-.5],
+    u2 = [.6,.4,-.5],
+    u3 = [.45,.6,.6],
+    u4 = [-.45,.4,.6],
+    
+    front=[.8,.8,.8],
+    right=[.7,.7,.7],
+    left=[.65,.65,.65],
+    back=[.75,.75,.75],
+    top = [.9,.9,.9] ):
+    
+    
+    return [list(x) for x in [
+    u1,u2,u3,u4,top,
+    u1,u2,l2,l1,back,
+    u3,u2,l2,l3,right,
+    u3,u4,l4,l3,front,
+    l1,u1,u4,l4,left
+    
+    
+    ]]
+    
+    
+def rock_design_2(
+    
+    l1 = [-14,-30,-16],
+    l2 = [16,-30,-15.8],
+    l3 = [18,-30,16],
+    l4 = [-18,-30,16],
+    
+    u1 = [-5,0,-5],
+    u2 = [6,0,-5],
+    u3 = [4.5,0,6],
+    u4 = [-4.5,0,6],
     
     front=[.8,.8,.8],
     right=[.7,.7,.7],

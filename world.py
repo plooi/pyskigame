@@ -209,7 +209,8 @@ class World(LooiObject):
             "ski_direction" : 0,
             "momentum" : 0,
             "momentum_direction" : 0,
-            "ski_model" : "Red Basic"
+            "ski_model" : "Red Basic",
+            "do_floor_textures" : True,
             
             
             }
@@ -734,6 +735,8 @@ class World(LooiObject):
     takes in the hr and vr and calculates a floor color based on that
     """
     def calculate_floor_color(self, hr, vr):
+        def stretch(_0_to_1,min, max):
+            return _0_to_1 * (max-min)+min
         sun = self.properties["sun_angle"]
         angle_distance_from_sun = normal.angle_distance(hr, sun)/math.pi
         inverse_angle_distance_from_sun = 1 - angle_distance_from_sun
@@ -741,13 +744,22 @@ class World(LooiObject):
         
         vertical_rotation_0_to_1 = vr/(math.pi/2)
         inverse_vertical_rotation_0_to_1 = 1 - vertical_rotation_0_to_1
-        
+        """
         neutral_floor_color = .8
         extremity = .7
+        """
+        neutral_floor_color = .5
+        extremity = .5
         
         color_value = neutral_floor_color + inverse_angle_distance_from_sun_m1_to_p1*inverse_vertical_rotation_0_to_1*extremity
-        if color_value > .92: color_value = .92
-        if color_value < .2: color_value = .2
+        
+        if color_value > 1: color_value = 1
+        if color_value < 0: color_value = 0
+        
+        
+        #color_value = stretch(color_value, .2, .89)
+        color_value = color_value**.7
+        color_value = stretch(color_value, .3, 1)
         
         color = [color_value]*3
         return color
@@ -923,41 +935,42 @@ class World(LooiObject):
         
         
         #draw textures
-        hs = self.properties["horizontal_stretch"]
-        vs = self.properties["vertical_stretch"]
+        if self.properties["do_floor_textures"]:
+            hs = self.properties["horizontal_stretch"]
+            vs = self.properties["vertical_stretch"]
+            
+            offset = .08
+            
+            pz = self.view.z/hs
+            px = self.view.x/hs
+            for z in range(round(pz-self.properties["texture_distance"]), round(pz+self.properties["texture_distance"])):
+                for x in range(round(px-self.properties["texture_distance"]), round(px+self.properties["texture_distance"])):
+                    dist = ( (z+.5-pz)**2 + (x+.5-px)**2 ) ** .5
+                    if dist <= self.properties["texture_distance"] and self.valid_floor(z, x):
+                        
+                        if dist < self.properties["texture_radius"] or normal.angle_distance(util.get_angle(pz, px, z, x), self.view.hor_rot) < math.pi/3:
+                            
+                            quad = self.quads[z][x]
+                            chunk = self.chunks[quad.my_chunk_z][quad.my_chunk_x]
+                            colors = chunk.vh.vertex_colors
+                            shade = ( colors[quad.floor_pointer][1] + colors[quad.floor_pointer+1][1] + colors[quad.floor_pointer+2][1] + colors[quad.floor_pointer+3][1] )/4
+                            
+                            
+                            
+                            texture = get_snow_texture(shade, dist/self.properties["texture_distance"])
+                            
+                            
+                        
+                            self.draw_image_3d(
+                                        x*hs, self.get_elevation(z,x,scaled=True) + offset, z*hs,
+                                        (x+1)*hs, self.get_elevation(z,x+1,scaled=True) + offset, z*hs,
+                                        (x+1)*hs, self.get_elevation(z+1,x+1,scaled=True) + offset, (z+1)*hs,
+                                        x*hs, self.get_elevation(z+1,x,scaled=True) + offset, (z+1)*hs,
+                                        texture,
+                                        setup_3d=self.setup_3d
+                                        )
         
-        offset = .08
-        
-        pz = self.view.z/hs
-        px = self.view.x/hs
-        for z in range(round(pz-self.properties["texture_distance"]), round(pz+self.properties["texture_distance"])):
-            for x in range(round(px-self.properties["texture_distance"]), round(px+self.properties["texture_distance"])):
-                dist = ( (z+.5-pz)**2 + (x+.5-px)**2 ) ** .5
-                if dist <= self.properties["texture_distance"] and self.valid_floor(z, x):
-                    
-                    if dist < self.properties["texture_radius"] or normal.angle_distance(util.get_angle(pz, px, z, x), self.view.hor_rot) < math.pi/3:
-                        
-                        quad = self.quads[z][x]
-                        chunk = self.chunks[quad.my_chunk_z][quad.my_chunk_x]
-                        colors = chunk.vh.vertex_colors
-                        shade = ( colors[quad.floor_pointer][1] + colors[quad.floor_pointer+1][1] + colors[quad.floor_pointer+2][1] + colors[quad.floor_pointer+3][1] )/4
-                        
-                        
-                        
-                        texture = get_snow_texture(shade, dist/self.properties["texture_distance"])
-                        
-                        
-                    
-                        self.draw_image_3d(
-                                    x*hs, self.get_elevation(z,x,scaled=True) + offset, z*hs,
-                                    (x+1)*hs, self.get_elevation(z,x+1,scaled=True) + offset, z*hs,
-                                    (x+1)*hs, self.get_elevation(z+1,x+1,scaled=True) + offset, (z+1)*hs,
-                                    x*hs, self.get_elevation(z+1,x,scaled=True) + offset, (z+1)*hs,
-                                    texture,
-                                    setup_3d=self.setup_3d
-                                    )
-    
-        
+            
         
 ###################################
 #END paint stuff

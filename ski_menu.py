@@ -130,7 +130,8 @@ def exit(menu):
     
     if event == "Yes":
         save(menu)
-        
+    if event == None:
+        return
     #code for exiting:
     for looi_object in pylooiengine.main_window.unlayered_looi_objects+main_window.layered_looi_objects+main_window.transfer_to_unlayered_looi_objects+main_window.transfer_to_layered_looi_objects:
         looi_object.deactivate()

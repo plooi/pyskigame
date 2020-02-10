@@ -18,14 +18,15 @@
     
     #OKAY LAH
     
-5. buildings, rocks, cliffs, shrubs, bushes, grass
+'''5. buildings, rocks, cliffs,''' shrubs, bushes, grass do i really need these plants?
 '''REMOVE ROCKS!'''
 '''5.1 Terrain modification? Run cutting?'''
 '''5.5 CLEAN UP THE UGLY MENU'''
-5.5Space out the menu icons
+'''5.5Space out the menu icons'''
 '''5.7 There's no way to delete a rock'''
 Cancel Map edit
 Find elevations of points in game
+make lifts go to the perfect center of the square rather than the corner, so buildings and lifts can coexist
 '''What if invalid settings are given? Like a string instead of a number'''
 '''I think high speed quads and especially gondolas need to be a little faster'''
 '''player is too short'''
@@ -63,9 +64,134 @@ Add wiping out
 
 Why does looi engine NOT call the activate function for a looi object active by default???
 sounds
-
+Allow adjustment of lift speeds because some people will not be patient
 
 '''try making the gradient smooth'''
 '''make trees look nicer'''
 
 '''FIX POLE FLOATING PROBLEM'''
+
+'''maybe we can disable floor textures while riding lifts'''
+
+
+when you trAverse, your speed decelerates until it hits a threshold
+when you go more straight down, your speed accelerates indefinitely
+you fall if you go too fast for too long
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+old
+                """
+                turn = angle_distance(self.world.properties["ski_direction"], self.world.view.hor_rot)
+                self.world.properties["ski_direction"] = self.world.view.hor_rot
+                
+                p1,p2,p3 = self.xyz_of_current_triangle(v.z, v.x)
+                floor_hr, floor_vr = get_plane_rotation(p1[0],p1[1],p1[2],p2[0],p2[1],p2[2],p3[0],p3[1],p3[2])
+                
+                if floor_vr < 0:
+                    floor_vr = -floor_vr
+                    floor_hr += math.pi
+                
+                floor_slope = math.pi/2 - floor_vr
+                
+                resistance = angle_distance(self.world.properties["ski_direction"], floor_hr)   
+                
+                equivalent_floor_slope = math.cos(resistance) * floor_slope
+                
+                f_parallel = ski_g * math.sin(equivalent_floor_slope)
+                
+                fhorizontal = f_parallel * math.cos(equivalent_floor_slope)
+                
+                self.world.properties["momentum"] += fhorizontal
+                self.world.properties["momentum_direction"] = self.world.properties["ski_direction"]
+                
+                if turn > math.pi/4:
+                    turn = math.pi/4
+                    
+                turn = (turn) ** 1.2
+                
+                #print(turn)
+                self.world.properties["momentum"] *= (1 - turn/(math.pi/4))
+                friction = friction_coefficient * self.world.properties["momentum"]**2
+                if friction < min_friction:
+                    friction = min_friction
+                self.world.properties["momentum"] -= friction
+                if self.world.properties["momentum"] > max_speed:
+                    self.world.properties["momentum"] = max_speed
+                
+                
+                if self.world.properties["momentum"] < 0:
+                    self.world.properties["momentum"] = 0
+                #bump = 0
+                #if self.world.properties["momentum"] / max_speed > .8:
+                #    bump = random() * (self.world.properties["momentum"] / max_speed) ** 4 * .2
+                #    self.world.view.vert_rot += (random()*2-1) * (self.world.properties["momentum"] / max_speed) ** 4 * math.pi/40
+                
+                v.x += self.world.properties["momentum"] * math.cos(self.world.properties["momentum_direction"])
+                v.z += self.world.properties["momentum"] * -math.sin(self.world.properties["momentum_direction"])
+                v.y = self.get_elevation_continuous(v.z, v.x)*self.world.properties["vertical_stretch"] + self.world.properties["player_height"]# + bump
+                """

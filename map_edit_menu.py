@@ -23,94 +23,98 @@ class Menu(LooiObject):
         self.set_layer(2)
         self.ui = ui
         
-        self.btn1 = Button(x = 680, y=120, width=80, height=80, font_size=10, text="", image=image("D-4C Icon.png"), action=LiftBuild, action_parameter=self)
+        self.btn1 = Button(x = 680, y=120, width=70, height=70, font_size=10, text="", image=image("D-4C Icon.png"), action=LiftBuild, action_parameter=self)
         self.btn1.set_layer(-4)
         self.add(self.btn1)
         
-        self.btn10 = Button(x = 520, y=120, width=80, height=80, font_size=10, text="", image=image("D-8G Icon.png"), action=GondolaBuild, action_parameter=self)
+        self.btn10 = Button(x = 520, y=120, width=70, height=70, font_size=10, text="", image=image("D-8G Icon.png"), action=GondolaBuild, action_parameter=self)
         self.btn10.set_layer(-2)
         self.add(self.btn10)
         
-        self.btn11 = Button(x = 760, y=120, width=80, height=80, font_size=10, text="", image=image("C4 Icon.png"), action=C4Build, action_parameter=self)
+        self.btn11 = Button(x = 760, y=120, width=70, height=70, font_size=10, text="", image=image("C4 Icon.png"), action=C4Build, action_parameter=self)
         self.btn11.set_layer(-5)
         self.add(self.btn11)
         
-        self.btn12 = Button(x = 840, y=120, width=80, height=80, font_size=10, text="", image=image("C3 Icon.png"), action=C3Build, action_parameter=self)
+        self.btn12 = Button(x = 840, y=120, width=70, height=70, font_size=10, text="", image=image("C3 Icon.png"), action=C3Build, action_parameter=self)
         self.btn12.set_layer(-6)
         self.add(self.btn12)
         
-        self.btn13 = Button(x = 920, y=120, width=80, height=80, font_size=10, text="", image=image("C2 Icon.png"), action=C2Build, action_parameter=self)
+        self.btn13 = Button(x = 920, y=120, width=70, height=70, font_size=10, text="", image=image("C2 Icon.png"), action=C2Build, action_parameter=self)
         self.btn13.set_layer(-7)
         self.add(self.btn13)
         
-        self.btn14 = Button(x = 600, y=120, width=80, height=80, font_size=10, text="", image=image("D-6C Icon.png"), action=D_6CBuild, action_parameter=self)
+        self.btn14 = Button(x = 600, y=120, width=70, height=70, font_size=10, text="", image=image("D-6C Icon.png"), action=D_6CBuild, action_parameter=self)
         self.btn14.set_layer(-3)
         self.add(self.btn14)
         
-        self.btn15 = Button(x = 1000, y=120, width=80, height=80, font_size=10, text="", image=image("T Bar Icon.png"), action=TBarBuild, action_parameter=self)
+        self.btn15 = Button(x = 1000, y=120, width=70, height=70, font_size=10, text="", image=image("T Bar Icon.png"), action=TBarBuild, action_parameter=self)
         self.btn15.set_layer(-8)
         self.add(self.btn15)
         
-        self.btn2 = Button(x = 520, y=200, width=80, height=80, font_size=10, text="", image=image("Tree Icon.png"), action=TreeAdd, action_parameter=(self, .01))
+        self.btn2 = Button(x = 520, y=200, width=70, height=70, font_size=10, text="", image=image("Tree Icon.png"), action=TreeAdd, action_parameter=(self, .01))
         self.btn2.set_layer(-2)
         self.add(self.btn2)
         
-        self.btn3 = Button(x = 600, y=200, width=80, height=80, font_size=10, text="", image=image("Tree Icon2.png"), action=TreeAdd, action_parameter=(self, .06))
+        self.btn3 = Button(x = 600, y=200, width=70, height=70, font_size=10, text="", image=image("Tree Icon2.png"), action=TreeAdd, action_parameter=(self, .06))
         self.btn3.set_layer(-2)
         self.add(self.btn3)
         
-        self.btn4 = Button(x = 680, y=200, width=80, height=80, font_size=10, text="", image=image("Tree Icon3.png"), action=TreeAdd, action_parameter=(self, .2))
+        self.btn4 = Button(x = 680, y=200, width=70, height=70, font_size=10, text="", image=image("Tree Icon3.png"), action=TreeAdd, action_parameter=(self, .2))
         self.btn4.set_layer(-2)
         self.add(self.btn4)
         
-        self.btn5 = Button(x = 760, y=200, width=80, height=80, font_size=10, text="", image=image("Chainsaw.png"), action=Chainsaw, action_parameter=self)
+        self.btn5 = Button(x = 760, y=200, width=70, height=70, font_size=10, text="", image=image("Chainsaw.png"), action=Chainsaw, action_parameter=self)
         self.btn5.set_layer(-2)
         self.add(self.btn5)
         
-        self.btn20 = Button(x = 840, y=200, width=80, height=80, font_size=10, text="", image=image("Chainsaw Straight.png"), action=ChainsawStraight, action_parameter=self)
+        self.btn20 = Button(x = 840, y=200, width=70, height=70, font_size=10, text="", image=image("Chainsaw Straight.png"), action=ChainsawStraight, action_parameter=self)
         self.btn20.set_layer(-2)
         self.add(self.btn20)
         
-        self.btn6 = Button(x = 520, y=520, width=80, height=80, font_size=10, text="", image=image("Select.png"), action=Select, action_parameter=self)
+        self.btn6 = Button(x = 520, y=520, width=70, height=70, font_size=10, text="", image=image("Select.png"), action=Select, action_parameter=self)
         self.btn6.set_layer(-2)
         self.add(self.btn6)
         
-        self.btn7 = Button(x = 1240, y=760, width=80, height=80, font_size=10, text="", image=image("Save Icon.png"), action=save, action_parameter=self)
+        self.btn7 = Button(x = 1240, y=760, width=70, height=70, font_size=10, text="", image=image("Save Icon.png"), action=save, action_parameter=self)
         self.btn7.set_layer(-2)
         self.add(self.btn7)
         
-        self.btn8 = Button(x = 1320, y=760, width=80, height=80, font_size=10, text="", image=image("Exit Icon.png"), action=exit, action_parameter=self)
+        self.btn8 = Button(x = 1320, y=760, width=70, height=70, font_size=10, text="", image=image("Exit Icon.png"), action=exit, action_parameter=self)
         self.btn8.set_layer(-2)
         self.add(self.btn8)
         
-        self.btn9 = Button(x = 1160, y=760, width=80, height=80, font_size=10, text="", image=image("Settings Icon.png"), action=settings, action_parameter=self)
+        self.btn9 = Button(x = 1160, y=760, width=70, height=70, font_size=10, text="", image=image("Settings Icon.png"), action=settings, action_parameter=self)
         self.btn9.set_layer(-2)
         self.add(self.btn9)
         
         
-        self.btn16 = Button(x = 520, y=280, width=80, height=80, font_size=10, text="", image=image("Mountain Icon.png"), action=HillMod, action_parameter=self)
+        self.btn16 = Button(x = 520, y=280, width=70, height=70, font_size=10, text="", image=image("Mountain Icon.png"), action=HillMod, action_parameter=self)
         self.btn16.set_layer(-2)
         self.add(self.btn16)
         
         
-        self.btn17 = Button(x = 600, y=280, width=80, height=80, font_size=10, text="", image=image("Smooth Icon.png"), action=SmoothMod, action_parameter=self)
+        self.btn17 = Button(x = 600, y=280, width=70, height=70, font_size=10, text="", image=image("Smooth Icon.png"), action=SmoothMod, action_parameter=self)
         self.btn17.set_layer(-2)
         self.add(self.btn17)
         
-        self.btn18 = Button(x = 680, y=280, width=80, height=80, font_size=10, text="", image=image("Plateau Icon.png"), action=PlateauMod, action_parameter=self)
+        self.btn18 = Button(x = 680, y=280, width=70, height=70, font_size=10, text="", image=image("Plateau Icon.png"), action=PlateauMod, action_parameter=self)
         self.btn18.set_layer(-2)
         self.add(self.btn18)
         
         
-        self.btn19 = Button(x = 760, y=280, width=80, height=80, font_size=10, text="", image=image("Path Icon.png"), action=PathMod, action_parameter=self)
+        self.btn19 = Button(x = 760, y=280, width=70, height=70, font_size=10, text="", image=image("Path Icon.png"), action=PathMod, action_parameter=self)
         self.btn19.set_layer(-2)
         self.add(self.btn19)
         
-        self.btn21 = Button(x = 520, y=360, width=80, height=80, font_size=10, text="", image=image("Rock Icon.png"), action=PlaceRock, action_parameter=self)
+        self.btn21 = Button(x = 520, y=360, width=70, height=70, font_size=10, text="", image=image("Rock Icon.png"), action=PlaceRock, action_parameter=self)
         self.btn21.set_layer(-2)
         self.add(self.btn21)
         
-        self.btn22 = Button(x = 520, y=440, width=80, height=80, font_size=10, text="", image=image("Rock Icon.png"), action=Building, action_parameter=self)
+        self.btn23 = Button(x = 600, y=360, width=70, height=70, font_size=10, text="", image=image("Big Rock Icon.png"), action=PlaceRock2, action_parameter=self)
+        self.btn23.set_layer(-2)
+        self.add(self.btn23)
+        
+        self.btn22 = Button(x = 520, y=440, width=70, height=70, font_size=10, text="", image=image("Building Icon.png"), action=Building, action_parameter=self)
         self.btn22.set_layer(-2)
         self.add(self.btn22)
         
@@ -437,7 +441,7 @@ class GondolaBuild(TwoPointEdit):
         distance_between_poles = self.world().properties["build_chair_pole_distance(map_editor)"]
         #end
         
-        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], chair_model=gondola_model_1, blurry_chair_model=gondola_model_2, super_blurry_chair_model=gondola_model_4, chair_riding_model = gondola_model_1_riding, chair_time_distance = self.world().properties["chair_time_distance_gondola"], terminal_speed="gondola_terminal_speed")
+        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], chair_model=gondola_model_1, blurry_chair_model=gondola_model_2, super_blurry_chair_model=gondola_model_4, chair_riding_model = gondola_model_1_riding, chair_time_distance = self.world().properties["chair_time_distance_gondola"], terminal_speed="gondola_terminal_speed", rope_speed="gondola_rope_speed")
         
         
         
@@ -566,20 +570,34 @@ class Select(TwoPointEdit):
         
         radius = ((midz-z1)**2 + (midx-x1)**2)**.5
         
-        try:
-            for z in range(int(midz-radius), int(midz+radius)+1):
-                for x in range(int(midx-radius), int(midx+radius)+1):
-                    if ((z-midz)**2 + (x-midx)**2)**.5 <= radius:
-                        objs = self.world().quads[z][x].containedObjects
-                        for obj in objs:
+        selectables = []
+        for z in range(int(midz-radius), int(midz+radius)+1):
+            for x in range(int(midx-radius), int(midx+radius)+1):
+                if ((z-midz)**2 + (x-midx)**2)**.5 <= radius:
+                    objs = self.world().quads[z][x].containedObjects
+                    for obj in objs:
+                        
+                        if isinstance(obj, Terminal):
+                            game_ui.set_mouse_mode("normal")
+                            the_lift = obj.chairlift
+                            selectables.append(the_lift)
                             
-                            if isinstance(obj, Terminal):
-                                game_ui.set_mouse_mode("normal")
-                                the_lift = obj.chairlift
-                                the_lift.open_menu()
-                            elif isinstance(obj, Selectable):
-                                game_ui.set_mouse_mode("normal")
-                                obj.open_menu()
+                        elif isinstance(obj, Selectable):
+                            game_ui.set_mouse_mode("normal")
+                            #obj.open_menu()
+                            selectables.append(obj)
+            
+        try:
+            seen_lift = False
+            for selectable in selectables:
+                
+                if isinstance(selectable, Lift):
+                    if seen_lift:
+                        continue
+                    else:
+                        seen_lift=True
+                selectable.open_menu()
+                
         except StopSelectingException:
             layout = [[sg.Text("aborted")]]
             window = sg.Window("", layout, size=(250, 150))
@@ -696,6 +714,12 @@ class PlaceRock(OnePointEdit):
         super().__init__(menu)
     def execute(self, point):
         Rock(point[0], point[1], self.world())
+        
+class PlaceRock2(OnePointEdit):
+    def __init__(self, menu):
+        super().__init__(menu)
+    def execute(self, point):
+        Rock(point[0], point[1], self.world(), design_function=rock_design_2)
 """
 End map edits
 """

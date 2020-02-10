@@ -10,11 +10,12 @@ import PySimpleGUI as sg
 
 class Tree(Selectable):
     #darkness factor represents the minimum brightness that the object can have
-    def __init__(self, z, x, world, darkness_factor=.4, design_function=tree_design_1, rotation=None):
+    #scale parameter is currently not used
+    def __init__(self, z, x, world, darkness_factor=.4, design_function=tree_design_1, rotation=None, scale=1):
         if len(world.quads[z][x].containedObjects) > 0:
             return
             
-        
+        #self.scale=scale
         self.z=z
         self.x=x
         self.world = world
@@ -31,10 +32,9 @@ class Tree(Selectable):
     def add_object_account(self):
         
         #object account
-        self.world.add_object_account(self, "Tree(%d, %d, world, %f, %s, %f)"%(self.z, self.x, self.darkness_factor, find_name(self.design_function), self.rotation ))
+        self.world.add_object_account(self, "Tree(%d, %d, world, %f, %s, %f)"%(self.z, self.x, self.darkness_factor, find_name(self.design_function), self.rotation))
         
         
-    #UNTESTED
     def reset(self, delete=True):
         z = self.z
         x = self.x

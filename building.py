@@ -53,7 +53,12 @@ class Building(Selectable):
         
     def open_menu(self):
         layout = [
-            [sg.Button("Delete")]
+            [sg.Button("Delete")],
+            [sg.Text("X"), sg.Input(str(self.x))],
+            [sg.Text("Y"), sg.Text(str(self.y))],
+            [sg.Text("Z"), sg.Input(str(self.z))],
+            [sg.Text("Rotation"), sg.Input(str(self.rotation))],
+            [sg.OK()]
         ]
         
         
@@ -62,6 +67,28 @@ class Building(Selectable):
         
         if event == "Delete":
             self.delete()
+        elif event == "OK":
+            try:
+                original_x = self.x
+                original_z = self.z
+                new_x = int(values[0])
+                new_z = int(values[1])
+                self.rotation = float(values[2])
+                self.x = new_x
+                self.z = new_z
+                self.add_object_account()
+                self.x = original_x
+                self.z = original_z
+                
+            except Exception as e:
+                sg.Popup(str(e))
+            
+            
+            recreate = self.world.object_account[id(self)]
+            self.delete()
+            world=self.world
+            eval(recreate)
+            
         window.close()
 
 
