@@ -10,7 +10,7 @@ def ski_model(
     ski_width = .1,
     ski_length = 2.1,
     ski_distance = .4,
-    ski_color = [1,0,0]):
+    ski_color = [.43,.57,.75]):
     return [  
     
     [-ski_length/2, 0,-ski_distance/2-ski_width/2], [ski_length/2, 0,-ski_distance/2-ski_width/2], [ski_length/2,0,-ski_distance/2+ski_width/2], [-ski_length/2, 0,-ski_distance/2+ski_width/2], ski_color,

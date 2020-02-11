@@ -1,4 +1,4 @@
-
+import math
 x = {
 
     "detachable_rope_speed" : .3,
@@ -11,8 +11,10 @@ x = {
     
     "chair_ride_distance" : 1.5, #in terms of real distance. How far away you need to be from a chair in order to get on it
     "chair_sit_under_distance" : .5,
-    "fall_speed" : .56,
-    "fall_chance" : .03,
+    "fall_speed" : .7,
+    "fall_slope" : math.pi/4.75,
+    "crash_speed" : .15,
+    
 
 
 }

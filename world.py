@@ -211,6 +211,7 @@ class World(LooiObject):
             "momentum_direction" : 0,
             "ski_model" : "Red Basic",
             "do_floor_textures" : True,
+            "jerk" : 0
             
             
             }

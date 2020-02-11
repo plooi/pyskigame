@@ -1,3 +1,21 @@
+#optional: 1. Add a mode where you turn the camera a tiny bit, then the skis turn a lot
+1.1 I change my mind, I want no speed limit on the blue runs, a .5 speed limit on the black runs with the threat of falling
+    because if there is a speed limit on blue runs, it's really boring.
+1.5 No more square root on the brake
+2. Allow map maker to place "landmarks" which serves as goals to try to get to them
+    Put landmarks on hard to get places, and a couple easy to get places
+3. If you press f, all landmarks shoot up a beacon to let you know where they are
+4. Theres a timer available in case you want to time yourself getting all the landmarks
+
+
+
+
+
+
+
+
+
+
 
 '''1. should I move the trees to the center of the box?'''
 '''1.5 delete lifts'''
@@ -79,17 +97,123 @@ when you go more straight down, your speed accelerates indefinitely
 you fall if you go too fast for too long
 
 
+Could we have the ski direction graphic disappear sometimes?
+
+
+'''NEED TO FALL If you all of a sudden release Q with momentum'''
 
 
 
+Make the skiing hard but not too hard. If someone else made a ski game, that's how hard you would want theirs to be     
+
+No AWSD for skiing. just z to go forward
+maybe when you lost control, the steering, instead of being too little, should be too extreme! So
+you're like turning all crazy all over the place
+if you're in the middle of falling and you ride a lift, the fall should abort
 
 
+trees and poles need to not have part of their bases exposed. They
+should be completely in the ground
+when you get off the chairlift, if you're holding z, there should
+be a small burst of momentum
+fix the depth buffer problem with rocks
 
-
-
-
-
-
+#ORRR
+    Big time obstacle dodge
+    Skis lags behind view
+    obstacles appear randomly, you wont see the same obstacle twice.
+    Obstacles include
+        Ice patch
+        Snowball
+        Small rock
+        Bump
+        Big bump
+        Small hole in the ground
+        groove
+        wind drift
+        lost ski
+        
+    Obstacles are kept track of in a sparse list
+        
+#SOLUTION TO THE SKI PHYSICS PROBLEM
+    Only z. The acceleration will be proportional to effective_slope_angle, except above pi/6 and then it's all the same
+    friction is only proportional to speed^2, no constant friction
+    you have a break that only works when the effective slope angle is below pi/10' (press x)
+    
+    no speed limit
+        Speed will be regulated by other things
+        
+    have ski direction LAG behind view direction.
+    To stop you just have to turn uphill. Friction will stop you
+    
+    
+    
+    
+    
+    Different snow conditions based on hr, vr, and elevation of quad (and weather)
+        Responsiveness is when you turn your camera, how long does it take before your skis move
+        Speed refers to the max speed that the player can have while going over it. If the player is going
+            faster than max speed, the player will either fall or be slowed down
+            
+        
+        
+        Powder
+            responsiveness = .7
+            speed = .5
+            friction = .7
+            
+            sprays particles in your face
+            
+            
+            
+        Packed powder
+            responsiveness = .9
+            speed = .8
+            friction = .5
+            
+        Hard Packed
+            responsiveness = .5
+            speed = inf
+            friction = .3
+        
+            
+        Bumps
+            responsiveness = .6
+            speed = .5
+            friction = .9
+            
+            shakes the screen
+            if you enter above the speed limit, you fall
+            
+        Moguls
+            responsiveness = .9
+            speed = .3
+            friction = .4
+            
+            if you enter above the speed limit, you fall
+            If you hit a mogul you fall
+        Ice
+            responsiveness = .2
+            speed = inf
+            friction = .1
+            
+            if you traverse across ice or if you stop on ice, you will fall
+            
+        Wet snow
+        Slush
+        Wet powder
+        
+        
+        
+        Normal Day
+            North
+                Packed powder
+            South
+                Bumps
+            West
+                Ice
+            East
+                Hard Packed
 
 
 
