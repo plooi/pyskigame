@@ -6,6 +6,7 @@ import traceback
 from models import *
 import loading
 from building import *
+from bump import Bump
 
 class StringBuffer:
     def __init__(self):

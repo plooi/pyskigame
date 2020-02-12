@@ -114,9 +114,18 @@ class Menu(LooiObject):
         self.btn23.set_layer(-2)
         self.add(self.btn23)
         
+        self.btn24 = Button(x = 680, y=360, width=70, height=70, font_size=10, text="", image=image("Mountain Icon.png"), action=PlaceBumps, action_parameter=self)
+        self.btn24.set_layer(-2)
+        self.add(self.btn24)
+        
+        self.btn25 = Button(x = 760, y=360, width=70, height=70, font_size=10, text="", image=image("Mountain Icon.png"), action=RemoveBumps, action_parameter=self)
+        self.btn25.set_layer(-2)
+        self.add(self.btn25)
+        
         self.btn22 = Button(x = 520, y=440, width=70, height=70, font_size=10, text="", image=image("Building Icon.png"), action=Building, action_parameter=self)
         self.btn22.set_layer(-2)
         self.add(self.btn22)
+        
         
         self.x1 = 500
         self.y1 = 100
@@ -242,6 +251,12 @@ def settings(menu):
                     name = menu.ui.world.properties["name"]
                     menu.ui.world.properties["horizontal_stretch"] = float(new_settings["Horizontal Stretch"])
                     menu.ui.world.properties["vertical_stretch"] = float(new_settings["Vertical Stretch"])
+                    menu.ui.world.view.x = 0
+                    menu.ui.world.view.y = 10
+                    menu.ui.world.view.z = 0
+                    menu.ui.world.view.hor_rot = -math.pi/4
+                    menu.ui.world.view.vert_rot = -math.pi/4
+                    
                     world_save.write(menu.ui.world, old_vertical_stretch = float(setting["Vertical Stretch"]))
                     
                     the_world = world_save.read("./worlds/"+name)
@@ -402,8 +417,18 @@ class Building(TwoPointEdit):
                 traceback.print_exc()
                 
                 
-            
-        
+class PlaceBumps(TwoPointEdit):
+    def __init__(self, menu):
+        super().__init__(menu)
+      
+    def execute(self, p1, p2):
+        place_bumps(self.world(), p1[0], p1[1], p2[0], p2[1])
+class RemoveBumps(TwoPointEdit):
+    def __init__(self, menu):
+        super().__init__(menu)
+      
+    def execute(self, p1, p2):
+        remove_bumps(self.world(), p1[0], p1[1], p2[0], p2[1])
 
 class LiftBuild(TwoPointEdit):
     def __init__(self, menu):

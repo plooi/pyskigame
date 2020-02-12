@@ -50,6 +50,9 @@ def find_name(model):
     if m is cube_building_model: return "cube_building_model"
     if m is building_with_slanted_roof:return "building_with_slanted_roof"
     
+    if m is bump_model_1: return "bump_model_1"
+    if m is bump_model_2: return "bump_model_2"
+    
     raise Exception("Cannot determine name of this model: " + str(model()))
 
 

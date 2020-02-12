@@ -52,6 +52,8 @@ class Color:
          return Color(reg(self.r + brightness_increase), reg(self.g + brightness_increase), reg(self.b + brightness_increase))
      def darker(self, brightness_decrease):
          return Color(reg(self.r - brightness_decrease), reg(self.g - brightness_decrease), reg(self.b - brightness_decrease))
+     def copy(self):
+         return Color(self.r,self.g,self.b,self.a)
 
 def reg(x):
     if x > 1:

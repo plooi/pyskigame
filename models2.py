@@ -223,6 +223,11 @@ def cube_building_model(
         face_remove = [],
 
     ):
+        wall_color1 = list(wall_color1)
+        wall_color2 = list(wall_color2)
+        floor_color = list(floor_color)
+        roof_color = list(roof_color)
+        door_color = list(door_color)
         length *= scale*hscale
         width *= scale*hscale
         height *= scale
@@ -274,7 +279,13 @@ def building_with_slanted_roof(
         height_roof_overhang_side = m*x + b
         #print(height_roof_overhang_side)
         
-        
+        wall_color1 = list(wall_color1)
+        wall_color2 = list(wall_color2)
+        floor_color = list(floor_color)
+        roof_color1 = list(roof_color1)
+        roof_color2 = list(roof_color2)
+        sub_roof_wall_color=list(sub_roof_wall_color)
+        door_color = list(door_color)
         
         return remove_faces([
             [-length/2,0,-width/2],[length/2,0,-width/2],[length/2,0,width/2],[-length/2,0,width/2],floor_color,
@@ -292,3 +303,66 @@ def building_with_slanted_roof(
             [door_sep/2,0,door_bulge+width/2],[door_sep/2+door_width,0,door_bulge+width/2],[door_sep/2+door_width,door_height,door_bulge+width/2],[door_sep/2,door_height,door_bulge+width/2],door_color,
         ], face_remove)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+def bump_model_2(
+            diagonal_length=12,
+            height = 1.1,
+            base=-4.6,
+            downhill_height = -4.9,
+            uphill_height = 1.1
+            ):
+    color1 = [.95,.95,.95]
+    color2 = [.91,.91,.91]
+    d = diagonal_length
+    return [
+            [-d/2, uphill_height, 0],[0, base, -d/2],[d/2, downhill_height, 0],[0,height,0],color1,
+            [-d/2, uphill_height, 0],[0, base, d/2],[d/2, downhill_height, 0],[0,height,0],color2,
+            
+        ]
+
+
+def bump_model_3(
+            diagonal_length=18,
+            height = 1.6,
+            base=-6,
+            downhill_height = -10,
+            uphill_height = 0
+            ):
+    color1 = [.95,.95,.95]
+    color2 = [.91,.91,.91]
+    d = diagonal_length
+    return [
+            [-d/2, uphill_height, 0],[0, base, -d/2],[d/2, downhill_height, 0],[0,height,0],color1,
+            [-d/2, uphill_height, 0],[0, base, d/2],[d/2, downhill_height, 0],[0,height,0],color2,
+            
+        ]
+
+
+#failure
+def bump_model_1(
+            diagonal_length=9,
+            height = .7,
+            base=-2,
+            ):
+    top_color = [.8,.8,.8]
+    side_color = [.6,.6,.6]
+    shadow_color = [.3,.3,.3]
+    sun_color = [.95,.95,.95]
+    d = diagonal_length
+    return [
+            [-d/2, base, 0],[0, base, -d/2],[d/2, base, 0],[0,height,0],shadow_color,side_color,sun_color,top_color,
+            [-d/2, base, 0],[0, base, d/2],[d/2, base, 0],[0,height,0],shadow_color,side_color,sun_color,top_color,
+            
+        ]

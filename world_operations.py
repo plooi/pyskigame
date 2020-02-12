@@ -4,6 +4,45 @@ from model_3d import *
 import PySimpleGUI as sg
 from models import *
 from rock import Rock
+from bump import Bump
+
+
+
+def place_bumps(world, z1, x1, z2, x2, chance = 1):
+    middle_z = int((z1+z2)/2)
+    middle_x = int((x1+x2)/2)
+    
+    radius = int(((z1-z2)**2 + (x1-x2)**2)**.5 / 2) + 1
+    
+    
+    for z in range(middle_z - radius, middle_z + radius):
+        for x in range(middle_x - radius, middle_x + radius):
+            if ((z-middle_z)**2 + (x-middle_x)**2)**.5 <= radius and world.valid_floor(z, x):
+                if chance == 1:
+                    Bump(z, x, world)
+                else:
+                    if random() < chance:
+                        Bump(z, x, world)
+                        
+def remove_bumps(world, z1, x1, z2, x2):
+    middle_z = int((z1+z2)/2)
+    middle_x = int((x1+x2)/2)
+    
+    radius = int(((z1-z2)**2 + (x1-x2)**2)**.5 / 2) + 1
+    
+    
+    for z in range(middle_z - radius, middle_z + radius):
+        for x in range(middle_x - radius, middle_x + radius):
+            if ((z-middle_z)**2 + (x-middle_x)**2)**.5 <= radius and world.valid_floor(z, x):
+                objs = world.quads[z][x].containedObjects
+                i=0
+                while i < len(objs):
+                    if isinstance(objs[i], Bump):
+                        objs[i].delete()#this automatically deletes the bump from the list
+                        
+                        i -= 1#but I still have to do i -= 1
+                        
+                    i += 1
 
 def fill_trees(world, z1, x1, z2, x2, chance = 1):
     for z in range(min([z1,z2]), max([z1,z2])+1):
@@ -81,7 +120,7 @@ def raise_hill(world, z1, x1, z2, x2, amount):
                 increase = amount * (   1   -   ((z-middle_z)**2 + (x-middle_x)**2)**.5 / radius   )
                 if world.valid_floor(z, x):
                     for obj in world.quads[z][x].containedObjects:
-                        if isinstance(obj, Tree):
+                        if isinstance(obj, Tree) or isinstance(obj, Bump):
                             recreate_strings.append(world.object_account[id(obj)])
                 
                 world.set_elevation(z, x, world.get_elevation(z,x) + increase, False)
@@ -109,7 +148,7 @@ def plateau(world, z1, x1, z2, x2, amount):
             if ((z-middle_z)**2 + (x-middle_x)**2)**.5 <= radius and world.valid_point(z, x):
                 if world.valid_floor(z, x):
                     for obj in world.quads[z][x].containedObjects:
-                        if isinstance(obj, Tree):
+                        if isinstance(obj, Tree) or isinstance(obj, Bump):
                             recreate_strings.append(world.object_account[id(obj)])
                 world.set_elevation(z, x, y + amount, False)
                 
@@ -161,7 +200,7 @@ def smooth(world, z1, x1, z2, x2):
                         ): 
                     if world.valid_floor(z, x):
                         for obj in world.quads[z][x].containedObjects:
-                            if isinstance(obj, Tree):
+                            if isinstance(obj, Tree) or isinstance(obj, Bump):
                                 recreate_strings.append(world.object_account[id(obj)])
                     world.set_elevation(z, x, ( origval(z-1,x)+origval(z-1,x-1)+origval(z,x-1)+origval(z+1,x-1)+origval(z+1,x)+origval(z+1,x+1)+origval(z,x+1)+origval(z-1,x+1)+origval(z,x))/9    , reset_color=False)
                     #world.set_elevation(z,x, origval(z,x), False)
@@ -260,7 +299,7 @@ def path(world, z1, x1, z2, x2, thickness):
                         for zzz in range(zz-1, zz+1):
                             for xxx in range(xx-1, xx+1):
                                 for obj in world.quads[zzz][xxx].containedObjects:
-                                    if isinstance(obj, Tree):
+                                    if isinstance(obj, Tree) or isinstance(obj, Bump):
                                         if world.object_account[id(obj)] not in recreate_strings:
                                             recreate_strings.append(world.object_account[id(obj)])
                     

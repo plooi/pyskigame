@@ -1,3 +1,17 @@
+Add moguls!
+
+
+
+maybe checking collisions makes it slow
+    yeah i think so actually. 13*2 ** 2 is a lot
+increase lift speed
+establish a ratio between in game real distance and meters
+
+
+
+
+
+
 #optional: 1. Add a mode where you turn the camera a tiny bit, then the skis turn a lot
 1.1 I change my mind, I want no speed limit on the blue runs, a .5 speed limit on the black runs with the threat of falling
     because if there is a speed limit on blue runs, it's really boring.

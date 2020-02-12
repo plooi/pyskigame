@@ -49,10 +49,13 @@ class Tree(Selectable):
         horizontal_rotate_model_around_origin(self.design, self.rotation)
         move_model(self.design, (self.x+.5) * self.world.properties["horizontal_stretch"], self.y, (self.z+.5) * self.world.properties["horizontal_stretch"])
         
+        brightness = self.world.get_proper_floor_color(z, x)[0]
+        if brightness < self.darkness_factor: brightness = self.darkness_factor
+        
+        
         for i in range(len(self.design)):
             if i%5 == 4:
-                brightness = self.world.get_proper_floor_color(z, x)[0]
-                if brightness < self.darkness_factor: brightness = self.darkness_factor
+                
                 self.design[i][0] *= brightness
                 self.design[i][1] *= brightness
                 self.design[i][2] *= brightness
