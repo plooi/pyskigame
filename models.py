@@ -53,6 +53,8 @@ def find_name(model):
     if m is bump_model_1: return "bump_model_1"
     if m is bump_model_2: return "bump_model_2"
     
+    if m is landmark_model_1: return "landmark_model_1"
+    
     raise Exception("Cannot determine name of this model: " + str(model()))
 
 

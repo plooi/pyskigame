@@ -7,6 +7,7 @@ from models import *
 import loading
 from building import *
 from bump import Bump
+from landmark import Landmark
 
 class StringBuffer:
     def __init__(self):

@@ -30,7 +30,6 @@ class Bump:
         
         
         self.reset(delete=False)
-        print("bump")
         
     def add_object_account(self):
         

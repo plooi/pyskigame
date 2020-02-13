@@ -17,6 +17,7 @@ from rock import *
 from stop_selecting_exception import StopSelectingException
 import traceback
 import building
+from landmark import Landmark
 class Menu(LooiObject):
     def __init__(self, ui):
         super().__init__()
@@ -71,7 +72,7 @@ class Menu(LooiObject):
         self.btn20.set_layer(-2)
         self.add(self.btn20)
         
-        self.btn6 = Button(x = 520, y=520, width=70, height=70, font_size=10, text="", image=image("Select.png"), action=Select, action_parameter=self)
+        self.btn6 = Button(x = 520, y=600, width=70, height=70, font_size=10, text="", image=image("Select.png"), action=Select, action_parameter=self)
         self.btn6.set_layer(-2)
         self.add(self.btn6)
         
@@ -125,6 +126,10 @@ class Menu(LooiObject):
         self.btn22 = Button(x = 520, y=440, width=70, height=70, font_size=10, text="", image=image("Building Icon.png"), action=Building, action_parameter=self)
         self.btn22.set_layer(-2)
         self.add(self.btn22)
+        
+        self.btn26 = Button(x = 520, y=520, width=70, height=70, font_size=10, text="", image=image("textures/Landmark Icon.png"), action=PlaceLandmark, action_parameter=self)
+        self.btn26.set_layer(-2)
+        self.add(self.btn26)
         
         
         self.x1 = 500
@@ -745,6 +750,11 @@ class PlaceRock2(OnePointEdit):
         super().__init__(menu)
     def execute(self, point):
         Rock(point[0], point[1], self.world(), design_function=rock_design_2)
+class PlaceLandmark(OnePointEdit):
+    def __init__(self, menu):
+        super().__init__(menu)
+    def execute(self, point):
+        Landmark(point[0], point[1], self.world())
 """
 End map edits
 """

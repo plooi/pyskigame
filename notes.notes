@@ -1,5 +1,69 @@
+Next steps
+
+1. Landmarks
+    b. If the game doesn't have enough landmarks, it will randomly generate
+    c. Press q to have all landmarks shoot up beacon
+    d. Opening up the "e" menu allows you to view all landmarks
+    YOU get to decide what to do with the landmarks, and you get to time it yourself
+2. Sounds
+    Chairlift going over pole
+    Terminal machine noise sound
+    Wind
+    Skiing sound
+    Stopping sound/swishing sound
+    Crashing sound
+    Walking sound
+3. Health
+    100 health
+    .00185 depletes per tick 
+    20 health depletes per fall
+    when walking, .007 depletes per tick 
+    1800 ticks per min
+    when health is zero, you have less control over skis and have a random chance of falling at any time
+    When you press r, you can see the health bar in the lower left of screen. Yellow on black. Thin
+    Theres a health recharger that recharges your health that you should put inside all the lodges. Map editor mode ofc
+4. Mission centers each have their own set of landmarks
+    Missions consist of going to 3 landmarks (if available, otherwise do just as many as you can), 
+    fix one lift, one chosen at random based on which lifts are closest to the landmarks of this mission center
+    rescue your boss at one of the landmarks
+    4 landmarks and 1 lift
+    cash reward
+    
+    Once all the landmarks from all the mission centers are used up, the mission centers all reset
+    
+
+Misc
+    Only w to walk forward
+    Left click to slow down
+    Menu pauses the game in ski mode
+        Every single step() function has if not paused: at the top
+    1 allows you to switch between walking or skiing (you can walk up or down it's okay) (but walking is VERY VERY SLOW and takes up more energy/health)
+    2 and 3 are item slots
+    When you board a chairlift when skiing, when you get off you DONT fall
+    Add the sun 
+    Fix the 
+    
+    
+
+
+Later steps
+    2. Missions
+        Explore misions: Visit a few randomly selected (or generated, if there isn't enough) landmarks on the mountain 
+            to "familiarize yourself with the mountain"
+        Rescue mission: Visit a randomly selected landmark and a person will be there who needs to be rescued
+        Maintenance mission: Randomly select a lift to break down and you have to fix it
+    3. Skis
+        Buy different skis for slots 2 and 3
+    4. make all world objects subclass of same supertype
+
+
+
+
+
 Add moguls!
 
+
+make the health bar skinny, purple
 
 
 maybe checking collisions makes it slow
@@ -7,7 +71,31 @@ maybe checking collisions makes it slow
 increase lift speed
 establish a ratio between in game real distance and meters
 
+each pair of skis has specific strategical advantages (also they are TEXTURES not just quads)
+    like one can resist ice
+    one can go fast on steeps
+    one can just go fast in general
+    one has good control
+    one can break at any angle
+    etc
+    one can walk up hills faster
+and you can go into the lodge and SIWTCH skis at any point in time!
+Or maybe you can carry two skis with you at any point in time. And you
+can switch at will! OOOHH!!
 
+w to go forward, left click to break. Can only walk uphill.
+1 is no skis
+2 is your main skis
+3 is your special skis
+just like far cry
+
+Maybe... instead of just saying here are the landmarks, go to them
+you can give them one at a time. But... I feel like that defeats the
+point of skiing. Maybe you can give them out like 5 at a time, then
+after you complete the batch you get money, you can then go buy skis,
+then you get 5 new landmarks.
+Could we just randomly generate landmarks??? 
+It takes like 15 secs to change skis.
 
 
 

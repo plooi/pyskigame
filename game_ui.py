@@ -80,8 +80,14 @@ class UI(LooiObject):
             return True
         self.world.properties["do_floor_textures"] = True
         return False
-        
+    def landmarks_hide_show(self):
+        for landmark in self.world.landmarks:
+            if (landmark.z, landmark.x) in self.world.properties["active_landmarks"] or self.game_mode == "map editor":
+                landmark.show()
+            else:
+                landmark.hide()
     def step(self):
+        self.landmarks_hide_show()
         self.look_around()
         self.e_key()
         

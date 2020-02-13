@@ -210,6 +210,7 @@ class World(LooiObject):
             "background_quad_distance" : 3000,
             "texture_distance" : 4, #distance at which we start drawing the snow texture in quads not chunks
             "texture_radius" : 3, #distance at which floors are guaranteed to be textured, regardless of whether you're looking or not
+            "active_landmarks" : [],
             
             
             #the settings below have nothing to do with the world itself,
@@ -233,7 +234,8 @@ class World(LooiObject):
             "momentum_direction" : 0,
             "ski_model" : "Red Basic",
             "do_floor_textures" : True,
-            "jerk" : 0
+            "jerk" : 0,
+            
             
             
             }
@@ -270,9 +272,7 @@ class World(LooiObject):
         #how to recreate that object
         self.object_account = {}
         
-        
         self.landmarks = []
-        self.completed_landmarks = []
         
         
         

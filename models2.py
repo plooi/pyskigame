@@ -366,3 +366,30 @@ def bump_model_1(
             [-d/2, base, 0],[0, base, d/2],[d/2, base, 0],[0,height,0],shadow_color,side_color,sun_color,top_color,
             
         ]
+
+
+
+
+
+def landmark_model_1(
+    width=.4,
+    height=7.5,
+    square_diagonal = 2.2):
+    pole_color = [0,0,0]
+    square_color = [0,.9,0]
+    
+    return [
+        [-width/2,0,-width/2],[width/2,0,-width/2],[width/2,height,-width/2],[-width/2,height,-width/2],[1,1,1],[1,1,1],[.5,0,.5],[.5,0,.5],
+        [-width/2,0,width/2],[width/2,0,width/2],[width/2,height,width/2],[-width/2,height,width/2],[1,1,1],[1,1,1],[.5,0,.5],[.5,0,.5],
+        [-width/2,0,-width/2],[-width/2,0,width/2],[-width/2,height,width/2],[-width/2,height,-width/2],[1,1,1],[1,1,1],[.5,0,.5],[.5,0,.5],
+        [width/2,0,-width/2],[width/2,0,width/2],[width/2,height,width/2],[width/2,height,-width/2],[1,1,1],[1,1,1],[.5,0,.5],[.5,0,.5],
+        #[0,height-square_diagonal/2,0],[0,height,square_diagonal/2],[0,height+square_diagonal/2,0],[0,height,-square_diagonal/2],square_color,
+    
+    
+    
+    ]
+    
+    
+    
+    
+    
