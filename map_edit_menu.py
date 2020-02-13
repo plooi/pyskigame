@@ -18,6 +18,8 @@ from stop_selecting_exception import StopSelectingException
 import traceback
 import building
 from landmark import Landmark
+from world_object import WorldObject
+import mission_center
 class Menu(LooiObject):
     def __init__(self, ui):
         super().__init__()
@@ -130,6 +132,10 @@ class Menu(LooiObject):
         self.btn26 = Button(x = 520, y=520, width=70, height=70, font_size=10, text="", image=image("textures/Landmark Icon.png"), action=PlaceLandmark, action_parameter=self)
         self.btn26.set_layer(-2)
         self.add(self.btn26)
+        
+        self.btn27 = Button(x = 520, y=680, width=70, height=70, font_size=10, text="test", action=PlaceMissionCenter, action_parameter=self)
+        self.btn27.set_layer(-2)
+        self.add(self.btn27)
         
         
         self.x1 = 500
@@ -349,6 +355,7 @@ class OnePointEdit(MapEdit):
     def execute(self, p1):
         pass
 
+
 class TwoPointEdit(MapEdit):
     def __init__(self, menu, message1="Select point 1", message2="Select point 2"):
         super().__init__(menu)
@@ -420,6 +427,14 @@ class Building(TwoPointEdit):
             except Exception as e:
                 sg.Popup(str(e))
                 traceback.print_exc()
+class PlaceMissionCenter(TwoPointEdit):
+    def __init__(self, menu):
+        super().__init__(menu, "Select location", "Select angle")
+      
+    def execute(self, p1, p2):
+        rot = get_angle(p1[0], p1[1], p2[0], p2[1])
+        mission_center.MissionCenter(z=p1[0], x=p1[1], world=self.world(), rotation=rot)
+            
                 
                 
 class PlaceBumps(TwoPointEdit):
@@ -616,6 +631,9 @@ class Select(TwoPointEdit):
                             game_ui.set_mouse_mode("normal")
                             #obj.open_menu()
                             selectables.append(obj)
+                        elif isinstance(obj, WorldObject):
+                            game_ui.set_mouse_mode("normal")
+                            selectables.append(obj)
             
         try:
             seen_lift = False
@@ -744,7 +762,11 @@ class PlaceRock(OnePointEdit):
         super().__init__(menu)
     def execute(self, point):
         Rock(point[0], point[1], self.world())
-        
+class PlaceWorldObject(OnePointEdit):
+    def __init__(self, menu):
+        super().__init__(menu)
+    def execute(self, point):
+        WorldObject(world=self.world(), z=point[0], x=point[1], model=rock_design_2, model_type="std")
 class PlaceRock2(OnePointEdit):
     def __init__(self, menu):
         super().__init__(menu)
@@ -754,7 +776,7 @@ class PlaceLandmark(OnePointEdit):
     def __init__(self, menu):
         super().__init__(menu)
     def execute(self, point):
-        Landmark(point[0], point[1], self.world())
+        Landmark(z=point[0], x=point[1], world=self.world())
 """
 End map edits
 """

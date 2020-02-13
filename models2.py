@@ -373,7 +373,7 @@ def bump_model_1(
 
 def landmark_model_1(
     width=.4,
-    height=7.5,
+    height=14,
     square_diagonal = 2.2):
     pole_color = [0,0,0]
     square_color = [0,.9,0]

@@ -5,6 +5,7 @@ import PySimpleGUI as sg
 from models import *
 from rock import Rock
 from bump import Bump
+from world_object import WorldObject
 
 
 
@@ -122,6 +123,10 @@ def raise_hill(world, z1, x1, z2, x2, amount):
                     for obj in world.quads[z][x].containedObjects:
                         if isinstance(obj, Tree) or isinstance(obj, Bump):
                             recreate_strings.append(world.object_account[id(obj)])
+                        elif isinstance(obj, WorldObject):
+                            del obj.args["y"]
+                            del obj.args["model_y"]
+                            recreate_strings.append(obj.get_recreate_string())
                 
                 world.set_elevation(z, x, world.get_elevation(z,x) + increase, False)
                 
@@ -150,6 +155,10 @@ def plateau(world, z1, x1, z2, x2, amount):
                     for obj in world.quads[z][x].containedObjects:
                         if isinstance(obj, Tree) or isinstance(obj, Bump):
                             recreate_strings.append(world.object_account[id(obj)])
+                        elif isinstance(obj, WorldObject):
+                            del obj.args["y"]
+                            del obj.args["model_y"]
+                            recreate_strings.append(obj.get_recreate_string())
                 world.set_elevation(z, x, y + amount, False)
                 
     radius += 2
@@ -202,6 +211,10 @@ def smooth(world, z1, x1, z2, x2):
                         for obj in world.quads[z][x].containedObjects:
                             if isinstance(obj, Tree) or isinstance(obj, Bump):
                                 recreate_strings.append(world.object_account[id(obj)])
+                            elif isinstance(obj, WorldObject):
+                                del obj.args["y"]
+                                del obj.args["model_y"]
+                                recreate_strings.append(obj.get_recreate_string())
                     world.set_elevation(z, x, ( origval(z-1,x)+origval(z-1,x-1)+origval(z,x-1)+origval(z+1,x-1)+origval(z+1,x)+origval(z+1,x+1)+origval(z,x+1)+origval(z-1,x+1)+origval(z,x))/9    , reset_color=False)
                     #world.set_elevation(z,x, origval(z,x), False)
     radius += 2
@@ -302,6 +315,11 @@ def path(world, z1, x1, z2, x2, thickness):
                                     if isinstance(obj, Tree) or isinstance(obj, Bump):
                                         if world.object_account[id(obj)] not in recreate_strings:
                                             recreate_strings.append(world.object_account[id(obj)])
+                                    elif isinstance(obj, WorldObject):
+                                        if obj.get_recreate_string() not in recreate_strings:
+                                            del obj.args["y"]
+                                            del obj.args["model_y"]
+                                            recreate_strings.append(obj.get_recreate_string())
                     
                     if dist_frm_ctr < thickness - 3:
                         world.set_elevation(zz,xx,y,False)

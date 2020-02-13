@@ -21,11 +21,13 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from constants import x as constants
 from bump import Bump
+from world_object import WorldObject
 
 ice_textures = {}
 ice_textures_keys = []
 snow_textures = {}
 snow_textures_keys = []
+
 
 for blend in range(4):
     snow_textures[blend] = {}
@@ -210,7 +212,10 @@ class World(LooiObject):
             "background_quad_distance" : 3000,
             "texture_distance" : 4, #distance at which we start drawing the snow texture in quads not chunks
             "texture_radius" : 3, #distance at which floors are guaranteed to be textured, regardless of whether you're looking or not
-            "active_landmarks" : [],
+            "active_missions" : [],#missions are lists of two values [(landmark_z,landmark_x), type]
+            #landmark is obviously the landmark that this mission requires us to go to
+            #type is the type of mission. 1=explore mission, 2=fix the lift mission, 3=save the buddy mission
+            "completed_missions" : [],#does not include fix the lift missions, only landmark missions
             
             
             #the settings below have nothing to do with the world itself,
@@ -273,6 +278,8 @@ class World(LooiObject):
         self.object_account = {}
         
         self.landmarks = []
+        
+        self.game_ui = None
         
         
         
@@ -531,7 +538,7 @@ class World(LooiObject):
                 i=0
                 while i < len(self.quads[z-1][x-1].containedObjects):
                     obj = self.quads[z-1][x-1].containedObjects[i]
-                    if isinstance(obj,Tree) or isinstance(obj, Bump):
+                    if isinstance(obj,Tree) or isinstance(obj, Bump) or isinstance(obj, WorldObject):
                         obj.delete()
                         i -= 1
                     i+=1
@@ -550,7 +557,7 @@ class World(LooiObject):
                 i=0
                 while i < len(self.quads[z-1][x].containedObjects):
                     obj = self.quads[z-1][x].containedObjects[i]
-                    if isinstance(obj,Tree) or isinstance(obj, Bump):
+                    if isinstance(obj,Tree) or isinstance(obj, Bump) or isinstance(obj, WorldObject):
                         obj.delete()
                         i -= 1
                     i+=1
@@ -569,7 +576,7 @@ class World(LooiObject):
                 i=0
                 while i < len(self.quads[z][x].containedObjects):
                     obj = self.quads[z][x].containedObjects[i]
-                    if isinstance(obj,Tree) or isinstance(obj, Bump):
+                    if isinstance(obj,Tree) or isinstance(obj, Bump) or isinstance(obj, WorldObject):
                         obj.delete()
                         i -= 1
                     i+=1
@@ -588,7 +595,7 @@ class World(LooiObject):
                 i=0
                 while i < len(self.quads[z][x-1].containedObjects):
                     obj = self.quads[z][x-1].containedObjects[i]
-                    if isinstance(obj,Tree) or isinstance(obj, Bump):
+                    if isinstance(obj,Tree) or isinstance(obj, Bump) or isinstance(obj, WorldObject):
                         obj.delete()
                         i -= 1
                     i+=1

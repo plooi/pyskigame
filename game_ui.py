@@ -12,11 +12,13 @@ from rock import Rock
 import models
 from lift import Pole
 from bump import Bump
+from world_object import WorldObject
 class UI(LooiObject):
     def __init__(self, world, game_mode):
         super().__init__(active=False)
         self.set_layer(100)
         self.world = world
+        world.game_ui = self
         self.crosshairs = False
         self.crosshair_length = 30
         self.interface_mode = "game"#"game" or "menu" or "can_move_temporarily"
@@ -29,7 +31,9 @@ class UI(LooiObject):
         self.my_lift = None
         self.my_chair = None
         self.can_load = False
-        self.load_icon = image("Chair Load Icon.png")
+        self.can_unload = False
+        self.load_icon = image("textures/Chair Load Icon.png")
+        self.unload_icon = image("textures/Chair Unload Icon.png")
         
         self.chair_sit_forward_distance = 0
         
@@ -40,6 +44,7 @@ class UI(LooiObject):
         self.slipping = False
     def chairlift_ride(self):
         self.can_load = False
+        self.can_unload = False
         chair_ride_distance = constants["chair_ride_distance"]
         x = self.world.view.x
         y = self.world.view.y
@@ -62,6 +67,7 @@ class UI(LooiObject):
                                     self.my_lift.player_riding = i
                                     return
                     else:#if currently riding
+                        self.can_unload = True
                         if self.key("r", "pressed"):
                             self.my_lift.player_riding = None
                             self.my_lift = None
@@ -80,14 +86,8 @@ class UI(LooiObject):
             return True
         self.world.properties["do_floor_textures"] = True
         return False
-    def landmarks_hide_show(self):
-        for landmark in self.world.landmarks:
-            if (landmark.z, landmark.x) in self.world.properties["active_landmarks"] or self.game_mode == "map editor":
-                landmark.show()
-            else:
-                landmark.hide()
+    
     def step(self):
-        self.landmarks_hide_show()
         self.look_around()
         self.e_key()
         
@@ -116,7 +116,8 @@ class UI(LooiObject):
         my_z = int(self.world.view.z/hs)
         my_x = int(self.world.view.x/hs)
         check_radius = 10
-        if self.world.properties["momentum"] >= constants["crash_speed"]:
+        
+        if 1==1:
             real_x = self.world.view.x
             real_z = self.world.view.z
             real_y = self.world.view.y
@@ -125,42 +126,47 @@ class UI(LooiObject):
                 for x in range(my_x-check_radius, my_x+check_radius):
                     if self.world.valid_floor(z,x):
                         for obj in self.world.quads[z][x].containedObjects:
-                            if isinstance(obj, Rock):
-                                if obj.design_function == models.rock_design_1:
+                            if isinstance(obj, WorldObject):
+                                if obj.touching(real_x, real_y, real_z):
+                                    obj.touching_player_consequence()
+                            if self.world.properties["momentum"] >= constants["crash_speed"]:
+                                if isinstance(obj, Rock):
+                                    if obj.design_function == models.rock_design_1:
+                                        dist = (((obj.z+.5)*hs-real_z)**2 + ((obj.x+.5)*hs-real_x)**2)**.5
+                                        if dist < 1:
+                                            self.falling = True
+                                            return
+                                    elif obj.design_function == models.rock_design_2:
+                                        dist = (((obj.z+.5)*hs-real_z)**2 + ((obj.x+.5)*hs-real_x)**2)**.5
+                                        
+                                        dist_under = obj.y - (real_y - self.world.properties["player_height"])
+                                        
+                                        
+                                        #dist bottom = 21 dist top = 7 height 30
+                                        m = -15/7
+                                        b = 15
+                                        height_of_rock_at_players_dist = m*dist + b
+                                        
+                                        if dist_under > 0 and dist <= 21:
+                                            if -dist_under < height_of_rock_at_players_dist:
+                                                self.falling = True
+                                                return
+                                elif isinstance(obj, Tree):
                                     dist = (((obj.z+.5)*hs-real_z)**2 + ((obj.x+.5)*hs-real_x)**2)**.5
+                                    if dist < .85:
+                                        self.falling = True
+                                        return
+                                elif isinstance(obj, Pole):
+                                    dist = ((obj.real_z-real_z)**2 + (obj.real_x-real_x)**2)**.5
+                                    if dist < .5:
+                                        self.falling = True
+                                        return
+                                elif isinstance(obj, Bump):
+                                    dist = ((obj.real_z-real_z)**2 + (obj.real_x-real_x)**2)**.5
                                     if dist < 1:
                                         self.falling = True
                                         return
-                                elif obj.design_function == models.rock_design_2:
-                                    dist = (((obj.z+.5)*hs-real_z)**2 + ((obj.x+.5)*hs-real_x)**2)**.5
-                                    
-                                    dist_under = obj.y - (real_y - self.world.properties["player_height"])
-                                    
-                                    
-                                    #dist bottom = 21 dist top = 7 height 30
-                                    m = -15/7
-                                    b = 15
-                                    height_of_rock_at_players_dist = m*dist + b
-                                    
-                                    if dist_under > 0 and dist <= 21:
-                                        if -dist_under < height_of_rock_at_players_dist:
-                                            self.falling = True
-                                            return
-                            elif isinstance(obj, Tree):
-                                dist = (((obj.z+.5)*hs-real_z)**2 + ((obj.x+.5)*hs-real_x)**2)**.5
-                                if dist < .85:
-                                    self.falling = True
-                                    return
-                            elif isinstance(obj, Pole):
-                                dist = ((obj.real_z-real_z)**2 + (obj.real_x-real_x)**2)**.5
-                                if dist < .5:
-                                    self.falling = True
-                                    return
-                            elif isinstance(obj, Bump):
-                                dist = ((obj.real_z-real_z)**2 + (obj.real_x-real_x)**2)**.5
-                                if dist < 1:
-                                    self.falling = True
-                                    return
+                            
                         
     
     #input scaled position
@@ -634,6 +640,8 @@ class UI(LooiObject):
             self.draw_text(0,100,"FPS: " + str(self.world.fps.fps))
         if self.can_load:
             self.draw_image(950, 900, 1050, 1000,self.load_icon)
+        if self.can_unload:
+            self.draw_image(950, 910, 1050, 1010,self.unload_icon)
         #self.draw_text(0,50, "%f %f %f %f %f" % (self.world.view.x, self.world.view.y, self.world.view.z, self.world.view.hor_rot, self.world.view.vert_rot))
         #self.draw_text(0,600,str(round(self.world.properties["momentum"])))
         #self.draw_text(0,600,str(self.game_mode))

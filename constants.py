@@ -2,7 +2,7 @@ import math
 from pylooiengine import *
 x = {
 
-    "detachable_rope_speed" : .3,
+    "detachable_rope_speed" : .375,#.3,
     "detachable_terminal_speed" : .02,
     "gondola_terminal_speed" : .01,
     "gondola_rope_speed" : .65,

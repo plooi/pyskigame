@@ -8,6 +8,8 @@ import loading
 from building import *
 from bump import Bump
 from landmark import Landmark
+from world_object import *
+from mission_center import MissionCenter
 
 class StringBuffer:
     def __init__(self):
