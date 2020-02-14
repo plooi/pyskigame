@@ -6,6 +6,7 @@ import pylooiengine
 import easygui
 import rooms
 import normal
+from random import random
 
 import numpy
 import copy
@@ -240,6 +241,7 @@ class World(LooiObject):
             "ski_model" : "Red Basic",
             "do_floor_textures" : True,
             "jerk" : 0,
+            "health" : 100,
             
             
             
@@ -865,6 +867,8 @@ class World(LooiObject):
         
         
         
+        
+        
     def get_chunk_load_grid(self):
         chunk_load_grid =[]
         for r in range(self.get_height_chunks()):
@@ -997,6 +1001,10 @@ class World(LooiObject):
         
         vertices_draw = numpy.vstack(tuple(vertices_draw))
         colors_draw = numpy.vstack(tuple(colors_draw))
+        
+        if random() < .05:print(len(vertices_draw))
+        
+        
         
         #print(vertices_draw)
         

@@ -7,7 +7,7 @@ from world_operations import *
 from model_3d import *
 import lift
 import lift_util
-
+import lodge
 import world_save
 import rooms
 from collections import OrderedDict
@@ -117,11 +117,11 @@ class Menu(LooiObject):
         self.btn23.set_layer(-2)
         self.add(self.btn23)
         
-        self.btn24 = Button(x = 680, y=360, width=70, height=70, font_size=10, text="", image=image("Mountain Icon.png"), action=PlaceBumps, action_parameter=self)
+        self.btn24 = Button(x = 680, y=360, width=70, height=70, font_size=10, text="", image=image("textures/Bumps Icon.png"), action=PlaceBumps, action_parameter=self)
         self.btn24.set_layer(-2)
         self.add(self.btn24)
         
-        self.btn25 = Button(x = 760, y=360, width=70, height=70, font_size=10, text="", image=image("Mountain Icon.png"), action=RemoveBumps, action_parameter=self)
+        self.btn25 = Button(x = 760, y=360, width=70, height=70, font_size=10, text="", image=image("textures/Remove Bumps Icon.png"), action=RemoveBumps, action_parameter=self)
         self.btn25.set_layer(-2)
         self.add(self.btn25)
         
@@ -129,11 +129,19 @@ class Menu(LooiObject):
         self.btn22.set_layer(-2)
         self.add(self.btn22)
         
+        self.btn28 = Button(x = 600, y=440, width=70, height=70, font_size=10, text="", image=image("textures/Lodge Icon.png"), action=BuildLodge, action_parameter=self)
+        self.btn28.set_layer(-2)
+        self.add(self.btn28)
+        
+        self.btn29 = Button(x = 680, y=440, width=70, height=70, font_size=10, text="", image=image("textures/Hut Icon.png"), action=BuildHut, action_parameter=self)
+        self.btn29.set_layer(-2)
+        self.add(self.btn29)
+        
         self.btn26 = Button(x = 520, y=520, width=70, height=70, font_size=10, text="", image=image("textures/Landmark Icon.png"), action=PlaceLandmark, action_parameter=self)
         self.btn26.set_layer(-2)
         self.add(self.btn26)
         
-        self.btn27 = Button(x = 520, y=680, width=70, height=70, font_size=10, text="test", action=PlaceMissionCenter, action_parameter=self)
+        self.btn27 = Button(x = 600, y=520, width=70, height=70, font_size=10, text="", image=image("textures/Mission Center Icon.png"), action=PlaceMissionCenter, action_parameter=self)
         self.btn27.set_layer(-2)
         self.add(self.btn27)
         
@@ -435,7 +443,21 @@ class PlaceMissionCenter(TwoPointEdit):
         rot = get_angle(p1[0], p1[1], p2[0], p2[1])
         mission_center.MissionCenter(z=p1[0], x=p1[1], world=self.world(), rotation=rot)
             
-                
+class BuildLodge(TwoPointEdit):
+    def __init__(self, menu):
+        super().__init__(menu, "Select location", "Select angle")
+      
+    def execute(self, p1, p2):
+        rot = get_angle(p1[0], p1[1], p2[0], p2[1])
+        lodge.Lodge(z=p1[0], x=p1[1], world=self.world(), rotation=rot)
+class BuildHut(TwoPointEdit):
+    def __init__(self, menu):
+        super().__init__(menu, "Select location", "Select angle")
+      
+    def execute(self, p1, p2):
+        rot = get_angle(p1[0], p1[1], p2[0], p2[1])
+        lodge.Hut(z=p1[0], x=p1[1], world=self.world(), rotation=rot)
+            
                 
 class PlaceBumps(TwoPointEdit):
     def __init__(self, menu):

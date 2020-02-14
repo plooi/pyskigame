@@ -6,6 +6,9 @@ from models import *
 from rock import Rock
 from bump import Bump
 from world_object import WorldObject
+from lodge import *
+from mission_center import *
+from landmark import *
 
 
 

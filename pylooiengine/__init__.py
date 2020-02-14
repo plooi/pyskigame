@@ -87,6 +87,7 @@ def main():
 
 class Window():
     def __init__(self, window_width=1000, window_height=600, internal_size=(1920,1080), fps=30):
+        pygame.mixer.pre_init(44100, 16, 2, 4096)
         pygame.init()
         self.window_size = (window_width, window_height)
         self.internal_size = internal_size
@@ -119,6 +120,11 @@ class Window():
             "released" : [False]*len(pygame.key.get_pressed()),
         }
         self.update_view_dimensions()
+        
+        
+        self.sounds = {}
+        
+        pygame.mixer.init()
     
     def start(self):
         keysdown = [False]*len(pygame.key.get_pressed())
@@ -379,8 +385,16 @@ class Window():
         glVertex2f(x1,y2)
         glEnd()
         glPopMatrix()
-    
-
+    def play_sound(self, sound, volume, fade_ms, maxtime):
+        s = sound
+        s.set_volume(volume)
+        s.play(fade_ms=fade_ms, maxtime=maxtime)
+        return s
+    def new_sound(self, filename, volume):
+        s = pygame.mixer.Sound(filename)
+        s.set_volume(volume)
+        return s
+        
 
 
     
@@ -772,6 +786,13 @@ class LooiObject:
     def events(self):
         return pygame.event.get()
     
+    def play_sound(self, sound, volume=.5, fade_ms=0, maxtime=9999999):
+        return self.get_my_window().play_sound(sound, volume, fade_ms, maxtime)
+    def new_sound(self, filename, volume=.5):
+        return self.get_my_window().new_sound(filename,volume)
+    
+        
+            
 
 
 

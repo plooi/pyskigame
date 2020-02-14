@@ -198,6 +198,8 @@ class WorldObject(LooiObject):
             self.world.delete_object_account(self)
         except Exception as e:
             sg.Popup(str(e))
+        if self.is_active():
+            self.deactivate()
 def default(dictionary, key, value):
     if key not in dictionary:
         dictionary[key] = value

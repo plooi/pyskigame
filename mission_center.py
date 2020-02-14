@@ -7,6 +7,7 @@ import util
 import normal
 from random import random
 import PySimpleGUI as sg
+from constants import x as constants
 
 
 mission_accept_icon = image("textures/Landmark Icon.png")
@@ -25,7 +26,37 @@ def find_closest_mission_center(lz, lx):
     
         
 
-
+def check_reset_missions():
+    for mc in active_mission_centers:
+        landmarks = list(mc.world.landmarks)
+        
+        #remove all the landmarks not closest to this mission center
+        i = 0
+        while i < len(landmarks):
+            lz, lx = (landmarks[i].args["z"], landmarks[i].args["x"])
+            
+            closest = find_closest_mission_center(lz, lx)
+            if not (closest is mc):
+                del landmarks[i]
+                i -= 1
+                
+            i += 1
+        
+        #remove all the completed missions
+        i = 0
+        while i < len(landmarks):
+            landmark_tuple = (landmarks[i].args["z"], landmarks[i].args["x"])
+            if is_in(landmark_tuple, mc.world.properties["completed_missions"]):
+                del landmarks[i]
+                i -= 1
+            i += 1
+            
+        if len(landmarks) >= 4:
+            #this mission center has missions
+            return
+    #no mission centers have missions. Reset
+    mc.world.properties["completed_missions"] = []
+    mc.world.properties["active_missions"] = []#just to make sure
 
 def is_in(landmark_tuple, array_of_missions):
     for mission in array_of_missions:
@@ -60,14 +91,14 @@ class MissionCenter(WorldObject):
         self.draw_icon = False
     def step(self):
         if len(self.world.properties["active_missions"]) == 0:
-            if self.key("f", "down"):
+            if self.key(constants["find_key"], "down"):
                 add_model_to_world_mobile(self.beacon, self.world)
     def paint(self):
         indicator_width = 10
         indicator_height = 50
         indicator_color = Color(0,0,0)
         
-        if len(self.world.properties["active_missions"]) == 0 and self.key("f", "down"):
+        if len(self.world.properties["active_missions"]) == 0 and self.key(constants["find_key"], "down"):
             half_screen = self.get_my_window().get_internal_size()[0]/2
             player_to_me = util.get_angle(self.world.view.z, self.world.view.x, self.args["model_z"], self.args["model_x"])
             diff = normal.angle_distance(self.world.view.hor_rot, player_to_me)
@@ -92,9 +123,10 @@ class MissionCenter(WorldObject):
             return True
         return False
     def touching_player_consequence(self):
+        
         if len(self.world.properties["active_missions"]) == 0:
             self.draw_icon = True
-            if self.key("r", "pressed"):
+            if self.key(constants["interact_key"], "pressed"):
                 landmarks = list(self.world.landmarks)
                 
                 #remove all the landmarks not closest to this mission center

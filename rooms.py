@@ -43,6 +43,9 @@ def main_menu():
     
     abort = Button(800, 400, 400, 85, "Quit", lambda:quit(), Color(.6,.6,.6), black, 64)
     abort.button_depth = 10
+    print(os.getcwd())
+    
+    
 def ski_room():
     kill_all()
     new = Button(700, 250, 600, 85, "New Game", new_ski_world, Color(.6,.6,.6), black, 64)

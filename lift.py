@@ -10,7 +10,8 @@ from lift_util import *
 from selectable import Selectable
 from constants import x as constants
 import PySimpleGUI as sg
-
+import normal
+import mission_center
 def main():
     l = Lift(None)
     l.add_point(Point(0,0,0,1))
@@ -45,7 +46,7 @@ class Lift(LooiObject, Selectable):
         self.z2 = None
         self.x2 = None
         
-        
+        self.broken = False
         
         self.start_terminal = None
         self.end_terminal = None
@@ -63,10 +64,17 @@ class Lift(LooiObject, Selectable):
         
         self.chair_positions=None#at each step, gets updated with the positions of each chair
         self.chair_angles = None
+        self.chair_segments = None
         
         self.player_riding = None#which chair is the player riding
         
         self.track = Track()
+        
+        self.beacon = beacon_model()
+        self.can_fix = False
+        self.fix_icon = image("textures/Fix Icon.png")
+        self.fixing = False
+        
         
     """
     [startZ, startX, [array of pole percentage values, negatives mean midpoints], endZ, endX]
@@ -144,6 +152,7 @@ class Lift(LooiObject, Selectable):
         self.update_object_account()
         
         self.activate()
+        move_model(self.beacon, self.start_terminal.real_x, self.start_terminal.real_y, self.start_terminal.real_z)
         return self
     def set_chair_time_distance(self, chair_time_distance):
         self.chairs = []
@@ -158,6 +167,7 @@ class Lift(LooiObject, Selectable):
         
         self.chair_positions = [[-9999999,-9999999,-9999999]] * len(self.chairs)
         self.chair_angles = [0] * len(self.chairs)
+        self.chair_segments = [-1] * len(self.chairs)
 
     def fix_underground_spots(self, rep=0):
         if rep > 15:
@@ -303,10 +313,45 @@ class Lift(LooiObject, Selectable):
     def update(self):
         self.track.generate_segments()
     def step(self):
+        
+        #this is so that there is one frame between when I press r and when the lift is fixed
+        if self.fixing:
+            self.world.properties["active_missions"] = []
+            mission_center.check_reset_missions()#for now, just end the mission, because I don't want to have to program the body
+            #remember, you have to do the case for if there are no lifts
+            #give the save the buddy mission
+            #TODO...
+        
+        self.broken=False
+        for mission in self.world.properties["active_missions"]:
+            if mission[1] == 2:#lift fix mission
+                z,x = mission[0]
+                if z==self.z1 and x==self.x1:
+                    self.broken=True
+                    if self.key(constants["find_key"], "down"):
+                        add_model_to_world_mobile(self.beacon, self.world)
+        
+        
+        self.can_fix = False
+        self.fixing = False
+        if self.broken:
+            if ( 
+                (self.world.view.x-self.start_terminal.real_x)**2 + 
+                (self.world.view.z-self.start_terminal.real_z)**2 )**.5 < 4.5 or ( 
+                (self.world.view.x-self.end_terminal.real_x)**2 + 
+                (self.world.view.z-self.end_terminal.real_z)**2 )**.5 < 4.5:
+                self.can_fix = True
+                if self.key(constants["interact_key"], "pressed"):
+                    self.fixing=True
+                    
         if ( 
             (self.world.view.x/self.world.properties["horizontal_stretch"]-self.center_x)**2 + 
             (self.world.view.z/self.world.properties["horizontal_stretch"]-self.center_z)**2 )**.5 > 5 + self.distance/2 + self.world.view.line_of_sight*self.world.properties["chunk_size"]:
             return
+        
+        
+        
+        
         rtt = self.round_trip_time()
         
         segment_index = 0
@@ -336,6 +381,15 @@ class Lift(LooiObject, Selectable):
                     self.chair_positions[i] = chair_i_position
                     self.chair_angles[i] = chair_i_angle
                     
+                    if segment_index != self.chair_segments[i] and self.chair_segments[i] != -1:#if this chair is entering a new segment
+                        if self.track.segments[segment_index-1].speed == constants[self.rope_speed]:#and the previous segment is rope speed
+                            if self.track.segments[segment_index].speed == constants[self.rope_speed]:#and this new segment is rope speed
+                                #then we must be going over a bu bu bump
+                                self.world.game_ui.pole_sound(chair_i_position[0], chair_i_position[1], chair_i_position[2])
+                    
+                    
+                    self.chair_segments[i] = segment_index
+                    
                     #execute the chair drawing
                     if self.world.in_los(chair_i_position[2], chair_i_position[0], scaled=True):
                         if self.player_riding == i:
@@ -363,7 +417,8 @@ class Lift(LooiObject, Selectable):
                         
                             add_model_to_world_mobile(model, self.world)
                     
-                    self.chairs[i] += 1#increment the time
+                    if not self.broken:
+                        self.chairs[i] += 1#increment the time
                     
                     
                     break#move on to next chair
@@ -371,6 +426,8 @@ class Lift(LooiObject, Selectable):
                     #chair is in a future segment
                     time += self.track.segments[segment_index].get_time_duration()
                     segment_index += 1
+                    
+                    
                 
                 
     def activate(self):
@@ -423,7 +480,30 @@ class Lift(LooiObject, Selectable):
         
         window.close()
 
-
+    def paint(self):
+        
+        if self.can_fix:
+            self.draw_image(950, 900, 1050, 1000,self.fix_icon)
+        if self.broken and self.key(constants["find_key"], "down"):
+            indicator_width = 10
+            indicator_height = 50
+            indicator_color = Color(1,1,0)
+            half_screen = self.get_my_window().get_internal_size()[0]/2
+            player_to_me = util.get_angle(self.world.view.z, self.world.view.x, self.start_terminal.real_z, self.start_terminal.real_x)
+            diff = normal.angle_distance(self.world.view.hor_rot, player_to_me)
+            if normal.angle_distance(self.world.view.hor_rot + .001, player_to_me) < normal.angle_distance(self.world.view.hor_rot - .001, player_to_me):
+                #this mission center is left of the player
+                x = diff/(math.pi/2)
+                if x > 1:
+                    x = 1
+                x = half_screen - x*half_screen
+            else:
+                #this mission centre is left of the player
+                x = diff/(math.pi/2)
+                if x > 1:
+                    x = 1
+                x = half_screen + x*half_screen
+            self.draw_rect(x-indicator_width/2, 0, x+indicator_width/2, indicator_height, indicator_color)
     
 
 class Pole:
@@ -484,6 +564,24 @@ class Terminal:
         move_track(self.track, self.real_x, self.real_y, self.real_z)
     def delete(self):
         rm_model_from_world_fixed(self.vhkeys, self.chairlift.world, int(self.z), int(self.x), self)
+
+
+
+def beacon_model(
+    width=3,
+    height=1000):
+    
+    return [
+        [-width/2,0,-width/2],[width/2,0,-width/2],[width/2,height,-width/2],[-width/2,height,-width/2],[.8,.8,.5],
+        [-width/2,0,width/2],[width/2,0,width/2],[width/2,height,width/2],[-width/2,height,width/2],[.8,.8,.5],
+        [-width/2,0,-width/2],[-width/2,0,width/2],[-width/2,height,width/2],[-width/2,height,-width/2],[.8,.8,.5],
+        [width/2,0,-width/2],[width/2,0,width/2],[width/2,height,width/2],[width/2,height,-width/2],[.8,.8,.5],
+        #[0,height-square_diagonal/2,0],[0,height,square_diagonal/2],[0,height+square_diagonal/2,0],[0,height,-square_diagonal/2],square_color,
+    
+    
+    
+    ]
+
 if __name__ == "__main__": main()
     
     

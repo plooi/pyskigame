@@ -7,6 +7,8 @@ import util
 import normal
 import mission_center
 import PySimpleGUI as sg
+import lift
+from constants import x as constants
 class Landmark(WorldObject):
     #required: x,z,world
     def __init__(self, **args):
@@ -39,17 +41,20 @@ class Landmark(WorldObject):
             self.show()
         else:
             location_tuple = (self.args["z"], self.args["x"])
+            
+            
             if mission_center.is_in(location_tuple, self.world.properties["active_missions"]):
                 self.show()
             else:
                 self.hide()
-        if self.showing and self.key("f", "down"):
+            
+        if self.showing and self.key(constants["find_key"], "down"):
             add_model_to_world_mobile(self.beacon, self.world)
     def paint(self):
         indicator_width = 10
         indicator_height = 50
         indicator_color = Color(1,0,0)
-        if self.showing and self.key("f", "down"):
+        if self.showing and self.key(constants["find_key"], "down"):
             half_screen = self.get_my_window().get_internal_size()[0]/2
             player_to_me = util.get_angle(self.world.view.z, self.world.view.x, self.args["model_z"], self.args["model_x"])
             diff = normal.angle_distance(self.world.view.hor_rot, player_to_me)
@@ -79,7 +84,24 @@ class Landmark(WorldObject):
                 
                 if mission_type == 1:
                     if len(self.world.properties["active_missions"]) == 0:
-                        sg.Popup("Type 1 missions complete.")
+                        #set up the lift fixing mission
+                        if len(lift.active_lifts) == 0:
+                            mission_center.check_reset_missions()
+                            pass#todo: Skip the lift mission
+                        else:
+                            n = 5#choose a random lift from the closest n lifts
+                            chosen_lift = None
+                            lifts = list(lift.active_lifts)
+                            lifts.sort(key = lambda l: (self.args["z"]-l.z1)**2 + (self.args["x"]-l.x1)**2)
+                            if len(lifts) < n:
+                                chosen_lift = mission_center.randomly_select(1, lifts)[0]
+                            else:
+                                chosen_lift = mission_center.randomly_select(1, lifts[0:n])[0]
+                                print(lifts[0:n].index(chosen_lift))
+                            #chosen_lift.broken = True
+                            self.world.properties["active_missions"].append([(chosen_lift.z1,chosen_lift.x1),2])
+                                
+                            
                 return
 """
 def beacon_model():

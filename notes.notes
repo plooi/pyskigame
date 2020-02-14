@@ -1,4 +1,22 @@
+Longer wind sound clip 
+Minimum wind volume
+
+
+
+
+More aggressive ice
+fog at certain elevations
+Allow user to reset the mission progress
+
 Next steps
+
+
+Note to self: if the command prompt enters select mode and then python 
+tries to print something, then the fact that the command prompt is in select
+mode will actually block the python thread from printing until select mode
+is aborted. 
+
+
 
 1. Landmarks
     b. If the game doesn't have enough landmarks, it will randomly generate
@@ -43,9 +61,17 @@ Misc
     Add the sun 
     Fix the pan chunk squares
     Map editor should not save onto ski saves, only worlds
-    
-    
-
+    dont hardcode the keys like w e r f
+    do not allow the skier to walk through cliffs when going slow
+    Make the WOrldObject NOT go to the corner of the square but go to the middle of the square
+    no ski change while on lift!
+    it's too mean to have you instantly fall if you take your finger off the key for 1 second
+    cancel ski change by pressing right click again
+    The fall slope is too steep. 90% of terrain is less steep than the fall slope
+        NEH MIND! I WAS JUST GETTING LACKY LUCKYwhile
+    when you fix a lift, do not let them board it at the exact same step
+    make fixed grip and detachable faster
+    Why does the mission always pick the closest lift?
 
 Later steps
     2. Missions

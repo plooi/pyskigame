@@ -10,6 +10,7 @@ from bump import Bump
 from landmark import Landmark
 from world_object import *
 from mission_center import MissionCenter
+from lodge import *
 
 class StringBuffer:
     def __init__(self):
