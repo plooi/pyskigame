@@ -403,14 +403,15 @@ class LooiObject:
     def __init__(self, layer=None, active=True):
     
         if main_window == None: fail("Tried to create LooiObject, but no Window object exists for the LooiObject to reside in.")
-        else: self.my_window = main_window
+        ####else: self.my_window = main_window
         
         self.contained_looi_objects = []
         self.layer = layer
         self.active = active
         
         if self.active:
-            self.my_window.add_looi_object(self)
+            ####self.my_window.add_looi_object(self)
+            main_window.add_looi_object(self)
         self.xx = 0
         
     def step(self): pass
@@ -446,7 +447,7 @@ class LooiObject:
     def is_active(self):
         return self.active
     def get_my_window(self):
-        return self.my_window
+        return main_window
     def get_mouse_pos(self):
         x,y = pygame.mouse.get_pos()
         x = self.get_my_window().window_x_to_internal_x(x)
@@ -746,6 +747,51 @@ class LooiObject:
         
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_COLOR_ARRAY);
+        
+        glPopMatrix()
+    def draw_image_array_3d(self, vertices, texutre_coords, image, bytes, setup_3d=default_3d_view_setup):
+        glPushMatrix()
+        
+        ix, iy = image.size[0], image.size[1]
+        
+        image = bytes
+        
+        ID = glGenTextures(1)
+        
+        glBindTexture(GL_TEXTURE_2D, ID)
+        glPixelStorei(GL_UNPACK_ALIGNMENT,1)
+        
+        
+        glTexImage2D(
+            GL_TEXTURE_2D, 0, 3, ix, iy, 0,
+            GL_RGBA, GL_UNSIGNED_BYTE, image
+        )
+        
+        
+        glEnable(GL_TEXTURE_2D)
+        
+        
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+        glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL)
+        
+        glBindTexture(GL_TEXTURE_2D, ID)
+        
+        setup_3d()
+        
+        
+        
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        
+        glVertexPointerf(vertices);
+        glTexCoordPointerf(texutre_coords);
+        glDrawArrays(GL_QUADS, 0, len(vertices));
+        
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        
+        glDeleteTextures([ID])
         
         glPopMatrix()
     

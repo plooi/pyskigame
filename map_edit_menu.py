@@ -176,6 +176,7 @@ def settings(menu):
     setting["Map Editor: Lift Build Pole Distance"] = menu.ui.world.properties["build_chair_pole_distance(map_editor)"]
     setting["Map Editor: Line Thickness"] = menu.ui.world.properties["line_thickness(map_editor)"]
     setting["Map Editor: Terrain Mod Step Size"] = menu.ui.world.properties["terrain_mod_step_size(map_editor)"]
+    setting["Map Editor: Bump Placement Chance"] = menu.ui.world.properties["bump_placement_chance(map_editor)"]
     
     """
     "chair_time_distance_detachable" : 210,
@@ -226,6 +227,7 @@ def settings(menu):
             menu.ui.world.properties["line_thickness(map_editor)"] = float(new_settings["Map Editor: Line Thickness"])
             menu.ui.world.properties["terrain_mod_step_size(map_editor)"] = float(new_settings["Map Editor: Terrain Mod Step Size"])
             menu.ui.world.properties["build_chair_pole_distance(map_editor)"] = float(new_settings["Map Editor: Lift Build Pole Distance"])
+            menu.ui.world.properties["bump_placement_chance(map_editor)"] = float(new_settings["Map Editor: Bump Placement Chance"])
             
             
             
@@ -256,7 +258,7 @@ def settings(menu):
                     menu.ui.world.properties["sun_angle"] = float(new_settings["Sun Angle"])
                     for z in range(menu.ui.world.get_height_floors()):
                         for x in range(menu.ui.world.get_width_floors()):
-                            menu.ui.world.reset_floor_color(z, x)
+                            menu.ui.world.reset_floor_texture(z, x)
                             for obj in menu.ui.world.quads[z][x].containedObjects:
                                 if isinstance(obj, Tree):
                                     obj.reset()
@@ -302,6 +304,7 @@ def exit(menu):
     elif event == None:
         return
         
+    menu.ui.stop_sounds()
     #code for exiting:
     for looi_object in pylooiengine.main_window.unlayered_looi_objects+main_window.layered_looi_objects+main_window.transfer_to_unlayered_looi_objects+main_window.transfer_to_layered_looi_objects:
         looi_object.deactivate()
@@ -464,7 +467,7 @@ class PlaceBumps(TwoPointEdit):
         super().__init__(menu)
       
     def execute(self, p1, p2):
-        place_bumps(self.world(), p1[0], p1[1], p2[0], p2[1])
+        place_bumps(self.world(), p1[0], p1[1], p2[0], p2[1], chance = self.world().properties["bump_placement_chance(map_editor)"])
 class RemoveBumps(TwoPointEdit):
     def __init__(self, menu):
         super().__init__(menu)
@@ -725,6 +728,7 @@ class TerrainMod(TwoPointEdit):
                 for pointer in self.pointers:
                     pointer.deactivate()
                 self.deactivate()
+                natural_bumps(self.world(), self.p1[0], self.p1[1], self.p2[0], self.p2[1])
         if self.mouse("left", "pressed") or self.mouse("left", "released"):
             if self.stage == "select p1":
                 self.p1 = self.world().get_view_pointing()
@@ -737,6 +741,7 @@ class TerrainMod(TwoPointEdit):
                     
                     self.execute(self.p1, self.p2)
                     self.stage = "modify terrain"
+                    remove_natural_bumps(self.world(), self.p1[0], self.p1[1], self.p2[0], self.p2[1])
                     
         
     def up():pass
@@ -756,6 +761,7 @@ class HillMod(TerrainMod):
         raise_hill(self.world(), self.p1[0], self.p1[1], self.p2[0], self.p2[1], self.world().properties["terrain_mod_step_size(map_editor)"])
     def down(self):
         raise_hill(self.world(), self.p1[0], self.p1[1], self.p2[0], self.p2[1], -self.world().properties["terrain_mod_step_size(map_editor)"])
+        
         
         
 class SmoothMod(TerrainMod):

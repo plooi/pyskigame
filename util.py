@@ -1,5 +1,5 @@
 import math
-
+import normal
 
 def get_angle(z1, x1, z2, x2):
     if x2==x1:
@@ -27,4 +27,12 @@ def extreme(x, degree=1):
             x = x**.5
             x = 1-x
     return x
-        
+
+
+
+#a and b are angles
+def is_a_left_of_b(a, b):
+    if normal.angle_distance(a + .00001, b) < normal.angle_distance(a, b):
+        return False
+    return True
+    

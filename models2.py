@@ -313,9 +313,68 @@ def building_with_slanted_roof(
 
 
 
+def bump_model_1(
+            diagonal_length=12,
+            height = 1.1,
+            base=-4.6,
+            downhill_height = -4.9,
+            uphill_height = 1.1,
+            angle_distance_from_sun = 0,
+            sun_is_to_the_left = True,
+            ):
+    if angle_distance_from_sun < math.pi/5:
+        tex1 = "MinecraftSnow-lighting-243"
+        tex2 = "MinecraftSnow-lighting-243"
+    elif angle_distance_from_sun < 4*math.pi/5:
+        if sun_is_to_the_left:
+            tex1 = "MinecraftSnow-lighting-231"
+            tex2 = "MinecraftSnow-lighting-211"
+        else:
+            tex1 = "MinecraftSnow-lighting-211"
+            tex2 = "MinecraftSnow-lighting-231"
+    else:
+        tex1 = "MinecraftSnow-lighting-223"
+        tex2 = "MinecraftSnow-lighting-223"
+        
+    
+    d = diagonal_length
+    return [
+            [-d/2, uphill_height, 0],[0, base, -d/2],[d/2, downhill_height, 0],[0,height,0],tex1,
+            [-d/2, uphill_height, 0],[0, base, d/2],[d/2, downhill_height, 0],[0,height,0],tex2,
+            [0,height,0],[-.1,height,0],[-.1,height+.4,0],[0,height+.4,0],"White",
+            ]
+            
+def bump_model_3(
+            diagonal_length=12,
+            height = 1.1,
+            base=-4.6,
+            downhill_height = -4.9,
+            uphill_height = 1.1,
+            angle_distance_from_sun = 0,
+            sun_is_to_the_left = True,
+            ):
+    if angle_distance_from_sun < math.pi/5:
+        tex1 = "MinecraftSnow-lighting-243"
+        tex2 = "MinecraftSnow-lighting-243"
+    elif angle_distance_from_sun < 4*math.pi/5:
+        if sun_is_to_the_left:
+            tex1 = "MinecraftSnow-lighting-231"
+            tex2 = "MinecraftSnow-lighting-211"
+        else:
+            tex1 = "MinecraftSnow-lighting-211"
+            tex2 = "MinecraftSnow-lighting-231"
+    else:
+        tex1 = "MinecraftSnow-lighting-223"
+        tex2 = "MinecraftSnow-lighting-223"
+        
+    
+    d = diagonal_length
+    return [
+            [-d/2, uphill_height, 0],[0, base, -d/2],[d/2, downhill_height, 0],[0,height,0],tex1,
+            [-d/2, uphill_height, 0],[0, base, d/2],[d/2, downhill_height, 0],[0,height,0],tex2,
+            ]
 
-
-
+#original model, just exists for backward compatibility purposes
 def bump_model_2(
             diagonal_length=12,
             height = 1.1,
@@ -331,42 +390,6 @@ def bump_model_2(
             [-d/2, uphill_height, 0],[0, base, d/2],[d/2, downhill_height, 0],[0,height,0],color2,
             
         ]
-
-
-def bump_model_3(
-            diagonal_length=18,
-            height = 1.6,
-            base=-6,
-            downhill_height = -10,
-            uphill_height = 0
-            ):
-    color1 = [.95,.95,.95]
-    color2 = [.91,.91,.91]
-    d = diagonal_length
-    return [
-            [-d/2, uphill_height, 0],[0, base, -d/2],[d/2, downhill_height, 0],[0,height,0],color1,
-            [-d/2, uphill_height, 0],[0, base, d/2],[d/2, downhill_height, 0],[0,height,0],color2,
-            
-        ]
-
-
-#failure
-def bump_model_1(
-            diagonal_length=9,
-            height = .7,
-            base=-2,
-            ):
-    top_color = [.8,.8,.8]
-    side_color = [.6,.6,.6]
-    shadow_color = [.3,.3,.3]
-    sun_color = [.95,.95,.95]
-    d = diagonal_length
-    return [
-            [-d/2, base, 0],[0, base, -d/2],[d/2, base, 0],[0,height,0],shadow_color,side_color,sun_color,top_color,
-            [-d/2, base, 0],[0, base, d/2],[d/2, base, 0],[0,height,0],shadow_color,side_color,sun_color,top_color,
-            
-        ]
-
 
 
 

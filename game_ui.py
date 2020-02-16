@@ -14,6 +14,32 @@ from lift import Pole
 from bump import Bump
 from world_object import WorldObject
 import mission_center
+import model_3d
+import pylooiengine
+
+
+
+
+wind_sound = pylooiengine.main_window.new_sound("sounds/Wind.ogg",0)
+wind_sound.play(loops = 9999999) #9999 loops is 20 days straight. I think nobody is going to play for 20 days straight so it's basically forever eh
+
+
+lift_sound = pylooiengine.main_window.new_sound("sounds/ChairliftTerminal.ogg",0)
+lift_sound.play(loops = 9999999)#63 years about. We should be okay
+
+
+swish_sound = pylooiengine.main_window.new_sound("sounds/SkiSwish4.ogg", 1)
+
+
+fall_sound = pylooiengine.main_window.new_sound("sounds/Fall.ogg",.9)
+
+pole_sound_obj = pylooiengine.main_window.new_sound("sounds/PoleBump1.ogg",.4)
+
+
+
+
+
+
 class UI(LooiObject):
     def __init__(self, world, game_mode):
         super().__init__(active=False)
@@ -53,19 +79,31 @@ class UI(LooiObject):
         self.health_timer = 0#time how long you want to show the health bar
         self.health_target = self.world.properties["health"]
         
-        self.wind_sound = self.new_sound("sounds/wind.ogg",volume=0)
+        
+        
         self.wind_vol = 0
-        
-        self.lift_sound = self.new_sound("sounds/ChairliftTerminal.ogg",volume=0)
         self.lift_vol = 0
-        
-        self.swish_sound = self.new_sound("sounds/SkiSwish4.ogg", volume=1)
         self.swish_timer = 0
+        """
+        wind_sound = .new_sound("sounds/Wind.ogg",volume=0)
+        wind_sound.play(loops = 9999999) #9999 loops is 20 days straight. I think nobody is going to play for 20 days straight so it's basically forever eh
         
-        self.fall_sound = self.new_sound("sounds/Fall.ogg",volume=.9)
         
-        self.pole_sound_obj = self.new_sound("sounds/PoleBump1.ogg",volume=.4)
+        lift_sound = self.new_sound("sounds/ChairliftTerminal.ogg",volume=0)
+        lift_sound.play(loops = 9999999)#63 years about. We should be okay
         
+        
+        swish_sound = self.new_sound("sounds/SkiSwish4.ogg", volume=1)
+        
+        
+        fall_sound = self.new_sound("sounds/Fall.ogg",volume=.9)
+        
+        pole_sound_obj = self.new_sound("sounds/PoleBump1.ogg",volume=.4)
+        """
+        
+    def stop_sounds(self):
+        wind_sound.stop()
+        lift_sound.stop()
     def chairlift_ride(self):
         self.can_load = False
         self.can_fix = False
@@ -174,7 +212,7 @@ class UI(LooiObject):
             vol = int(vol)
             vol /= 4
             """
-            self.pole_sound_obj.play(maxtime=1000)
+            pole_sound_obj.play(maxtime=1000)
             
     def sounds(self):
         self.clock += 1
@@ -185,30 +223,30 @@ class UI(LooiObject):
             
             
         #wind
+        """
         if self.clock % 600 == 0:
             self.wind_sound.stop()
             self.wind_sound.play()
+        """
         vol = 0
         if self.world.properties["momentum"] == 0:
             if self.my_lift != None:
                 vol = .7
+            else:
+                vol = .1
         else:
             vol = self.world.properties["momentum"] / 1
         if vol>1:vol=1
-        vol *= 5
-        vol = int(vol)
-        vol /= 4
-        if self.wind_vol != vol:
-            self.wind_vol = vol
-            self.wind_sound.set_volume(self.wind_vol)
-            self.wind_sound.stop()
-            self.wind_sound.play()
+        if vol < .17: vol=.17
+        wind_sound.set_volume(vol)
+        
         
         #lift
+        """
         if self.clock % 160 == 0:
-            self.lift_sound.stop()
+            lift_sound.stop()
             self.lift_sound.play()
-            
+        """
         x = self.world.view.x
         y = self.world.view.y
         z = self.world.view.z
@@ -226,24 +264,16 @@ class UI(LooiObject):
         
         #swish
         if self.world.properties["momentum"] > .1 and self.swish_timer == 0 and angle_distance(self.world.view.hor_rot, self.world.properties["ski_direction"]) > math.pi/10:
-            self.swish_sound.stop()
-            self.swish_sound.play(maxtime=2000, fade_ms = 1000)
+            swish_sound.stop()
+            swish_sound.play(maxtime=2000, fade_ms = 1000)
             self.swish_timer = 25
         if self.swish_timer == 15:
-            self.swish_sound.fadeout(1000)
+            swish_sound.fadeout(1000)
                 
             
     def set_lift_vol(self, vol):
-        if vol>1:vol=1
-        vol *= 5
-        vol = int(vol)
-        vol /= 4
-        vol *= .5#to make it quieter
-        if self.lift_vol != vol:
-            self.lift_vol = vol
-            self.lift_sound.set_volume(self.lift_vol)
-            self.lift_sound.stop()
-            self.lift_sound.play()
+        self.lift_vol = vol
+        lift_sound.set_volume(self.lift_vol)
         
         
         
@@ -295,7 +325,15 @@ class UI(LooiObject):
             elif self.game_mode == "ski test": self.game_mode = "map editor"
         
         
+        #draw sun
+        self.draw_sun()
+    def draw_sun(self):
+        model = models.sun_model_1()
         
+        model_3d.vertical_rotate_model_around_x_eq_0(model, math.pi/10)
+        model_3d.horizontal_rotate_model_around_origin(model, self.world.properties["sun_angle"])
+        model_3d.move_model(model, self.world.view.x, self.world.view.y, self.world.view.z)
+        model_3d.add_model_to_world_mobile(model, self.world)
             
     def collision_check(self):
         hs = self.world.properties["horizontal_stretch"]
@@ -346,11 +384,6 @@ class UI(LooiObject):
                                 elif isinstance(obj, Pole):
                                     dist = ((obj.real_z-real_z)**2 + (obj.real_x-real_x)**2)**.5
                                     if dist < .5:
-                                        self.falling = True
-                                        return
-                                elif isinstance(obj, Bump):
-                                    dist = ((obj.real_z-real_z)**2 + (obj.real_x-real_x)**2)**.5
-                                    if dist < 1:
                                         self.falling = True
                                         return
                             
@@ -463,7 +496,7 @@ class UI(LooiObject):
                 
         if self.falling:
             if self.fall_clock == 0:
-                self.fall_sound.play(maxtime=1800)
+                fall_sound.play(maxtime=1800)
                 self.health(-20, animate=True)
                 self.world.properties["momentum"] = 0
                 self.original_pos = (self.world.view.x,self.world.view.y,self.world.view.z,self.world.view.hor_rot,self.world.view.vert_rot)

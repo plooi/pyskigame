@@ -43,7 +43,7 @@ def main_menu():
     
     abort = Button(800, 400, 400, 85, "Quit", lambda:quit(), Color(.6,.6,.6), black, 64)
     abort.button_depth = 10
-    print(os.getcwd())
+    
     
     
 def ski_room():
@@ -241,8 +241,6 @@ def load_existing_map_editor():
     event, values = window.Read()
     window.close()
     if event == None: return
-    
-    
     
     
     the_world = world_save.read("./worlds/"+event)

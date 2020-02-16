@@ -17,47 +17,67 @@ import PySimpleGUI as sg
 from rock import Rock
 from models import *
 import util
-
+import model_3d
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from constants import x as constants
 from bump import Bump
 from world_object import WorldObject
 
-ice_textures = {}
-ice_textures_keys = []
-snow_textures = {}
-snow_textures_keys = []
+import texture
+import world_operations
+from PIL import Image
+from time import time
 
 
-for blend in range(4):
-    snow_textures[blend] = {}
-    for target in range(55, 255, 5):
-        snow_textures[blend][target] = image("./textures/SnowTexture-lighting-"+str(target)+"_"*blend+".png")
-        if target not in snow_textures_keys:
-            snow_textures_keys.append(target)
-for blend in range(1):
-    ice_textures[blend] = {}
-    for target in range(55, 255, 5):
-        ice_textures[blend][target] = image("./textures/IceTexture-lighting-"+str(target)+"_"*blend+".png")
-        if target not in ice_textures_keys:
-            ice_textures_keys.append(target)
-            
-snow_textures_keys.reverse()
-ice_textures_keys.reverse()
+arr_155_255 = [x for x in range(155, 256, 4)]
+arr_155_255.reverse()
 
-def get_snow_texture(lighting, distance_0to1):
-    lighting = lighting * 255
+def conv_155_255(x):
+    if x > 1 or x < 0: raise Exception()
+    lighting = x * 255
     def abs(x): return x if x >= 0 else -x
     closest = None
     closest_distance = 999999
-    for key in snow_textures_keys:
+    for key in arr_155_255:
         distance = abs(key-lighting)
         if distance < closest_distance:
             closest = key
             closest_distance = distance
     
-    return snow_textures[int(distance_0to1*4)][closest]
+    return closest
+
+
+arr_55_255 = [x for x in range(55, 255, 5)]
+arr_55_255.reverse()
+
+def conv_55_255(x):
+    if x > 1 or x < 0: raise Exception()
+    lighting = x * 255
+    def abs(x): return x if x >= 0 else -x
+    closest = None
+    closest_distance = 999999
+    for key in arr_55_255:
+        distance = abs(key-lighting)
+        if distance < closest_distance:
+            closest = key
+            closest_distance = distance
+    
+    return closest
+
+ice_textures = {}
+ice_textures_keys = []
+"""
+for blend in range(1):
+    ice_textures[blend] = {}
+    for target in range(55, 255, 5):
+        ice_textures[blend][target] = image("./3d_textures/IceTexture-lighting-"+str(target)+"_"*blend+".png")
+        if target not in ice_textures_keys:
+            ice_textures_keys.append(target)
+            
+
+ice_textures_keys.reverse()
+"""
     
 def get_ice_texture(lighting):
     lighting = lighting * 255
@@ -118,7 +138,7 @@ class Quad:
 class Chunk:
     def __init__(self, world):
         self.vh = VertexHandler(3)#vertex handler to store all non-moving drawables in this chunk
-        
+        self.tvh = texture.new_texture_handler(initial_capacity=world.properties["chunk_size"]**2+1)
         
         #is this even used???
         self.pan_chunk_square_pointer = -1 #pointer to it's chunk square location in the "vertex buffer for all chunk squares" (None if not added)
@@ -150,29 +170,30 @@ class Chunk:
             new_pan_chunk_color = [0,0,0]
             self.colors_changed = False
             
-            for i in range(len(self.vh.vertex_colors)):
+            
+            
+            total_quads = 0
+            
+            for i in range(self.vh.num_occupied()):
                 if self.vh.vertex_colors[i][1]*1.2>self.vh.vertex_colors[i][0] or self.vh.vertex_colors[i][2]*1.2>self.vh.vertex_colors[i][0]:
-                    new_pan_chunk_color[0] += self.vh.vertex_colors[i][0]
-                    new_pan_chunk_color[1] += self.vh.vertex_colors[i][1]
-                    new_pan_chunk_color[2] += self.vh.vertex_colors[i][2]
-                
-            new_pan_chunk_color[0] /= self.vh.num_occupied()
-            new_pan_chunk_color[1] /= self.vh.num_occupied()
-            new_pan_chunk_color[2] /= self.vh.num_occupied()
-            #print("Average color from chunk", chunk_z, chunk_x, "is ", new_pan_chunk_color[0], new_pan_chunk_color[1], new_pan_chunk_color[2], )
-            """
+                    new_pan_chunk_color[0] += self.vh.vertex_colors[i][0]*.5
+                    new_pan_chunk_color[1] += self.vh.vertex_colors[i][1]*.5
+                    new_pan_chunk_color[2] += self.vh.vertex_colors[i][2]*.5
+                    
+                    total_quads+=.5
+                    
             for r in range(ul_z, ul_z+cs):
                 for c in range(ul_x, ul_x+cs):
-                    self.world.quads[r][c]
+                    floor_shade = self.world.get_proper_floor_color(r, c)[0]
                     
-                    each_floor_color = self.world.get_floor_color(r, c)
-                    new_pan_chunk_color[0] += each_floor_color[0]
-                    new_pan_chunk_color[1] += each_floor_color[1]
-                    new_pan_chunk_color[2] += each_floor_color[2]
-            new_pan_chunk_color[0] /= cs**2#the pan chunk color is the average of all the colors of it's floor tiles
-            new_pan_chunk_color[1] /= cs**2#the pan chunk color is the average of all the colors of it's floor tiles
-            new_pan_chunk_color[2] /= cs**2#the pan chunk color is the average of all the colors of it's floor tiles
-            """
+                    new_pan_chunk_color[0] += floor_shade*.97
+                    new_pan_chunk_color[1] += floor_shade
+                    new_pan_chunk_color[2] += floor_shade
+                    
+                    total_quads += 1
+            new_pan_chunk_color[0] /= total_quads
+            new_pan_chunk_color[1] /= total_quads
+            new_pan_chunk_color[2] /= total_quads
             self.last_pan_chunk_color = new_pan_chunk_color
         
         return (
@@ -210,7 +231,6 @@ class World(LooiObject):
             "vertical_stretch" : .15,
             "sun_angle" : 0,
             "background_color" : Color(.7,.7,1),
-            "background_quad_distance" : 3000,
             "texture_distance" : 4, #distance at which we start drawing the snow texture in quads not chunks
             "texture_radius" : 3, #distance at which floors are guaranteed to be textured, regardless of whether you're looking or not
             "active_missions" : [],#missions are lists of two values [(landmark_z,landmark_x), type]
@@ -227,6 +247,7 @@ class World(LooiObject):
             "chair_time_distance_gondola" : 300,#in terms of ticks
             "chair_time_distance_fixed" : 390, #in terms of ticks
             "build_chair_pole_distance(map_editor)" : 23, #in real distance
+            "bump_placement_chance(map_editor)" : 1, #0-1
             
             
             #the settings below are just for ski mode
@@ -317,7 +338,7 @@ class World(LooiObject):
         allocates a spot in the current chunk's buffer for the floor square, and hands that pointer over to the quadrilateral
     """
     def init(self, name, width, height, more_properties={}, elevation_function=lambda z,x:0, view=None, prog_bar=True):
-        if prog_bar: loading.progress_bar("Loading 1/2")
+        if prog_bar: loading.progress_bar("Loading 1/3")
         
         
         #set properties properly
@@ -353,40 +374,56 @@ class World(LooiObject):
                 row.append(c)
             self.chunks.append(row)
             
-        """    
-        #create a temp elevation grid
-        elevation_grid = [None]*(self.properties["height"]+1)
-        for z in range(self.properties["height"]+1):#+1 because the height in points is one plus the height in quads
-            elevation_grid[z] = [elevation_function(z, x) for x in range(self.properties["width"]+1)]
-        elevation_function = lambda z,x: elevation_grid[z][x]*self.properties["vertical_stretch"]
-        """
-        elevation_function_orig = elevation_function
-        elevation_function = lambda z,x: elevation_function_orig(z,x)*self.properties["vertical_stretch"]
         
-        #initialize quads 
+        
+        
+        
+        vs = self.properties["vertical_stretch"]
+        
+        elevation_function_orig = elevation_function
+        elevation_function = lambda z,x: elevation_function_orig(z,x)*vs
+        
+        t1 = time()
+        
+        
+        
+        
         for z in range(self.properties["height"]):
             row = []
             self.quads.append(row)
             for x in range(self.properties["width"]):
+                #actually create the quad object
+                row.append(Quad())#add the quad object to the self.quads
+        
+        #initialize quads 
+        for z in range(self.properties["height"]):
+            
+            
+            for x in range(self.properties["width"]):
                 z_chunk, x_chunk = self.convert_to_chunk_coords(z, x)#find which chunk this quad z,x is in
-                q = Quad()#actually create the quad object
-                row.append(q)#add the quad object to the self.quads
                 
+                q=self.quads[z][x]
                 q.my_chunk_z = z_chunk#set properly which chunk it belongs to
                 q.my_chunk_x = x_chunk
                 
+                tvh = self.chunks[z_chunk][x_chunk].tvh
+                
+                hs = self.properties["horizontal_stretch"]
+                
                 #allocate memory for the quad that is going to be drawn and
                 #set all the elevations to what the elevation function wants
-                q.floor_pointer = self.chunks[z_chunk][x_chunk].vh.add_vertex([x*self.properties["horizontal_stretch"],elevation_function(z,x),z*self.properties["horizontal_stretch"]])
-                self.chunks[z_chunk][x_chunk].vh.add_vertex([(x+1)*self.properties["horizontal_stretch"],elevation_function(z, x+1),z*self.properties["horizontal_stretch"]])
-                self.chunks[z_chunk][x_chunk].vh.add_vertex([(x+1)*self.properties["horizontal_stretch"],elevation_function(z+1, x+1),(z+1)*self.properties["horizontal_stretch"]])
-                self.chunks[z_chunk][x_chunk].vh.add_vertex([x*self.properties["horizontal_stretch"],elevation_function(z+1, x),(z+1)*self.properties["horizontal_stretch"]])
-                self.reset_floor_color(z, x)
+                q.floor_pointer = tvh.add_vertex([x*hs,elevation_function(z,x),z*hs])
+                tvh.add_vertex([(x+1)*hs,elevation_function(z, x+1),z*hs])
+                tvh.add_vertex([(x+1)*hs,elevation_function(z+1, x+1),(z+1)*hs])
+                tvh.add_vertex([x*hs,elevation_function(z+1, x),(z+1)*hs])
                 
             if prog_bar and z % 7 == 0: loading.update(z/self.properties["height"]*100)
-                    
+        
+        for z in range(self.properties["height"]):
+            for x in range(self.properties["width"]):
+                self.reset_floor_texture(z, x)
             
-                
+        print(time() - t1)
         
         """
         do not worry about allocating all the pan chunk squares
@@ -408,7 +445,7 @@ class World(LooiObject):
         used to tell opengl to draw our objects from the proper angles
         """
         def setup_3d():
-            gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), .5, (self.properties["width"]**2 + self.properties["height"]**2)**.5 * 2.5 * self.properties["horizontal_stretch"] )
+            gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), .5, 6000 )
             try:
                 glRotate(rad_to_deg(-(self.view.hor_rot-math.pi/2)), 0, 1, 0)
                 glRotate(rad_to_deg(-self.view.vert_rot), math.cos(self.view.hor_rot - math.pi/2), 0, -math.sin(self.view.hor_rot - math.pi/2))
@@ -418,7 +455,11 @@ class World(LooiObject):
             #print(self.view.x)
         self.setup_3d = setup_3d
         
+        #initialize the natural bumps
         if prog_bar: loading.update(100)
+        world_operations.natural_bumps(self, 0,0,self.get_width_points(), self.get_width_points(), prog_bar=True)
+        
+        
         return self
         #END INIT
         
@@ -443,7 +484,7 @@ class World(LooiObject):
             chunk_z, chunk_x = self.convert_to_chunk_coords(z, x)
             chunk_obj = self.chunks[chunk_z][chunk_x]
             floor_pointer = self.quads[z][x].floor_pointer
-            point = chunk_obj.vh.vertices[floor_pointer+0]#+0 for upper left
+            point = chunk_obj.tvh.vertices[floor_pointer+0]#+0 for upper left
             return point[1] if scaled else point[1]/self.properties["vertical_stretch"]#1 for the y elevation
         else:# we are either on the last row, or the last column, or both
             #so we will have to access other corners and be smart about it
@@ -452,20 +493,20 @@ class World(LooiObject):
                 chunk_z, chunk_x = self.convert_to_chunk_coords(z-1, x)
                 chunk_obj = self.chunks[chunk_z][chunk_x]
                 floor_pointer = self.quads[z-1][x].floor_pointer
-                point = chunk_obj.vh.vertices[floor_pointer+3]#+0 for lower left
+                point = chunk_obj.tvh.vertices[floor_pointer+3]#+0 for lower left
                 return point[1] if scaled else point[1]/self.properties["vertical_stretch"]
             elif z == 0:#then we are on the last column, first (0th) row
                 #so ill just go to that floor and get the upper right point
                 chunk_z, chunk_x = self.convert_to_chunk_coords(z, x-1)
                 chunk_obj = self.chunks[chunk_z][chunk_x]
                 floor_pointer = self.quads[z][x-1].floor_pointer
-                point = chunk_obj.vh.vertices[floor_pointer+1]#+1 for upper right
+                point = chunk_obj.tvh.vertices[floor_pointer+1]#+1 for upper right
                 return point[1] if scaled else point[1]/self.properties["vertical_stretch"]
             else:#then we can just go to the corresponding floor z-1,x-1 and get it's lower right corner
                 chunk_z, chunk_x = self.convert_to_chunk_coords(z-1, x-1)
                 chunk_obj = self.chunks[chunk_z][chunk_x]
                 floor_pointer = self.quads[z-1][x-1].floor_pointer
-                point = chunk_obj.vh.vertices[floor_pointer+2]#+1 for lower right
+                point = chunk_obj.tvh.vertices[floor_pointer+2]#+1 for lower right
                 return point[1] if scaled else point[1]/self.properties["vertical_stretch"]
                 
     #input unscaled position
@@ -530,11 +571,11 @@ class World(LooiObject):
             chunk_z, chunk_x = self.convert_to_chunk_coords(z-1, x-1)
             chunk_obj = self.chunks[chunk_z][chunk_x]
             floor_pointer = self.quads[z-1][x-1].floor_pointer
-            point = chunk_obj.vh.vertices[floor_pointer+2]#+2 for upper left floor's LOWER RIGHT point
+            point = chunk_obj.tvh.vertices[floor_pointer+2]#+2 for upper left floor's LOWER RIGHT point
             point[1] = elevation
             
             if reset_color:
-                self.reset_floor_color(z-1,x-1)
+                self.reset_floor_texture(z-1,x-1)
                 
             if delete_trees:
                 i=0
@@ -550,11 +591,11 @@ class World(LooiObject):
             chunk_z, chunk_x = self.convert_to_chunk_coords(z-1, x)
             chunk_obj = self.chunks[chunk_z][chunk_x]
             floor_pointer = self.quads[z-1][x].floor_pointer
-            point = chunk_obj.vh.vertices[floor_pointer+3]#+3 for upper right floor's LOWER LEFT point
+            point = chunk_obj.tvh.vertices[floor_pointer+3]#+3 for upper right floor's LOWER LEFT point
             point[1] = elevation
             
             if reset_color:
-                self.reset_floor_color(z-1,x)
+                self.reset_floor_texture(z-1,x)
             if delete_trees:
                 i=0
                 while i < len(self.quads[z-1][x].containedObjects):
@@ -569,11 +610,11 @@ class World(LooiObject):
             chunk_z, chunk_x = self.convert_to_chunk_coords(z, x)
             chunk_obj = self.chunks[chunk_z][chunk_x]
             floor_pointer = self.quads[z][x].floor_pointer
-            point = chunk_obj.vh.vertices[floor_pointer+0]#+0 for lower right floor's UPPER LEFT point
+            point = chunk_obj.tvh.vertices[floor_pointer+0]#+0 for lower right floor's UPPER LEFT point
             point[1] = elevation
             
             if reset_color:
-                self.reset_floor_color(z,x)
+                self.reset_floor_texture(z,x)
             if delete_trees:
                 i=0
                 while i < len(self.quads[z][x].containedObjects):
@@ -588,11 +629,11 @@ class World(LooiObject):
             chunk_z, chunk_x = self.convert_to_chunk_coords(z, x-1)
             chunk_obj = self.chunks[chunk_z][chunk_x]
             floor_pointer = self.quads[z][x-1].floor_pointer
-            point = chunk_obj.vh.vertices[floor_pointer+1]#+1 for upper left floor's UPPER RIGHT point
+            point = chunk_obj.tvh.vertices[floor_pointer+1]#+1 for upper left floor's UPPER RIGHT point
             point[1] = elevation
             
             if reset_color:
-                self.reset_floor_color(z,x-1)
+                self.reset_floor_texture(z,x-1)
             if delete_trees:
                 i=0
                 while i < len(self.quads[z][x-1].containedObjects):
@@ -602,8 +643,27 @@ class World(LooiObject):
                         i -= 1
                     i+=1
                         
+    def get_rotation(self, floor_z, floor_x):
+    
+        #find the floor object and the chunk object
+        floor = self.quads[floor_z][floor_x]
+        chunk = self.chunks[floor.my_chunk_z][floor.my_chunk_x]
         
+        
+        #find the coordinates of all the 
+        ul = chunk.tvh.vertices[floor.floor_pointer]
+        ur = chunk.tvh.vertices[floor.floor_pointer+1]
+        lr = chunk.tvh.vertices[floor.floor_pointer+2]
+        ll = chunk.tvh.vertices[floor.floor_pointer+3]
+        
+        #find hr and vr or the floor so we can use that to calculate the color
+        hr, vr = normal.get_plane_rotation(ul[0],ul[1],ul[2],ur[0],ur[1],ur[2],lr[0],lr[1],lr[2])
+        if vr < 0:
+            vr = -vr
+            hr = hr + math.pi
             
+        return hr,vr
+        
             
             
     
@@ -662,6 +722,7 @@ class World(LooiObject):
         floor = self.quads[floor_z][floor_x]
         chunk = self.chunks[floor.my_chunk_z][floor.my_chunk_x]
         
+        raise Exception("This needs to be redone to consider textures")
         return chunk.vh.vertex_colors[floor.floor_pointer]
     
     
@@ -672,17 +733,15 @@ class World(LooiObject):
     finds the floor that we're dealing with
     goes to the floor pointer in the floor's chunk's vertexhandler and sets the color
     """
-    def set_floor_color(self, floor_z, floor_x, color):
-        """
+    def set_floor_texture(self, floor_z, floor_x, texture_str):
+        check(self.valid_floor(floor_z, floor_x))
+        
         floor = self.quads[floor_z][floor_x]
         chunk = self.chunks[floor.my_chunk_z][floor.my_chunk_x]
         
-        chunk.vh.vertex_colors[floor.floor_pointer] = color
-        chunk.vh.vertex_colors[floor.floor_pointer+1] = color
-        chunk.vh.vertex_colors[floor.floor_pointer+2] = color
-        chunk.vh.vertex_colors[floor.floor_pointer+3] = color
-        
+        texture.set_texture(chunk.tvh, floor.floor_pointer, texture_str)
         chunk.colors_changed = True
+        
         """
         
         if floor_z == self.get_height_floors()-1:
@@ -719,16 +778,24 @@ class World(LooiObject):
             chunk.vh.vertex_colors[floor.floor_pointer+1] = color
             chunk.colors_changed = True
         
-    
+        """
     """
-    reset_floor_color
+    reset_floor_texture
     
-    calls get_proper_floor_color and sets this floor to whatever color
+    calls get_proper_floor_color and sets this floor to whatever shade
     we just got out of that function
     """
-    def reset_floor_color(self, floor_z, floor_x):
-        floor = self.quads[floor_z][floor_x]
-        self.set_floor_color(floor_z, floor_x, self.get_proper_floor_color(floor_z, floor_x))
+    def reset_floor_texture(self, floor_z, floor_x):
+        shade = self.get_proper_floor_color(floor_z, floor_x)[0]
+        #shade = self.get_proper_floor_shade(floor_z, floor_x)
+        #floor = self.quads[floor_z][floor_x]
+        
+        if self.is_ice(floor_z, floor_x):
+            self.set_floor_texture(floor_z, floor_x, "IceTexture-lighting-%d" % (conv_155_255(shade),))
+        else:
+            self.set_floor_texture(floor_z, floor_x, "MinecraftSnow-lighting-%d" % (conv_155_255(shade),))
+    
+    
     
     """
     get_proper_floor_color
@@ -739,16 +806,17 @@ class World(LooiObject):
     uses the indices of the four corners to set the color to the new color in the vertex handler
     """
     def get_proper_floor_color(self, floor_z, floor_x, consider_ice=True):
+        
         #find the floor object and the chunk object
         floor = self.quads[floor_z][floor_x]
         chunk = self.chunks[floor.my_chunk_z][floor.my_chunk_x]
         
         
         #find the coordinates of all the 
-        ul = chunk.vh.vertices[floor.floor_pointer]
-        ur = chunk.vh.vertices[floor.floor_pointer+1]
-        lr = chunk.vh.vertices[floor.floor_pointer+2]
-        ll = chunk.vh.vertices[floor.floor_pointer+3]
+        ul = chunk.tvh.vertices[floor.floor_pointer]
+        ur = chunk.tvh.vertices[floor.floor_pointer+1]
+        lr = chunk.tvh.vertices[floor.floor_pointer+2]
+        ll = chunk.tvh.vertices[floor.floor_pointer+3]
         
         #find hr and vr or the floor so we can use that to calculate the color
         hr, vr = normal.get_plane_rotation(ul[0],ul[1],ul[2],ur[0],ur[1],ur[2],lr[0],lr[1],lr[2])
@@ -778,6 +846,11 @@ class World(LooiObject):
     takes in the hr and vr and calculates a floor color based on that
     """
     def calculate_floor_color(self, hr, vr):
+        return [self.calculate_floor_color_single(hr, vr)]*3
+    """
+    optimized for speed
+    """
+    def calculate_floor_color_single(self, hr, vr):
         def stretch(_0_to_1,min, max):
             return _0_to_1 * (max-min)+min
         sun = self.properties["sun_angle"]
@@ -802,10 +875,9 @@ class World(LooiObject):
         
         #color_value = stretch(color_value, .2, .89)
         color_value = color_value**.7
-        color_value = stretch(color_value, .3, 1)
+        color_value = stretch(color_value, .6, 1)
         
-        color = [color_value]*3
-        return color
+        return color_value
     def is_ice(self, z, x, hr=None, vr=None):
         if not self.valid_floor(z, x):
             return False
@@ -815,18 +887,28 @@ class World(LooiObject):
         seed = (  math.sin((10*int((z*hs)/35))**2) + math.sin((12*int((x*hs)/35))**2)  )/2
         seed2 = (  math.sin((12*int((z*hs)/35))**2) + math.sin((6*int((x*hs)/35))**2)  )/2
         seed3 = (  math.sin((20*int((z*hs)/35))**2) + math.sin((17*int((x*hs)/35))**2)  )/2
-        if not(seed < .4 and seed > -.4):return False
+        if not(seed < .28 and seed > -.28):return False
         
         xx = x*hs % 35
         zz = z*hs % 35
-        if ((xx-(17+seed2*5))**2 + (zz-(17+seed2*5))**2)**.5 > 17:return False
+        if ((xx-(17+seed2*5))**2 + (zz-(17+seed3*5))**2)**.5 > 17:return False
         
+        
+        def get_elev(zz, xx):
+            floor = self.quads[zz][xx]
+            chunk = self.chunks[floor.my_chunk_z][floor.my_chunk_x]
+            return (
+                        chunk.tvh.vertices[floor.floor_pointer],
+                        chunk.tvh.vertices[floor.floor_pointer+1],
+                        chunk.tvh.vertices[floor.floor_pointer+2],
+                        chunk.tvh.vertices[floor.floor_pointer+3])
         
         if hr==None and vr==None:
+            elevs = get_elev(z, x)
             hr,vr = normal.get_plane_rotation(
-                                    x*hs,self.get_elevation(z,x)*vs,z*hs,
-                                    (x+1)*hs,self.get_elevation(z,x+1)*vs,z*hs,
-                                    (x+1)*hs,self.get_elevation(z+1,x+1)*vs,(z+1)*hs)
+                                    x*hs,elevs[0][1],z*hs,
+                                    (x+1)*hs,elevs[1][1],z*hs,
+                                    (x+1)*hs,elevs[2][1],(z+1)*hs)
             if vr < 0:
                 vr = -vr
                 hr = hr + math.pi
@@ -837,6 +919,29 @@ class World(LooiObject):
                 floor_slope > constants["ice_slope"][1] and
                 (normal.angle_distance(hr, self.properties["sun_angle"]+math.pi) > constants["no_ice_zone"]/2)
                 )
+    def is_bump(self, real_z, real_x):
+        hs = self.properties["horizontal_stretch"]
+        vs = self.properties["vertical_stretch"]
+        
+        z = int(real_z/hs)
+        x = int(real_x/hs)
+        
+        if not self.valid_floor(z, x):
+            return False
+        
+        seed = (  math.sin(17*real_z**2) + math.sin(27*real_x**2)  )/2
+        seed2 = (  math.sin((20*int((real_z)/35))**2) + math.sin((17*int((real_x)/35))**2)  )/2
+        
+        if not(seed < constants["bump_density"] and seed > -constants["bump_density"]): return False
+        if not(seed2 < constants["bump_group_density"] and seed2 > -constants["bump_group_density"]): return False
+        
+        hr, vr = self.get_rotation(z, x)
+        floor_slope = math.pi/2 - vr
+        #print("bump",real_z,real_x)
+        return floor_slope < constants["bump_slope"][0] and floor_slope > constants["bump_slope"][1]
+        
+        
+        
     
 ###################################
 #END floor color
@@ -852,14 +957,14 @@ class World(LooiObject):
 ###################################
     def step(self):
         pass
+        
     def paint(self):
+        #draw sky
+        self.draw_rect(0,0,self.get_my_window().get_internal_size()[0],self.get_my_window().get_internal_size()[1], self.properties["background_color"])
+        glClear(GL_DEPTH_BUFFER_BIT)
+        
         self.draw(self.get_chunk_load_grid())
         self.draw_mobile()
-        
-        
-        #draw sky
-        d = self.properties["background_quad_distance"]
-        self.draw_quad_3d(-2*d, 2*d, -d, 2*d, 2*d, -d, 2*d, -2*d, -d, -2*d, -2*d, -d, self.properties["background_color"], setup_3d=lambda: gluPerspective(45, (main_window.window_size[0]/main_window.window_size[1]), 0.2, 10000.0))
         
         
         glClear(GL_DEPTH_BUFFER_BIT)#clear the depth buffer bit so that the 2d stuff renders on top
@@ -950,6 +1055,9 @@ class World(LooiObject):
         vertices_draw = []
         colors_draw = []
         
+        tex_vertices_draw = []
+        tex_coords_draw = []
+        
         #if the chunk load grid is not 1, make sure the pan chunk square is added to self.pan_chunk_squares
         
         
@@ -965,6 +1073,8 @@ class World(LooiObject):
                     vertices_draw.append(self.chunks[z][x].vh.vertices)
                     colors_draw.append(self.chunks[z][x].vh.vertex_colors)
                     
+                    tex_vertices_draw.append(self.chunks[z][x].tvh.vertices)
+                    tex_coords_draw.append(self.chunks[z][x].tvh.vertex_colors)
                     
                     #if the pan chunk square is showing, get rid of it
                     if self.chunks[z][x].pan_chunk_square_pointer != -1:
@@ -1001,17 +1111,20 @@ class World(LooiObject):
         
         vertices_draw = numpy.vstack(tuple(vertices_draw))
         colors_draw = numpy.vstack(tuple(colors_draw))
-        
-        if random() < .05:print(len(vertices_draw))
-        
-        
-        
-        #print(vertices_draw)
-        
-        
-        #draw the stuff using opengl
         self.draw_quad_array_3d(vertices_draw, colors_draw, setup_3d=self.setup_3d)
+        if len(tex_vertices_draw) > 0:
+            tex_vertices_draw = numpy.vstack(tuple(tex_vertices_draw))
+            tex_coords_draw = numpy.vstack(tuple(tex_coords_draw))
+            
+            #print(vertices_draw)
+            
+            
+            #draw the stuff using opengl
+            
+            self.draw_image_array_3d(tex_vertices_draw, tex_coords_draw, texture.tex, texture.tex_b, setup_3d=self.setup_3d)
+            
         
+        return#######################
         
         
         
@@ -1030,38 +1143,33 @@ class World(LooiObject):
             
             
             def cap_1(x):return x if x < 1 else 1
-            #for z in range(round(pz-self.properties["texture_distance"]), round(pz+self.properties["texture_distance"])):
-            #    for x in range(round(px-self.properties["texture_distance"]), round(px+self.properties["texture_distance"])):
             for z in range(round(pz-radius), round(pz+radius)):
                 for x in range(round(px-radius), round(px+radius)):
                     dist = ( (z+.5-pz)**2 + (x+.5-px)**2 ) ** .5
                     in_front = normal.angle_distance(util.get_angle(pz, px, z, x), self.view.hor_rot) < math.pi/3
-                    if dist <= self.properties["texture_distance"] and self.valid_floor(z, x):
+                    if dist <= self.properties["texture_distance"] and self.valid_floor(z, x):#distance
                         
-                        if dist < self.properties["texture_radius"] or in_front:
+                        if dist < self.properties["texture_radius"] or in_front:#radius
                         
-                            quad = self.quads[z][x]
-                            chunk = self.chunks[quad.my_chunk_z][quad.my_chunk_x]
-                            colors = chunk.vh.vertex_colors
-                            shade = ( colors[quad.floor_pointer][1] + colors[quad.floor_pointer+1][1] + colors[quad.floor_pointer+2][1] + colors[quad.floor_pointer+3][1] )/4
+                            shade = self.get_proper_floor_color(z, x)[0]
                             
                             
                             if self.is_ice(z, x):
-                                texture = get_ice_texture(shade)
-                            else:
-                                texture = get_snow_texture(shade, dist/self.properties["texture_distance"])
-                            
-                            
-                        
-                            self.draw_image_3d(
+                                tex = get_ice_texture(shade)
+                                self.draw_image_3d(
                                         x*hs, self.get_elevation(z,x,scaled=True) + offset, z*hs,
                                         (x+1)*hs, self.get_elevation(z,x+1,scaled=True) + offset, z*hs,
                                         (x+1)*hs, self.get_elevation(z+1,x+1,scaled=True) + offset, (z+1)*hs,
                                         x*hs, self.get_elevation(z+1,x,scaled=True) + offset, (z+1)*hs,
-                                        texture,
+                                        tex,
                                         setup_3d=self.setup_3d
                                         )
+                            
+                            
+                        
+                            
                     elif dist < constants["ice_radius"] and self.is_ice(z, x) and in_front:
+                        """
                         quad = self.quads[z][x]
                         chunk = self.chunks[quad.my_chunk_z][quad.my_chunk_x]
                         colors = chunk.vh.vertex_colors
@@ -1080,7 +1188,7 @@ class World(LooiObject):
                             colors[i][1] = cap_1(colors[i][1]*factor)
                             colors[i][2] = cap_1(colors[i][2]*factor)
                             
-                        
+                        """
                         
                         
                         
@@ -1089,7 +1197,7 @@ class World(LooiObject):
                                     [(x+1)*hs, self.get_elevation(z,x+1,scaled=True) + offset*2, z*hs],
                                     [(x+1)*hs, self.get_elevation(z+1,x+1,scaled=True) + offset*2, (z+1)*hs],
                                     [x*hs, self.get_elevation(z+1,x,scaled=True) + offset*2, (z+1)*hs],
-                                    (colors)
+                                    constants["ice_color"]
                                     )
                         
             

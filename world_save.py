@@ -1,16 +1,19 @@
 import world
 from pylooiengine import *
+import pylooiengine
 from os import path
 import os
 import traceback
 from models import *
 import loading
 from building import *
-from bump import Bump
+from bump import Bump, NaturalBump
 from landmark import Landmark
 from world_object import *
 from mission_center import MissionCenter
 from lodge import *
+import pickle
+import dill
 
 class StringBuffer:
     def __init__(self):
@@ -35,6 +38,31 @@ def write(world,old_vertical_stretch=None,writepath="./worlds/"):
     if not path.isdir(writepath+world.properties["name"]):
         os.mkdir(writepath+world.properties["name"])
         
+    #DONT USE PICKLE
+    """
+    #now use pickle
+    
+    print(pylooiengine.main_window.layered_looi_objects)
+    #return
+    f = open(writepath+world.properties["name"]+"/layered_looi_objects", "wb")
+    pickle.dump(pylooiengine.main_window.layered_looi_objects,f)
+    f.close()    
+    f = open(writepath+world.properties["name"]+"/unlayered_looi_objects", "wb")
+    pickle.dump(pylooiengine.main_window.unlayered_looi_objects,f)
+    f.close()
+    
+    f = open(writepath+world.properties["name"]+"/transfer_to_unlayered_looi_objects", "wb")
+    pickle.dump(pylooiengine.main_window.transfer_to_unlayered_looi_objects,f)
+    f.close()   
+    f = open(writepath+world.properties["name"]+"/transfer_to_layered_looi_objects", "wb")
+    pickle.dump(pylooiengine.main_window.transfer_to_layered_looi_objects,f)
+    f.close()   
+    f = open(writepath+world.properties["name"]+"/to_remove", "wb")
+    pickle.dump(pylooiengine.main_window.to_remove,f)
+    f.close()   
+        
+    return
+    """
     f = open(writepath+world.properties["name"]+"/save", "w")
     
     out = StringBuffer()
@@ -82,7 +110,8 @@ def property_string(properties):
     ret+="}"
     return ret
         
-        
+
+
 """
 read
 
@@ -92,6 +121,38 @@ object that can be deciphered from that world directory
 For map editor worlds
 """
 def read(path):
+    """
+    if "unlayered_looi_objects" in os.listdir(path):
+        #unpickle everything
+        f = open(path+"/unlayered_looi_objects", "rb")
+        unlayered_looi_objects = picke.load(f)
+        f.close()
+        f = open(path+"/layered_looi_objects", "rb")
+        layered_looi_objects = picke.load(f)
+        f.close()
+        f = open(path+"/transfer_to_unlayered_looi_objects", "rb")
+        transfer_to_unlayered_looi_objects = picke.load(f)
+        f.close()
+        f = open(path+"/transfer_to_layered_looi_objects", "rb")
+        transfer_to_layered_looi_objects = picke.load(f)
+        f.close()
+        f = open(path+"/to_remove", "rb")
+        to_remove = picke.load(f)
+        f.close()
+        
+        pylooiengine.main_window.unlayered_looi_objects=unlayered_looi_objects
+        pylooiengine.main_window.layered_looi_objects=layered_looi_objects
+        pylooiengine.main_window.transfer_to_unlayered_looi_objects=transfer_to_unlayered_looi_objects
+        pylooiengine.main_window.transfer_to_layered_looi_objects=transfer_to_layered_looi_objects
+        pylooiengine.main_window.to_remove=to_remove
+        
+        
+        
+        return None
+    """
+    #otherwise do it the old fashioned way
+    #no, ALWAYS do it the old fashioned way
+    #conservative = good
     from world import World,View
     from tree import Tree
     from lift import Lift#,chair_model_1,chair_model_2,chair_model_3,chair_model_4,rope_model_1,terminal_design_1,pole_design_1
@@ -150,13 +211,12 @@ def read(path):
             
             objects_to_load.append(line)
             
-    loading.progress_bar("Loading 2/2")
+    loading.progress_bar("Loading 3/3")
     for i in range(len(objects_to_load)):
         try:
             eval(objects_to_load[i])
         except:
-            traceback.print_exc()
-            raise Exception("Tried to execute:"+line)
+            print("Can't load this object: " + objects_to_load[i])
         if i %400 == 0:
             loading.update(i/len(objects_to_load)*100)
     loading.update(100)

@@ -15,12 +15,17 @@ x = {
     "fall_speed" : .7,
     "ice_fall_speed" : .67,
     "fall_slope" : math.pi/4.75,
-    "ice_slope" : (math.pi/5.5,math.pi/10),#(math.pi/5.5,math.pi/8.5),
+    "ice_slope" : (math.pi/5.5,math.pi/7.5),#(math.pi/5.5,math.pi/10),#(math.pi/5.5,math.pi/8.5),
     "no_ice_zone" : math.pi/3,
     "crash_speed" : .15,
     
     "ice_color" : Color(.84,.87,.9),
     "ice_radius" : 27,#scaled value
+    
+    
+    "bump_slope" : (math.pi/6,math.pi/9.5),
+    "bump_density" : .25,
+    "bump_group_density" : .2,
     
     "move_key" : "w",
     "menu_key" : "c",

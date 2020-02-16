@@ -1,10 +1,18 @@
+'''Fix the annoying wind sound'''
+Make a mode where you can ski without turning your head
+make bumps more dense
+'''constant wind'''
+snow needs to be less regular
+faster loading
+
+
+
+
+
 Longer wind sound clip 
-Minimum wind volume
 
 
 
-
-More aggressive ice
 fog at certain elevations
 Allow user to reset the mission progress
 
@@ -448,3 +456,57 @@ old
                 v.z += self.world.properties["momentum"] * -math.sin(self.world.properties["momentum_direction"])
                 v.y = self.get_elevation_continuous(v.z, v.x)*self.world.properties["vertical_stretch"] + self.world.properties["player_height"]# + bump
                 """
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                """
+    oops i don't think pan chunk texture is possible
+    def get_pan_chunk_texture(self, chunk_z, chunk_x):
+        if self.colors_changed:
+            cs = self.world.properties["chunk_size"]
+            ul_z = chunk_z * cs
+            ul_x = chunk_x * cs
+            s = self.world.properties["horizontal_stretch"]
+            
+            
+            ret = Image.new("RGBA", (8,8))
+            pixels = ret.load()
+            
+            for r in range(ul_z, ul_z+cs):
+                for c in range(ul_x, ul_x+cs):
+                    
+                    shade = self.world.get_proper_floor_color(r, c)[0]
+                        
+                        
+                        for obj in self.world.floors[r][c].containedObjects:
+                            if instanceof(obj,Tree):
+                                floor_color = (100*shade,255*shade,100*shade,255)
+                                break
+                        else:
+                            floor_color = (255*shade,255*shade,255*shade,255)
+                                
+                    pixels[c-ul_x, r-ul_r] = floor_color
+        return return (
+                [ul_x*s, self.world.get_elevation(ul_z, ul_x, scaled=True), ul_z*s], 
+                [(ul_x+cs)*s, self.world.get_elevation(ul_z, ul_x+cs, scaled=True), ul_z*s], 
+                [(ul_x+cs)*s, self.world.get_elevation(ul_z+cs, ul_x+cs, scaled=True), (ul_z+cs)*s], 
+                [ul_x*s, self.world.get_elevation(ul_z+cs, ul_x, scaled=True), (ul_z+cs)*s], 
+                self.last_pan_chunk_color
+                )
+    """

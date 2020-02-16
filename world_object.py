@@ -47,7 +47,7 @@ class WorldObject(LooiObject):
         
         #set the position and add the model
         if "model" in args:
-            check("model_type" in args and (args["model_type"] == "std" or args["model_type"] == "grad"))
+            check("model_type" in args and (args["model_type"] == "std" or args["model_type"] == "grad" or args["model_type"] == "tex"))
             
             default(args, "model_z", args["z"]*self.h)
             default(args, "model_x", args["x"]*self.h)
@@ -73,6 +73,10 @@ class WorldObject(LooiObject):
         recreate_string = type(self).__name__ + "(" 
         for key in self.args:
             if key == "world": continue
+            if key == "y": continue
+            if key == "model_x": continue
+            if key == "model_y": continue
+            if key == "model_z": continue
             value = self.args[key]
             if not(
                     isinstance(value, int) or
@@ -111,7 +115,7 @@ class WorldObject(LooiObject):
     """
     def do_lighting(self, model, min_brightness=.4):
         
-        brightness = self.world.get_proper_floor_color(self.args["z"], self.args["x"])[0]
+        brightness = self.world.get_proper_floor_color(int(self.args["z"]), int(self.args["x"]))[0]
         if brightness < min_brightness: brightness = min_brightness
         
         
@@ -133,7 +137,7 @@ class WorldObject(LooiObject):
         
         
     def set_anchor(self, z, x, relocate_model=True):
-        if not self.world.valid_floor(z, x):
+        if not self.world.valid_floor(int(z), int(x)):
             raise Exception("Invalid z and x position " + str(x) + " " + str(z) + ". World dimensions are h%d w%d" % (self.world.get_height_floors(), self.world.get_width_floors()))
         if relocate_model:
             self.remove_fixed_model()
@@ -146,8 +150,11 @@ class WorldObject(LooiObject):
         
         
     def remove_fixed_model(self):
+    
+        tm = self.args["model_type"] == "tex"
+            
         if self.vertex_handler_pointers != None:
-            rm_model_from_world_fixed(self.vertex_handler_pointers, self.world, self.args["z"], self.args["x"], self)
+            rm_model_from_world_fixed(self.vertex_handler_pointers, self.world, int(self.args["z"]), int(self.args["x"]), self, texture_model=tm)
         self.vertex_handler_pointers = None
         
         
@@ -159,13 +166,14 @@ class WorldObject(LooiObject):
         
         
         gm = True if self.args["model_type"] == "grad" else False
-        horizontal_rotate_model_around_origin(model, self.args["rotation"], gradient_model=gm)
-        move_model(model, self.args["model_x"], self.args["model_y"], self.args["model_z"],gradient_model=gm)
+        tex = True if self.args["model_type"] == "tex" else False
+        horizontal_rotate_model_around_origin(model, self.args["rotation"], gradient_model=gm, texture_model=tex)
+        move_model(model, self.args["model_x"], self.args["model_y"], self.args["model_z"],gradient_model=gm, texture_model=tex)
         
-        if self.args["do_lighting"]:
+        if self.args["do_lighting"] and not tex:
             self.do_lighting(model)
         
-        self.vertex_handler_pointers = add_model_to_world_fixed(model, self.world, self.args["z"], self.args["x"], self,gradient_model=gm)
+        self.vertex_handler_pointers = add_model_to_world_fixed(model, self.world, int(self.args["z"]), int(self.args["x"]), self,gradient_model=gm, texture_model=tex)
         
         
         

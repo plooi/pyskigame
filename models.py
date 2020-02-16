@@ -52,6 +52,7 @@ def find_name(model):
     
     if m is bump_model_1: return "bump_model_1"
     if m is bump_model_2: return "bump_model_2"
+    if m is bump_model_3: return "bump_model_3"
     
     if m is landmark_model_1: return "landmark_model_1"
     
@@ -739,3 +740,34 @@ def rock_design_2(
     
     
     ]]
+
+
+def sun_model_1(
+        angle_segments = 30,
+        radius = 300,
+        dist_from_player = 5000,
+        color = [1,1,.95]):
+    
+    
+    ret = []
+    for i in range(0, angle_segments):
+        angle = i * math.pi*2/angle_segments
+        angle2 = (i+1) * math.pi*2/angle_segments
+        z = math.cos(angle)*radius
+        y = math.sin(angle)*radius
+        
+        z2 = math.cos(angle2)*radius
+        y2 = math.sin(angle2)*radius
+        
+        ret.append([dist_from_player, y, z])
+        ret.append([dist_from_player, y2, z2])
+        ret.append([dist_from_player, 0, 0])
+        ret.append([dist_from_player, 0, 0])
+        ret.append(color)
+        
+    return ret
+        
+        
+        
+        
+    

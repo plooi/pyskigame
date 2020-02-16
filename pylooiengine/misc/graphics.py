@@ -10,8 +10,8 @@ from queue import Queue
 class VertexHandler:
     def __init__(self, vertex_size, color_size=3, initial_capacity=2):
         initial_capacity *= 4 #to make sure it's multiple of four so squares will stay together
-        self.vertices = numpy.empty([initial_capacity, vertex_size])
-        self.vertex_colors = numpy.empty([initial_capacity, color_size])
+        self.vertices = numpy.zeros([initial_capacity, vertex_size])
+        self.vertex_colors = numpy.zeros([initial_capacity, color_size])
         self.available_indices = Queue()
         self.vertex_size = vertex_size
         self.color_size = color_size

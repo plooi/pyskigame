@@ -1,6 +1,7 @@
 import pylooiengine
 from pylooiengine import *
 w = Window(internal_size = (2000,1080), fps=30)
+import mash_textures
 import pygame
 
 import rooms
