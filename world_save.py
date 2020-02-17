@@ -83,7 +83,7 @@ write
 
 writes a map editor world to a file
 """
-def write(world,old_vertical_stretch=None,writepath="./worlds/", new_version=True):
+def write(world,old_vertical_stretch=None,writepath="../worlds/", new_version=True):
     if writepath.endswith("/") or writepath.endswith("\\"):
         pass#okay
     else:

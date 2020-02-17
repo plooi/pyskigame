@@ -57,8 +57,8 @@ def ski_room():
 
 def new_ski_world():
     col = []
-    for d in os.listdir("./worlds"):
-        if os.path.isdir("./worlds/"+d):
+    for d in os.listdir("../worlds"):
+        if os.path.isdir("../worlds/"+d):
             col.append([sg.Button(d)])
     col = sg.Column(col, size=(500,800), scrollable=True)
             
@@ -80,7 +80,7 @@ def new_ski_world():
         window.close()
         if _event == None: return
         
-        if values[0] in os.listdir("./saves/"):
+        if values[0] in os.listdir("../saves/"):
             layout = [
                           [sg.Text('A world of this name already exists. Would you like to OVERWRITE it?')],
                           [sg.Yes(), sg.No()] ]
@@ -94,14 +94,14 @@ def new_ski_world():
         else:
             break
     
-    the_world = world_save.read("./worlds/"+event)
+    the_world = world_save.read("../worlds/"+event)
     the_world.properties["name"] = values[0]
-    world_save.write(the_world, writepath="./saves/")
+    world_save.write(the_world, writepath="../saves/")
     init_ski_room(the_world)
 def load_existing_ski_world():
     col = []
-    for d in os.listdir("./saves"):
-        if os.path.isdir("./saves/"+d):
+    for d in os.listdir("../saves"):
+        if os.path.isdir("../saves/"+d):
             col.append([sg.Button(d)])
     col = sg.Column(col, size=(500,800), scrollable=True)
             
@@ -116,7 +116,7 @@ def load_existing_ski_world():
     
     
     
-    the_world = world_save.read("./saves/"+event)
+    the_world = world_save.read("../saves/"+event)
     init_ski_room(the_world)
 
 
@@ -185,7 +185,7 @@ def blank_world():
     
     
     
-        if values[0] in os.listdir("./worlds/"):
+        if values[0] in os.listdir("../worlds/"):
             layout = [
                           [sg.Text('A world of this name already exists. Would you like to OVERWRITE it?')],
                           [sg.Yes(), sg.No()] ]
@@ -211,8 +211,8 @@ def blank_world():
     init_game_room(the_world)
 def create_copy():
     col = []
-    for d in os.listdir("./worlds"):
-        if os.path.isdir("./worlds/"+d):
+    for d in os.listdir("../worlds"):
+        if os.path.isdir("../worlds/"+d):
             col.append([sg.Button(d)])
     col = sg.Column(col, size=(500,800), scrollable=True)
             
@@ -234,7 +234,7 @@ def create_copy():
         window.close()
         if _event == None: return
         
-        if values[0] in os.listdir("./worlds/"):
+        if values[0] in os.listdir("../worlds/"):
             layout = [
                           [sg.Text('A world of this name already exists. Would you like to OVERWRITE it?')],
                           [sg.Yes(), sg.No()] ]
@@ -248,7 +248,7 @@ def create_copy():
         else:
             break
     def job():
-        the_world = world_save.read("./worlds/"+event)
+        the_world = world_save.read("../worlds/"+event)
         the_world.properties["name"] = values[0]
         world_save.write(the_world)
         init_game_room(the_world)
@@ -256,8 +256,8 @@ def create_copy():
     
 def load_existing_map_editor():
     col = []
-    for d in os.listdir("./worlds"):
-        if os.path.isdir("./worlds/"+d):
+    for d in os.listdir("../worlds"):
+        if os.path.isdir("../worlds/"+d):
             col.append([sg.Button(d)])
     col = sg.Column(col, size=(500,800), scrollable=True)
             
@@ -271,7 +271,7 @@ def load_existing_map_editor():
     
     
     def job():
-        the_world = world_save.read("./worlds/"+event)
+        the_world = world_save.read("../worlds/"+event)
         init_game_room(the_world)
     LoadingScreen(job)
     
@@ -303,7 +303,7 @@ def data_file_world():
         window.close()
         if event == None: return
         
-        if values[0] in os.listdir("./worlds/"):
+        if values[0] in os.listdir("../worlds/"):
             layout = [
                           [sg.Text('A world of this name already exists. Would you like to OVERWRITE it?')],
                           [sg.Yes(), sg.No()] ]
