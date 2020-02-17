@@ -36,6 +36,7 @@ def find_name(model):
     
     if m is terminal_design_1: return "terminal_design_1"
     if m is terminal_design_2: return "terminal_design_2"
+    if m is terminal_design_3: return "terminal_design_3"
     
     if m is pole_design_1: return "pole_design_1"
     if m is pole_design_2: return "pole_design_2"

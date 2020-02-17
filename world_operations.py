@@ -11,6 +11,7 @@ from mission_center import *
 from landmark import *
 import traceback
 import loading
+from building import Building
 
 
         
@@ -178,11 +179,7 @@ def raise_hill(world, z1, x1, z2, x2, amount):
                 increase = amount * (   1   -   ((z-middle_z)**2 + (x-middle_x)**2)**.5 / radius   )
                 if world.valid_floor(z, x):
                     for obj in world.quads[z][x].containedObjects:
-                        if isinstance(obj, Tree):
-                            objects_to_reset.append(obj)
-                        elif isinstance(obj, WorldObject):
-                            
-                            
+                        if isinstance(obj, Tree) or isinstance(obj, WorldObject) or isinstance(obj, Building):
                             objects_to_reset.append(obj)
                 
                 world.set_elevation(z, x, world.get_elevation(z,x) + increase, False)
@@ -209,11 +206,7 @@ def plateau(world, z1, x1, z2, x2, amount):
             if ((z-middle_z)**2 + (x-middle_x)**2)**.5 <= radius and world.valid_point(z, x):
                 if world.valid_floor(z, x):
                     for obj in world.quads[z][x].containedObjects:
-                        if isinstance(obj, Tree):
-                            objects_to_reset.append(obj)
-                        elif isinstance(obj, WorldObject):
-                            
-                            
+                        if isinstance(obj, Tree) or isinstance(obj, WorldObject) or isinstance(obj, Building):
                             objects_to_reset.append(obj)
                 world.set_elevation(z, x, y + amount, False)
                 
@@ -266,11 +259,7 @@ def smooth(world, z1, x1, z2, x2):
                         ): 
                     if world.valid_floor(z, x):
                         for obj in world.quads[z][x].containedObjects:
-                            if isinstance(obj, Tree):
-                                objects_to_reset.append(obj)
-                            elif isinstance(obj, WorldObject):
-                                
-                                
+                            if isinstance(obj, Tree) or isinstance(obj, WorldObject) or isinstance(obj, Building):
                                 objects_to_reset.append(obj)
                     world.set_elevation(z, x, ( origval(z-1,x)+origval(z-1,x-1)+origval(z,x-1)+origval(z+1,x-1)+origval(z+1,x)+origval(z+1,x+1)+origval(z,x+1)+origval(z-1,x+1)+origval(z,x))/9    , reset_color=False)
                     #world.set_elevation(z,x, origval(z,x), False)
@@ -370,13 +359,8 @@ def path(world, z1, x1, z2, x2, thickness):
                         for zzz in range(zz-1, zz+1):
                             for xxx in range(xx-1, xx+1):
                                 for obj in world.quads[zzz][xxx].containedObjects:
-                                    if isinstance(obj, Tree):
+                                    if isinstance(obj, Tree) or isinstance(obj, WorldObject) or isinstance(obj, Building):
                                         if obj not in objects_to_reset:
-                                            objects_to_reset.append(obj)
-                                    elif isinstance(obj, WorldObject):
-                                        if obj not in objects_to_reset:
-                                            
-                                            
                                             objects_to_reset.append(obj)
                     
                     if dist_frm_ctr < thickness - 3:

@@ -41,15 +41,14 @@ class Building(Selectable):
         self.vertex_handler_pointers = add_model_to_world_fixed(self.design, self.world, self.z, self.x, self)
     def delete(self):
         rm_model_from_world_fixed(self.vertex_handler_pointers, self.world, self.z, self.x, self)
-        self.world.delete_object_account(self)
     def get_recreate_string(self):
-        return "Building(%d, %d, world, %s, %s, %f)"%(self.z, self.x, find_name(self.design_function), str(self.params), self.rotation )
+        return "Building(%d, %d, self.world, %s, %s, %f)"%(self.z, self.x, find_name(self.design_function), str(self.params), self.rotation )
     def open_menu(self):
         layout = [
             [sg.Button("Delete")],
-            [sg.Text("X"), sg.Input(str(self.x))],
-            [sg.Text("Y"), sg.Text(str(self.y))],
-            [sg.Text("Z"), sg.Input(str(self.z))],
+            #[sg.Text("X"), sg.Input(str(self.x))],
+            #[sg.Text("Y"), sg.Text(str(self.y))],
+            #[sg.Text("Z"), sg.Input(str(self.z))],
             [sg.Text("Rotation"), sg.Input(str(self.rotation))],
             [sg.OK()]
         ]
@@ -62,21 +61,22 @@ class Building(Selectable):
             self.delete()
         elif event == "OK":
             try:
-                original_x = self.x
-                original_z = self.z
-                new_x = int(values[0])
-                new_z = int(values[1])
-                self.rotation = float(values[2])
-                self.x = new_x
-                self.z = new_z
-                self.x = original_x
-                self.z = original_z
                 
+                #original_x = self.x
+                #original_z = self.z
+                #new_x = int(values[0])
+                #new_z = int(values[1])
+                self.rotation = float(values[0])
+                #self.x = new_x
+                #self.z = new_z
+                #self.x = original_x
+                #self.z = original_z
+                self.reset()
             except Exception as e:
                 sg.Popup(str(e))
             
             
-            eval(self.get_recreate_string())
+            #eval(self.get_recreate_string())
             
         window.close()
 
