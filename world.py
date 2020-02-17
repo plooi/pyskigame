@@ -33,6 +33,17 @@ from time import time
 arr_155_255 = [x for x in range(155, 256, 4)]
 arr_155_255.reverse()
 
+
+#improves performance. 
+def conv_155_255(x):
+    if x > 1 or x < 0: raise Exception()
+    x = int(x*63)*4+3
+    if x < 155:
+        x = 155
+    return x
+    
+    
+"""
 def conv_155_255(x):
     if x > 1 or x < 0: raise Exception()
     lighting = x * 255
@@ -46,6 +57,7 @@ def conv_155_255(x):
             closest_distance = distance
     
     return closest
+"""
 
 
 arr_55_255 = [x for x in range(55, 255, 5)]
@@ -125,7 +137,7 @@ class View:
         self.line_of_sight = 7 #IN NUMBER OF CHUNKS (not opengl space) #the radius
         self.max_vert_rot = math.pi/2.3
         
-        
+
         
 class Quad:
     def __init__(self):
@@ -174,18 +186,18 @@ class Chunk:
             
             total_quads = 0
             
-            for i in range(self.vh.num_occupied()):
-                if self.vh.vertex_colors[i][1]*1.2>self.vh.vertex_colors[i][0] or self.vh.vertex_colors[i][2]*1.2>self.vh.vertex_colors[i][0]:
-                    new_pan_chunk_color[0] += self.vh.vertex_colors[i][0]*.5
-                    new_pan_chunk_color[1] += self.vh.vertex_colors[i][1]*.5
-                    new_pan_chunk_color[2] += self.vh.vertex_colors[i][2]*.5
-                    
-                    total_quads+=.5
-                    
+            for r in range(ul_z, ul_z+cs):
+                for c in range(ul_x, ul_x+cs):
+                    for obj in self.world.quads[r][c].containedObjects:
+                        if isinstance(obj, Tree):
+                            new_pan_chunk_color[0] += .3*8
+                            new_pan_chunk_color[1] += .5*8
+                            new_pan_chunk_color[2] += .19*8
+                            
+                            total_quads+=8
             for r in range(ul_z, ul_z+cs):
                 for c in range(ul_x, ul_x+cs):
                     floor_shade = self.world.get_proper_floor_color(r, c)[0]
-                    
                     new_pan_chunk_color[0] += floor_shade*.97
                     new_pan_chunk_color[1] += floor_shade
                     new_pan_chunk_color[2] += floor_shade
@@ -195,7 +207,6 @@ class Chunk:
             new_pan_chunk_color[1] /= total_quads
             new_pan_chunk_color[2] /= total_quads
             self.last_pan_chunk_color = new_pan_chunk_color
-        
         return (
                 [ul_x*s, self.world.get_elevation(ul_z, ul_x, scaled=True), ul_z*s], 
                 [(ul_x+cs)*s, self.world.get_elevation(ul_z, ul_x+cs, scaled=True), ul_z*s], 
@@ -298,7 +309,7 @@ class World(LooiObject):
         #keys are the IDs (id function) of objects such as trees and
         #lifts, values are strings which contain python code describing
         #how to recreate that object
-        self.object_account = {}
+        #self.object_account = {}
         
         self.landmarks = []
         
@@ -338,7 +349,7 @@ class World(LooiObject):
         allocates a spot in the current chunk's buffer for the floor square, and hands that pointer over to the quadrilateral
     """
     def init(self, name, width, height, more_properties={}, elevation_function=lambda z,x:0, view=None, prog_bar=True):
-        if prog_bar: loading.progress_bar("Loading 1/3")
+        if prog_bar: loading.progress_bar("Loading 1/2")
         
         
         #set properties properly
@@ -387,7 +398,7 @@ class World(LooiObject):
         
         
         
-        
+        #initialize quads 
         for z in range(self.properties["height"]):
             row = []
             self.quads.append(row)
@@ -395,10 +406,8 @@ class World(LooiObject):
                 #actually create the quad object
                 row.append(Quad())#add the quad object to the self.quads
         
-        #initialize quads 
+        #fill the quads with data
         for z in range(self.properties["height"]):
-            
-            
             for x in range(self.properties["width"]):
                 z_chunk, x_chunk = self.convert_to_chunk_coords(z, x)#find which chunk this quad z,x is in
                 
@@ -417,13 +426,15 @@ class World(LooiObject):
                 tvh.add_vertex([(x+1)*hs,elevation_function(z+1, x+1),(z+1)*hs])
                 tvh.add_vertex([x*hs,elevation_function(z+1, x),(z+1)*hs])
                 
-            if prog_bar and z % 7 == 0: loading.update(z/self.properties["height"]*100)
-        
+            if prog_bar and z % 7 == 0: loading.update(z/self.properties["height"]*50)
+        #reset floor textures
+        #by the way, having this as it's own loop increased performance by 15%
         for z in range(self.properties["height"]):
             for x in range(self.properties["width"]):
                 self.reset_floor_texture(z, x)
+            if prog_bar and z % 7 == 0: loading.update(z/self.properties["height"]*50+50)
             
-        print(time() - t1)
+        #print("loading 1/3 took",time() - t1)
         
         """
         do not worry about allocating all the pan chunk squares
@@ -444,16 +455,8 @@ class World(LooiObject):
         
         used to tell opengl to draw our objects from the proper angles
         """
-        def setup_3d():
-            gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), .5, 6000 )
-            try:
-                glRotate(rad_to_deg(-(self.view.hor_rot-math.pi/2)), 0, 1, 0)
-                glRotate(rad_to_deg(-self.view.vert_rot), math.cos(self.view.hor_rot - math.pi/2), 0, -math.sin(self.view.hor_rot - math.pi/2))
-                glTranslate(-self.view.x, -self.view.y, -self.view.z)
-            except Exception as e:
-                pass
-            #print(self.view.x)
-        self.setup_3d = setup_3d
+        
+        self.setup_3d = self.get_setup_3d()
         
         #initialize the natural bumps
         if prog_bar: loading.update(100)
@@ -462,6 +465,16 @@ class World(LooiObject):
         
         return self
         #END INIT
+    def get_setup_3d(self):
+        def setup_3d():
+            gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), .5, 6000 )
+            try:
+                glRotate(rad_to_deg(-(self.view.hor_rot-math.pi/2)), 0, 1, 0)
+                glRotate(rad_to_deg(-self.view.vert_rot), math.cos(self.view.hor_rot - math.pi/2), 0, -math.sin(self.view.hor_rot - math.pi/2))
+                glTranslate(-self.view.x, -self.view.y, -self.view.z)
+            except Exception as e:
+                pass
+        return setup_3d
         
 ###################################
 #END init stuff
@@ -562,7 +575,7 @@ class World(LooiObject):
     
     UNTESTED
     """
-    def set_elevation(self, z, x, elevation, reset_color=True, delete_trees=True):
+    def set_elevation(self, z, x, elevation, reset_color=True, delete_trees=False):
         #print("set")
         elevation *= self.properties["vertical_stretch"]
         
@@ -828,6 +841,9 @@ class World(LooiObject):
         
         
         color1 = self.calculate_floor_color(hr, vr)
+        #cut short here
+        return color1
+        ##BUTT! Although it loads faster now, it will have just a bit less shading accuracy especially on those non-planar quads
         
         hr, vr = normal.get_plane_rotation(ul[0],ul[1],ul[2],ll[0],ll[1],ll[2],lr[0],lr[1],lr[2])
         if vr < 0:
@@ -923,14 +939,21 @@ class World(LooiObject):
         hs = self.properties["horizontal_stretch"]
         vs = self.properties["vertical_stretch"]
         
+        if real_z < 5 or real_x < 5 or real_z > self.get_height_floors()*self.properties["horizontal_stretch"]-6 or real_x > self.get_width_floors()*self.properties["horizontal_stretch"]-6:
+            return False
+        
         z = int(real_z/hs)
         x = int(real_x/hs)
+        
+        
         
         if not self.valid_floor(z, x):
             return False
         
-        seed = (  math.sin(17*real_z**2) + math.sin(27*real_x**2)  )/2
-        seed2 = (  math.sin((20*int((real_z)/35))**2) + math.sin((17*int((real_x)/35))**2)  )/2
+        
+        
+        seed = (  math.sin((17*real_z)**2) + math.sin((27*real_x)**2)  )/2
+        seed2 = (  math.sin((209*int((real_z)/35))**2) + math.sin((170*int((real_x)/35))**2)  )/2
         
         if not(seed < constants["bump_density"] and seed > -constants["bump_density"]): return False
         if not(seed2 < constants["bump_group_density"] and seed2 > -constants["bump_group_density"]): return False
@@ -955,6 +978,8 @@ class World(LooiObject):
 ###################################
 #STEP AND PAINT STUFF
 ###################################
+    
+        
     def step(self):
         pass
         
@@ -1008,7 +1033,7 @@ class World(LooiObject):
                                 chunk_load_grid[r][c] = 1
                             except:
                                 print("%d, %d out of range of %d, %d" %(r, c, len(chunk_load_grid), len(chunk_load_grid[0])))
-                        
+        
         return chunk_load_grid
     def draw_mobile(self):
         mobile_vertices = numpy.array(self.mobile_vertices)
@@ -1314,15 +1339,15 @@ class World(LooiObject):
     This code can assume that the variable "world" contains the world we will
     be adding to
     """
-    def add_object_account(self, object, creation_code):
-        self.object_account[id(object)] = creation_code
+    #def add_object_account(self, object, creation_code):
+    #    self.object_account[id(object)] = creation_code
     """
     When you delete an object in game, you want it so that when you save
     the world, that object is never saved. Use delete_object_account to
     remove the object from the save list
     """
-    def delete_object_account(self, object):
-        del self.object_account[id(object)]
+    #def delete_object_account(self, object):
+    #    del self.object_account[id(object)]
 def rad_to_deg(radians):
     return radians/(2*math.pi) * 360
 def round(x):

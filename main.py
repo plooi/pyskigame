@@ -6,7 +6,6 @@ import pygame
 
 import rooms
 
-def main():
-    
+def main():  
     w.start()
 if __name__ == "__main__": main()

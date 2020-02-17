@@ -14,6 +14,10 @@ from mission_center import MissionCenter
 from lodge import *
 import pickle
 import dill
+from time import time
+
+from lift import Lift,Terminal#,chair_model_1,chair_model_2,chair_model_3,chair_model_4,rope_model_1,terminal_design_1,pole_design_1
+
 
 class StringBuffer:
     def __init__(self):
@@ -23,12 +27,63 @@ class StringBuffer:
     def get_string(self):
         return "".join(self.array)
 
+
+
+
+
+"""
+self.quads = []
+        
+#2D Array where each element denotes one chunk
+self.chunks = []
+
+#stores all the pan chunk squares
+self.pan_chunk_squares = VertexHandler(3)
+
+
+#keep track of the view position
+self.view = View()
+
+
+#used to tell opengl to draw our objects from the proper angles
+self.setup_3d = None
+
+
+self.mobile_vertices = None
+self.mobile_colors = None
+
+
+#this keeps track of how to save and load the world next time
+#keys are the IDs (id function) of objects such as trees and
+#lifts, values are strings which contain python code describing
+#how to recreate that object
+self.object_account = {}
+
+self.landmarks = []
+"""
+
+
+#attrs is a list of attr names
+def temp_remove(world, attrs):
+    ret = {}
+    for attr in attrs:
+        if hasattr(world, attr):
+            ret[attr] = getattr(world, attr)
+            delattr(world, attr)
+        
+    return ret
+    
+#attrs is a dictionary of attr names and values
+def replace(world, attrs):
+    for attr in attrs:
+        setattr(world, attr, attrs[attr])
+
 """
 write
 
 writes a map editor world to a file
 """
-def write(world,old_vertical_stretch=None,writepath="./worlds/"):
+def write(world,old_vertical_stretch=None,writepath="./worlds/", new_version=True):
     if writepath.endswith("/") or writepath.endswith("\\"):
         pass#okay
     else:
@@ -38,31 +93,17 @@ def write(world,old_vertical_stretch=None,writepath="./worlds/"):
     if not path.isdir(writepath+world.properties["name"]):
         os.mkdir(writepath+world.properties["name"])
         
-    #DONT USE PICKLE
-    """
-    #now use pickle
-    
-    print(pylooiengine.main_window.layered_looi_objects)
-    #return
-    f = open(writepath+world.properties["name"]+"/layered_looi_objects", "wb")
-    pickle.dump(pylooiengine.main_window.layered_looi_objects,f)
-    f.close()    
-    f = open(writepath+world.properties["name"]+"/unlayered_looi_objects", "wb")
-    pickle.dump(pylooiengine.main_window.unlayered_looi_objects,f)
-    f.close()
-    
-    f = open(writepath+world.properties["name"]+"/transfer_to_unlayered_looi_objects", "wb")
-    pickle.dump(pylooiengine.main_window.transfer_to_unlayered_looi_objects,f)
-    f.close()   
-    f = open(writepath+world.properties["name"]+"/transfer_to_layered_looi_objects", "wb")
-    pickle.dump(pylooiengine.main_window.transfer_to_layered_looi_objects,f)
-    f.close()   
-    f = open(writepath+world.properties["name"]+"/to_remove", "wb")
-    pickle.dump(pylooiengine.main_window.to_remove,f)
-    f.close()   
+    if new_version:
+        #now use pickle
         
-    return
-    """
+        f = open(writepath+world.properties["name"]+"/bin", "wb")
+        attrs = temp_remove(world,["game_ui","setup_3d"])
+        pickle.dump(world,f)
+        replace(world,attrs)
+        f.close()   
+            
+        return
+    
     f = open(writepath+world.properties["name"]+"/save", "w")
     
     out = StringBuffer()
@@ -120,42 +161,48 @@ object that can be deciphered from that world directory
 
 For map editor worlds
 """
-def read(path):
-    """
-    if "unlayered_looi_objects" in os.listdir(path):
-        #unpickle everything
-        f = open(path+"/unlayered_looi_objects", "rb")
-        unlayered_looi_objects = picke.load(f)
-        f.close()
-        f = open(path+"/layered_looi_objects", "rb")
-        layered_looi_objects = picke.load(f)
-        f.close()
-        f = open(path+"/transfer_to_unlayered_looi_objects", "rb")
-        transfer_to_unlayered_looi_objects = picke.load(f)
-        f.close()
-        f = open(path+"/transfer_to_layered_looi_objects", "rb")
-        transfer_to_layered_looi_objects = picke.load(f)
-        f.close()
-        f = open(path+"/to_remove", "rb")
-        to_remove = picke.load(f)
-        f.close()
-        
-        pylooiengine.main_window.unlayered_looi_objects=unlayered_looi_objects
-        pylooiengine.main_window.layered_looi_objects=layered_looi_objects
-        pylooiengine.main_window.transfer_to_unlayered_looi_objects=transfer_to_unlayered_looi_objects
-        pylooiengine.main_window.transfer_to_layered_looi_objects=transfer_to_layered_looi_objects
-        pylooiengine.main_window.to_remove=to_remove
-        
-        
-        
-        return None
-    """
+def read(path, new_version = True):
+    
+    
+    
+    if new_version:
+        if "bin" in os.listdir(path):
+            def set_active_variable_false(looiobject):
+                looiobject.active=False
+                for obj in looiobject.contained_looi_objects:
+                    set_active_variable_false(obj)
+                    
+                    
+            #unpickle everything
+            f = open(path+"/bin", "rb")
+            the_world = pickle.load(f)
+            f.close()
+            
+            for z in range(the_world.get_height_floors()):
+                for x in range(the_world.get_width_floors()):
+                    for obj in the_world.quads[z][x].containedObjects:
+                        
+                        if isinstance(obj, Terminal):
+                            if obj.top_or_bot == "bot":
+                                set_active_variable_false(obj.chairlift)
+                                obj.chairlift.activate()
+                        elif isinstance(obj, LooiObject):
+                            if obj.active:
+                                set_active_variable_false(obj)
+                                obj.activate()
+            
+            set_active_variable_false(the_world)
+            
+            the_world.setup_3d = the_world.get_setup_3d()
+            return the_world
+    
     #otherwise do it the old fashioned way
     #no, ALWAYS do it the old fashioned way
     #conservative = good
+    
     from world import World,View
     from tree import Tree
-    from lift import Lift#,chair_model_1,chair_model_2,chair_model_3,chair_model_4,rope_model_1,terminal_design_1,pole_design_1
+    #from lift import Lift#,chair_model_1,chair_model_2,chair_model_3,chair_model_4,rope_model_1,terminal_design_1,pole_design_1
     from rock import Rock
     
     def new_view(x,y,z,hr,vr,spd,rotspd,los,maxvrot):
@@ -179,7 +226,7 @@ def read(path):
     f = open(path+"/save", "r")
     
     elevations = []
-    world = None
+    the_world = None
     
     
     mode = "read_elevations"
@@ -190,17 +237,17 @@ def read(path):
         line = line.strip()
         if mode == "read_elevations":
             if line == "WAHLAO EH!":
-                mode = "read_world_command"
+                mode = "read_the_world_command"
                 continue
             elevations.append([float(x) for x in line.split(",")])
-        if mode == "read_world_command":
+        if mode == "read_the_world_command":
             if line == "WAHLAO EH!":
                 mode = "load_objects"
                 continue
             
             elevation_function = lambda z,x: elevations[z][x]
             try:
-                world = eval(line)
+                the_world = eval(line)
             except:
                 traceback.print_exc()
                 raise Exception("Tried to execute:"+line)
@@ -212,12 +259,24 @@ def read(path):
             objects_to_load.append(line)
             
     loading.progress_bar("Loading 3/3")
+    world=the_world
+    executables = []
+    count = 0
+    load_objects = ""
     for i in range(len(objects_to_load)):
-        try:
-            eval(objects_to_load[i])
-        except:
-            print("Can't load this object: " + objects_to_load[i])
-        if i %400 == 0:
-            loading.update(i/len(objects_to_load)*100)
+        load_objects += "try:"+objects_to_load[i] + "\nexcept:print('failure')\n"
+        count += 1
+        if count >= 1000:
+            executables.append(load_objects)
+            load_objects=''
+            count = 0
+    if load_objects != '':
+        executables.append(load_objects)
+    
+    t = time()
+    for i in range(len(executables)):
+        exec(executables[i])
+        loading.update(i/len(executables)*100)
+    print("loading 3/3 took",time() - t)
     loading.update(100)
-    return world
+    return the_world

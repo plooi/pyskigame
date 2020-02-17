@@ -66,36 +66,16 @@ class WorldObject(LooiObject):
             self.activate()
             
         
-        self.update_object_account()
+    def recreate(self):
+        self.delete()
+        del self.args["y"]
+        del self.args["model_x"]
+        del self.args["model_y"]
+        del self.args["model_z"]
+        return self.__class__(**self.args)
+    def reset(self):
+        return self.recreate()
         
-        
-    def get_recreate_string(self):
-        recreate_string = type(self).__name__ + "(" 
-        for key in self.args:
-            if key == "world": continue
-            if key == "y": continue
-            if key == "model_x": continue
-            if key == "model_y": continue
-            if key == "model_z": continue
-            value = self.args[key]
-            if not(
-                    isinstance(value, int) or
-                    isinstance(value, float) or
-                    isinstance(value, str) or
-                    isinstance(value, list) or
-                    isinstance(value, tuple) or
-                    isinstance(value, dict) or 
-                    callable(value)):
-                raise Exception("Key %s has a value of type %s which is not an allowed type for serialization" % (key, type(value)))
-            if callable(value):
-                value = models.find_name(value)
-                recreate_string += key + "=" + value +","
-            else:
-                recreate_string += key + "=" + repr(value) +","
-        recreate_string += "world=world)"
-        return recreate_string
-    def update_object_account(self):
-        self.world.add_object_account(self, self.get_recreate_string())
         
     def set_model_position(self, x, y, z):
         #remove the old model
@@ -145,7 +125,6 @@ class WorldObject(LooiObject):
         self.args["x"] = x
         if relocate_model:
             self.add_fixed_model()
-        self.update_object_account()
         
         
         
@@ -202,10 +181,6 @@ class WorldObject(LooiObject):
         
     def delete(self):
         self.remove_fixed_model()
-        try:
-            self.world.delete_object_account(self)
-        except Exception as e:
-            sg.Popup(str(e))
         if self.is_active():
             self.deactivate()
 def default(dictionary, key, value):

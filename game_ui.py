@@ -20,23 +20,6 @@ import pylooiengine
 
 
 
-wind_sound = pylooiengine.main_window.new_sound("sounds/Wind.ogg",0)
-wind_sound.play(loops = 9999999) #9999 loops is 20 days straight. I think nobody is going to play for 20 days straight so it's basically forever eh
-
-
-lift_sound = pylooiengine.main_window.new_sound("sounds/ChairliftTerminal.ogg",0)
-lift_sound.play(loops = 9999999)#63 years about. We should be okay
-
-
-swish_sound = pylooiengine.main_window.new_sound("sounds/SkiSwish4.ogg", 1)
-
-
-fall_sound = pylooiengine.main_window.new_sound("sounds/Fall.ogg",.9)
-
-pole_sound_obj = pylooiengine.main_window.new_sound("sounds/PoleBump1.ogg",.4)
-
-
-
 
 
 
@@ -84,26 +67,28 @@ class UI(LooiObject):
         self.wind_vol = 0
         self.lift_vol = 0
         self.swish_timer = 0
-        """
-        wind_sound = .new_sound("sounds/Wind.ogg",volume=0)
-        wind_sound.play(loops = 9999999) #9999 loops is 20 days straight. I think nobody is going to play for 20 days straight so it's basically forever eh
+        
+        self.wind_sound = self.new_sound("sounds/Wind.ogg",volume=0)
+        self.wind_sound.play(loops = 9999999) #9999 loops is 20 days straight. I think nobody is going to play for 20 days straight so it's basically forever eh
         
         
-        lift_sound = self.new_sound("sounds/ChairliftTerminal.ogg",volume=0)
-        lift_sound.play(loops = 9999999)#63 years about. We should be okay
+        self.lift_sound = self.new_sound("sounds/ChairliftTerminal.ogg",volume=0)
+        self.lift_sound.play(loops = 9999999)#63 years about. We should be okay
         
         
-        swish_sound = self.new_sound("sounds/SkiSwish4.ogg", volume=1)
+        self.swish_sound = self.new_sound("sounds/SkiSwish4.ogg", volume=1)
         
         
-        fall_sound = self.new_sound("sounds/Fall.ogg",volume=.9)
+        self.fall_sound = self.new_sound("sounds/Fall.ogg",volume=.9)
         
-        pole_sound_obj = self.new_sound("sounds/PoleBump1.ogg",volume=.4)
-        """
+        self.pole_sound_obj = self.new_sound("sounds/PoleBump1.ogg",volume=.4)
+        
+        self.no_look = 0
+        
         
     def stop_sounds(self):
-        wind_sound.stop()
-        lift_sound.stop()
+        self.wind_sound.stop()
+        self.lift_sound.stop()
     def chairlift_ride(self):
         self.can_load = False
         self.can_fix = False
@@ -212,7 +197,7 @@ class UI(LooiObject):
             vol = int(vol)
             vol /= 4
             """
-            pole_sound_obj.play(maxtime=1000)
+            self.pole_sound_obj.play(maxtime=1000)
             
     def sounds(self):
         self.clock += 1
@@ -225,8 +210,8 @@ class UI(LooiObject):
         #wind
         """
         if self.clock % 600 == 0:
-            self.wind_sound.stop()
-            self.wind_sound.play()
+            self.self.wind_sound.stop()
+            self.self.wind_sound.play()
         """
         vol = 0
         if self.world.properties["momentum"] == 0:
@@ -238,14 +223,14 @@ class UI(LooiObject):
             vol = self.world.properties["momentum"] / 1
         if vol>1:vol=1
         if vol < .17: vol=.17
-        wind_sound.set_volume(vol)
+        self.wind_sound.set_volume(vol)
         
         
         #lift
         """
         if self.clock % 160 == 0:
-            lift_sound.stop()
-            self.lift_sound.play()
+            self.lift_sound.stop()
+            self.self.lift_sound.play()
         """
         x = self.world.view.x
         y = self.world.view.y
@@ -259,26 +244,30 @@ class UI(LooiObject):
                 
             
         vol = 1 - closest_chairlift_distance/50
+        vol /= 2
         if vol < 0: vol = 0
         self.set_lift_vol(vol)
         
         #swish
         if self.world.properties["momentum"] > .1 and self.swish_timer == 0 and angle_distance(self.world.view.hor_rot, self.world.properties["ski_direction"]) > math.pi/10:
-            swish_sound.stop()
-            swish_sound.play(maxtime=2000, fade_ms = 1000)
+            self.swish_sound.stop()
+            self.swish_sound.play(maxtime=2000, fade_ms = 1000)
             self.swish_timer = 25
         if self.swish_timer == 15:
-            swish_sound.fadeout(1000)
+            self.swish_sound.fadeout(1000)
                 
             
     def set_lift_vol(self, vol):
         self.lift_vol = vol
-        lift_sound.set_volume(self.lift_vol)
+        self.lift_sound.set_volume(self.lift_vol)
         
         
         
             
     def step(self):
+        if self.key("p", "pressed"):
+            print("layered",self.get_my_window().layered_looi_objects)
+            print("unlayered",self.get_my_window().unlayered_looi_objects)
         """
         if self.key("p", "pressed"):
             if self.world.properties["active_missions"]:
@@ -496,7 +485,7 @@ class UI(LooiObject):
                 
         if self.falling:
             if self.fall_clock == 0:
-                fall_sound.play(maxtime=1800)
+                self.fall_sound.play(maxtime=1800)
                 self.health(-20, animate=True)
                 self.world.properties["momentum"] = 0
                 self.original_pos = (self.world.view.x,self.world.view.y,self.world.view.z,self.world.view.hor_rot,self.world.view.vert_rot)
@@ -633,21 +622,21 @@ class UI(LooiObject):
                 
                 
                 #ski turns toward view, but lags behind view
-                angle_d = angle_distance(self.world.properties["ski_direction"], self.world.view.hor_rot)
+                angle_d = angle_distance(self.world.properties["ski_direction"], self.world.view.hor_rot+self.no_look)
                 angle_inc = math.pi/6.5 *angle_d/(math.pi/2)
                 if angle_inc < math.pi/550:
                     angle_inc = math.pi/550
                 if angle_d > angle_inc and self.world.properties["momentum"] > .05:
-                    if (angle_distance(self.world.properties["ski_direction"]+angle_inc, self.world.view.hor_rot) 
+                    if (angle_distance(self.world.properties["ski_direction"]+angle_inc, self.world.view.hor_rot+self.no_look) 
                         <
-                        angle_distance(self.world.properties["ski_direction"]-angle_inc, self.world.view.hor_rot) 
+                        angle_distance(self.world.properties["ski_direction"]-angle_inc, self.world.view.hor_rot+self.no_look) 
                         ):
                         self.world.properties["ski_direction"] += angle_inc
                     else:
                         self.world.properties["ski_direction"] -= angle_inc
                     
                 else:
-                    self.world.properties["ski_direction"] = self.world.view.hor_rot
+                    self.world.properties["ski_direction"] = self.world.view.hor_rot+self.no_look
             
                 
                 
@@ -802,8 +791,14 @@ class UI(LooiObject):
     def look_around(self):
         if self.interface_mode == "game" or self.interface_mode == "can_move_temporarily":
             rel = pygame.mouse.get_rel()
-            self.world.view.hor_rot += -(rel[0])*self.world.view.rot_spd
-            self.world.view.vert_rot += -(rel[1])*self.world.view.rot_spd
+            if self.key(constants["no_look_key"], "down"):
+                self.no_look += -(rel[0])*self.world.view.rot_spd*.4
+                self.world.view.hor_rot += -(rel[0])*self.world.view.rot_spd*.6
+                self.world.view.vert_rot += -(rel[1])*self.world.view.rot_spd
+            else:
+                self.world.view.hor_rot += -(rel[0])*self.world.view.rot_spd
+                self.world.view.vert_rot += -(rel[1])*self.world.view.rot_spd
+                self.no_look = 0
                 
             
                 

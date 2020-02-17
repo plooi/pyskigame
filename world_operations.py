@@ -20,18 +20,32 @@ def natural_bumps(world, z1, x1, z2, x2, prog_bar=False):
     
     radius = int(((z1-z2)**2 + (x1-x2)**2)**.5 / 2) + 1
     radius += 2
-    if prog_bar: loading.progress_bar("Loading 2/3")
+    if prog_bar: loading.progress_bar("Loading 2/2")
         
     
     hs = world.properties["horizontal_stretch"]
     vs = world.properties["vertical_stretch"]
-    for z in range(int((middle_z - radius)*hs), int((middle_z + radius)*hs),7):
+    bump_grid_space = 5
+    for z in range(int((middle_z - radius)*hs), int((middle_z + radius)*hs),bump_grid_space):
         if prog_bar and z % 7 == 0: loading.update(100*(z-int((middle_z - radius)*hs))/((int((middle_z + radius)*hs))-(int((middle_z - radius)*hs))))
         #print(z,"/",radius*2*hs)
         
-        for x in range(int((middle_x - radius)*hs), int((middle_x + radius)*hs), 7):
+        for x in range(int((middle_x - radius)*hs), int((middle_x + radius)*hs), bump_grid_space):
             if world.is_bump(z, x):
-                NaturalBump(z=z/hs,x=x/hs, world=world)
+                #key1 and key2 should be over 50
+                def seedf(z,x,key1=55,key2=177):
+                    def abs(x): return x if x >= 0 else -x
+                    p = x + 1000000*z
+                    seed = abs(-abs(math.sin((p*key1)**2)+.5) + 1)
+                    seed2 = abs(-abs(math.sin((p*key2)**2)+.5) + 1)
+                    
+                    return seed,seed2
+                seed,seed2 = seedf(z, x)
+                seed *= bump_grid_space
+                seed2 *= bump_grid_space
+                if not world.valid_floor(int(z/hs+seed),int(x/hs+seed2)):
+                    continue
+                NaturalBump(z=z/hs+seed,x=x/hs+seed2, world=world)
     if prog_bar: loading.update(100)
     
 def remove_natural_bumps(world, z1, x1, z2, x2):
@@ -156,7 +170,7 @@ def raise_hill(world, z1, x1, z2, x2, amount):
     
     radius = int(((z1-z2)**2 + (x1-x2)**2)**.5 / 2) + 1
     
-    recreate_strings = []
+    objects_to_reset = []
     
     for z in range(middle_z - radius, middle_z + radius):
         for x in range(middle_x - radius, middle_x + radius):
@@ -165,11 +179,11 @@ def raise_hill(world, z1, x1, z2, x2, amount):
                 if world.valid_floor(z, x):
                     for obj in world.quads[z][x].containedObjects:
                         if isinstance(obj, Tree):
-                            recreate_strings.append(world.object_account[id(obj)])
+                            objects_to_reset.append(obj)
                         elif isinstance(obj, WorldObject):
-                            del obj.args["y"]
-                            del obj.args["model_y"]
-                            recreate_strings.append(obj.get_recreate_string())
+                            
+                            
+                            objects_to_reset.append(obj)
                 
                 world.set_elevation(z, x, world.get_elevation(z,x) + increase, False)
                 
@@ -178,9 +192,8 @@ def raise_hill(world, z1, x1, z2, x2, amount):
         for x in range(middle_x - radius, middle_x + radius):
             if ((z-middle_z)**2 + (x-middle_x)**2)**.5 <= radius and world.valid_floor(z, x):
                 world.reset_floor_texture(z,x)
-                
-    for recreate in recreate_strings:
-        eval(recreate)
+    for recreate in objects_to_reset:
+        recreate.reset()
                 
 def plateau(world, z1, x1, z2, x2, amount):
     middle_z = int((z1+z2)/2)
@@ -189,7 +202,7 @@ def plateau(world, z1, x1, z2, x2, amount):
     radius = int(((z1-z2)**2 + (x1-x2)**2)**.5 / 2) + 1
     y = world.get_elevation(middle_z,middle_x)
     
-    recreate_strings = []
+    objects_to_reset = []
     
     for z in range(middle_z - radius, middle_z + radius):
         for x in range(middle_x - radius, middle_x + radius):
@@ -197,11 +210,11 @@ def plateau(world, z1, x1, z2, x2, amount):
                 if world.valid_floor(z, x):
                     for obj in world.quads[z][x].containedObjects:
                         if isinstance(obj, Tree):
-                            recreate_strings.append(world.object_account[id(obj)])
+                            objects_to_reset.append(obj)
                         elif isinstance(obj, WorldObject):
-                            del obj.args["y"]
-                            del obj.args["model_y"]
-                            recreate_strings.append(obj.get_recreate_string())
+                            
+                            
+                            objects_to_reset.append(obj)
                 world.set_elevation(z, x, y + amount, False)
                 
     radius += 2
@@ -210,8 +223,8 @@ def plateau(world, z1, x1, z2, x2, amount):
             if ((z-middle_z)**2 + (x-middle_x)**2)**.5 <= radius and world.valid_floor(z, x):
                 world.reset_floor_texture(z,x)
     
-    for recreate in recreate_strings:
-        eval(recreate)
+    for recreate in objects_to_reset:
+        recreate.reset()
         
     
 def smooth(world, z1, x1, z2, x2):
@@ -234,7 +247,7 @@ def smooth(world, z1, x1, z2, x2):
     def origval(z, x):
         return original_values[z-boundaryz1][x-boundaryx1]
     
-    recreate_strings = []
+    objects_to_reset = []
     
     
     for z in range(middle_z - radius, middle_z + radius):
@@ -254,11 +267,11 @@ def smooth(world, z1, x1, z2, x2):
                     if world.valid_floor(z, x):
                         for obj in world.quads[z][x].containedObjects:
                             if isinstance(obj, Tree):
-                                recreate_strings.append(world.object_account[id(obj)])
+                                objects_to_reset.append(obj)
                             elif isinstance(obj, WorldObject):
-                                del obj.args["y"]
-                                del obj.args["model_y"]
-                                recreate_strings.append(obj.get_recreate_string())
+                                
+                                
+                                objects_to_reset.append(obj)
                     world.set_elevation(z, x, ( origval(z-1,x)+origval(z-1,x-1)+origval(z,x-1)+origval(z+1,x-1)+origval(z+1,x)+origval(z+1,x+1)+origval(z,x+1)+origval(z-1,x+1)+origval(z,x))/9    , reset_color=False)
                     #world.set_elevation(z,x, origval(z,x), False)
     radius += 2
@@ -266,8 +279,8 @@ def smooth(world, z1, x1, z2, x2):
         for x in range(middle_x - radius, middle_x + radius):
             if ((z-middle_z)**2 + (x-middle_x)**2)**.5 <= radius and world.valid_floor(z, x):
                 world.reset_floor_texture(z,x)
-    for recreate in recreate_strings:
-        eval(recreate)
+    for recreate in objects_to_reset:
+        recreate.reset()
     
     
 #THICKNESS IS THE  DIAMETER 
@@ -337,7 +350,7 @@ def path(world, z1, x1, z2, x2, thickness):
                     z1 * inverted_fraction + z2 * fraction,
                     ]
     
-    recreate_strings = []
+    objects_to_reset = []
     for i in range(0, int(distance), 1):
         loc = travel(i/distance)
         
@@ -358,13 +371,13 @@ def path(world, z1, x1, z2, x2, thickness):
                             for xxx in range(xx-1, xx+1):
                                 for obj in world.quads[zzz][xxx].containedObjects:
                                     if isinstance(obj, Tree):
-                                        if world.object_account[id(obj)] not in recreate_strings:
-                                            recreate_strings.append(world.object_account[id(obj)])
+                                        if obj not in objects_to_reset:
+                                            objects_to_reset.append(obj)
                                     elif isinstance(obj, WorldObject):
-                                        if obj.get_recreate_string() not in recreate_strings:
-                                            del obj.args["y"]
-                                            del obj.args["model_y"]
-                                            recreate_strings.append(obj.get_recreate_string())
+                                        if obj not in objects_to_reset:
+                                            
+                                            
+                                            objects_to_reset.append(obj)
                     
                     if dist_frm_ctr < thickness - 3:
                         world.set_elevation(zz,xx,y,False)
@@ -390,7 +403,7 @@ def path(world, z1, x1, z2, x2, thickness):
                 if ((zz-z)**2 + (xx-x)**2)**.5 < thickness and world.valid_floor(zz,xx):
                     world.reset_floor_texture(zz,xx)
                     
-    for recreate in recreate_strings:
-        eval(recreate)
+    for recreate in objects_to_reset:
+        recreate.reset()
     
     

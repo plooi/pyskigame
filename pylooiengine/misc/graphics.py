@@ -1,10 +1,19 @@
 from pylooiengine import *
 import pylooiengine
 import numpy
-from queue import Queue
+#from queue import Queue
 
 
-
+class Queue:
+    def __init__(self):
+        self.data = []
+    def put(self,x,block=False):
+        self.data.append(x)
+    def empty(self):
+        return len(self.data) == 0
+    def get(self, block=False):
+        return self.data.pop(0)
+        
 
 
 class VertexHandler:

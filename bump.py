@@ -42,8 +42,8 @@ class NaturalBump(WorldObject):
                 "sun_is_to_the_left" : is_a_left_of_b(args["world"].properties["sun_angle"], args["rotation"]),
                 "angle_distance_from_sun" : normal.angle_distance(args["world"].properties["sun_angle"], args["rotation"])})
         
+        
         super().__init__(**args)
-
     def touching(self, x, y, z):
         if ((x-self.args["model_x"])**2 + (z-self.args["model_z"])**2) ** .5 < 1:
             return True

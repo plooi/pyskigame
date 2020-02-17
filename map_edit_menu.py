@@ -19,6 +19,7 @@ import traceback
 import building
 from landmark import Landmark
 from world_object import WorldObject
+from bump import *
 import mission_center
 class Menu(LooiObject):
     def __init__(self, ui):
@@ -166,8 +167,6 @@ def settings(menu):
     setting["Vertical Stretch"] = menu.ui.world.properties["vertical_stretch"]
     setting["Sun Angle"] = menu.ui.world.properties["sun_angle"]
     setting["Line of Sight"] = menu.ui.world.view.line_of_sight
-    setting["Texture Distance"] = menu.ui.world.properties["texture_distance"]
-    setting["Texture Radius"] = menu.ui.world.properties["texture_radius"]
     setting["Movement Speed"] = menu.ui.world.view.speed
     setting["Rotation Speed"] = menu.ui.world.view.rot_spd
     setting["Chair Time Interval Detachable"] = menu.ui.world.properties["chair_time_distance_detachable"]
@@ -217,8 +216,6 @@ def settings(menu):
         try:
             #do all the non-reload settings first...
             menu.ui.world.view.line_of_sight = int(new_settings["Line of Sight"])
-            menu.ui.world.properties["texture_distance"] = float(new_settings["Texture Distance"])
-            menu.ui.world.properties["texture_radius"] = float(new_settings["Texture Radius"])
             menu.ui.world.view.speed = float(new_settings["Movement Speed"])
             menu.ui.world.view.rot_spd = float(new_settings["Rotation Speed"])
             menu.ui.world.properties["chair_time_distance_detachable"] = float(new_settings["Chair Time Interval Detachable"])
@@ -242,7 +239,7 @@ def settings(menu):
                             chairlift.set_chair_time_distance(menu.ui.world.properties["chair_time_distance_detachable"])
                     else:#if fixed grip
                         chairlift.set_chair_time_distance(menu.ui.world.properties["chair_time_distance_fixed"])
-                    chairlift.update_object_account()
+                    #chairlift.update_object_account()
                             
                         
             
@@ -262,6 +259,10 @@ def settings(menu):
                             for obj in menu.ui.world.quads[z][x].containedObjects:
                                 if isinstance(obj, Tree):
                                     obj.reset()
+                world = menu.ui.world
+                remove_natural_bumps(world, 0,0,world.get_width_points(), world.get_width_points())
+                natural_bumps(world, 0,0,world.get_width_points(), world.get_width_points(), prog_bar=True)
+                
             if nsame("Horizontal Stretch") or nsame("Vertical Stretch"):
                 layout = [[sg.Text("Changing the horizontal or vertical stretch will require a reload. Confirm can?")],
                             [sg.OK(), sg.Cancel()]]
@@ -270,6 +271,8 @@ def settings(menu):
                 window.close()
                 if event2 == "OK":
                     name = menu.ui.world.properties["name"]
+                    old_hs = menu.ui.world.properties["horizontal_stretch"]
+                    old_vs = menu.ui.world.properties["vertical_stretch"]
                     menu.ui.world.properties["horizontal_stretch"] = float(new_settings["Horizontal Stretch"])
                     menu.ui.world.properties["vertical_stretch"] = float(new_settings["Vertical Stretch"])
                     menu.ui.world.view.x = 0
@@ -278,10 +281,51 @@ def settings(menu):
                     menu.ui.world.view.hor_rot = -math.pi/4
                     menu.ui.world.view.vert_rot = -math.pi/4
                     
-                    world_save.write(menu.ui.world, old_vertical_stretch = float(setting["Vertical Stretch"]))
                     
-                    the_world = world_save.read("./worlds/"+name)
-                    rooms.init_game_room(the_world)
+                    #modify the world object
+                    world = menu.ui.world
+                    hratio = world.properties["horizontal_stretch"]/old_hs
+                    vratio = world.properties["vertical_stretch"]/old_vs
+                    
+                    
+                    loading.progress_bar("Loading 1/2...")
+                    for z in range(world.get_height_floors()):
+                        for x in range(world.get_width_floors()):
+                            z_chunk, x_chunk = world.convert_to_chunk_coords(z, x)#find which chunk this quad z,x is in
+                            q=world.quads[z][x]
+                            
+                            tvh = world.chunks[z_chunk][x_chunk].tvh
+                            for i in range(4):
+                                tvh.vertices[q.floor_pointer+i][0] *= hratio
+                                tvh.vertices[q.floor_pointer+i][1] *= vratio
+                                tvh.vertices[q.floor_pointer+i][2] *= hratio
+                        if z % 7 == 0: loading.update(z/world.properties["height"]*33)
+                    for z in range(world.get_height_floors()):
+                        for x in range(world.get_width_floors()):
+                            world.reset_floor_texture(z, x)
+                        if z % 7 == 0: loading.update(z/world.properties["height"]*33+33)
+                    for z in range(world.get_height_floors()):
+                        for x in range(world.get_width_floors()):
+                            objs = world.quads[z][x].containedObjects
+                            i=0
+                            while i < len(objs):
+                                if isinstance(objs[i], NaturalBump):
+                                    objs[i].delete()#this automatically deletes the bump from the list
+                                    i -= 1#but I still have to do i -= 1
+                                elif isinstance(objs[i], Terminal):
+                                    if objs[i].top_or_bot == 'bot':
+                                        objs[i].chairlift.reset()
+                                elif isinstance(objs[i], Pole):
+                                    pass
+                                else:
+                                    objs[i].reset()
+                                i += 1
+                                
+                        if z % 7 == 0: loading.update(z/world.properties["height"]*33+66)
+                    loading.update(100)
+                    natural_bumps(world, 0,0,world.get_width_points(), world.get_width_points(), prog_bar=True)
+                    
+                    world_save.write(world)
         except Exception as e:
             traceback.print_exc()
             sg.Popup(str(e))
@@ -306,8 +350,12 @@ def exit(menu):
         
     menu.ui.stop_sounds()
     #code for exiting:
+    #print("going to deactivate",pylooiengine.main_window.unlayered_looi_objects+main_window.layered_looi_objects+main_window.transfer_to_unlayered_looi_objects+main_window.transfer_to_layered_looi_objects)
     for looi_object in pylooiengine.main_window.unlayered_looi_objects+main_window.layered_looi_objects+main_window.transfer_to_unlayered_looi_objects+main_window.transfer_to_layered_looi_objects:
-        looi_object.deactivate()
+        try:
+            looi_object.deactivate()
+        except:
+            raise Exception("Cannot remove this looiobject " + str(looi_object) + "see because it's active variable is " + str(looi_object.active))
     
     rooms.main_menu()
     """

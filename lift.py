@@ -148,9 +148,6 @@ class Lift(LooiObject, Selectable):
         
         self.do_rope()
         
-        #self.world.add_object_account(self, "Lift(world).build(%s, %f, %f, %f, %s, %s, %s,terminal_model=%s,pole_model=%s)"%(str(chairlift_array), self.rope_speed, self.terminal_speed, self.chair_time_distance, find_name(self.chair_model), find_name(self.blurry_chair_model), find_name(self.super_blurry_chair_model), find_name(self.terminal_model), find_name(self.pole_model)))
-        self.update_object_account()
-        
         self.activate()
         move_model(self.beacon, self.start_terminal.real_x, self.start_terminal.real_y, self.start_terminal.real_z)
         return self
@@ -229,14 +226,8 @@ class Lift(LooiObject, Selectable):
                     segment_index += 1
         
     def reset(self):
-        self.update_object_account()
-        recreate = self.world.object_account[id(self)]
+        Lift(self.world).build(self.chairlift_array, self.rope_speed, self.terminal_speed, self.chair_time_distance, self.chair_model, self.blurry_chair_model, self.super_blurry_chair_model,terminal_model=self.terminal_model,pole_model=self.pole_model,chair_riding_model=self.chair_riding_model)
         self.delete()
-        world=self.world
-        return eval(recreate)
-        
-    def update_object_account(self):
-        self.world.add_object_account(self, "Lift(world).build(%s, '%s', '%s', %f, %s, %s, %s,terminal_model=%s,pole_model=%s,chair_riding_model=%s)"%(str(self.chairlift_array), self.rope_speed, self.terminal_speed, self.chair_time_distance, find_name(self.chair_model), find_name(self.blurry_chair_model), find_name(self.super_blurry_chair_model), find_name(self.terminal_model), find_name(self.pole_model), find_name(self.chair_riding_model)))
         
     def do_rope(self):
         objs = [self.start_terminal] + self.poles_midpoints_objects + [self.end_terminal]
@@ -302,7 +293,6 @@ class Lift(LooiObject, Selectable):
             rm_model_from_world_fixed(keys, self.world, anchor_z, anchor_x)
             
         self.deactivate()
-        self.world.delete_object_account(self)
     def round_trip_time(self):
         ret = 0
         for segment in self.track:

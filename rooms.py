@@ -143,6 +143,32 @@ def new_world_1():
     back = Button(700, 650, 600, 85, "<--", main_menu, Color(.6,.6,.6), black, 64)
     back.button_depth = 10
     
+    
+
+class LoadingScreen(LooiObject):
+    def __init__(self, job):
+        kill_all()
+        super().__init__()
+        self.i=0
+        self.job = job
+    def paint(self):
+        #loading gui
+        bg = Color(.9,.9,1)
+        self.draw_text(550,800,"Loading...", background_color=bg,font_size = 100,font = "Goudy Stout")
+        self.draw_rect(0,0,self.get_my_window().get_internal_size()[0],self.get_my_window().get_internal_size()[1], bg)
+        
+            
+        
+        
+        
+        
+        
+        self.i+=1
+        if self.i==2:
+            self.job()
+            self.deactivate()
+            
+        
 def blank_world():
     
     values = ["My World", "100", "100"]
@@ -221,11 +247,12 @@ def create_copy():
                 break
         else:
             break
-    
-    the_world = world_save.read("./worlds/"+event)
-    the_world.properties["name"] = values[0]
-    world_save.write(the_world)
-    init_game_room(the_world)
+    def job():
+        the_world = world_save.read("./worlds/"+event)
+        the_world.properties["name"] = values[0]
+        world_save.write(the_world)
+        init_game_room(the_world)
+    LoadingScreen(job)
     
 def load_existing_map_editor():
     col = []
@@ -243,8 +270,12 @@ def load_existing_map_editor():
     if event == None: return
     
     
-    the_world = world_save.read("./worlds/"+event)
-    init_game_room(the_world)
+    def job():
+        the_world = world_save.read("./worlds/"+event)
+        init_game_room(the_world)
+    LoadingScreen(job)
+    
+    
 def data_file_world():
     
     col = []

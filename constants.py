@@ -24,13 +24,14 @@ x = {
     
     
     "bump_slope" : (math.pi/6,math.pi/9.5),
-    "bump_density" : .25,
+    "bump_density" : .3,
     "bump_group_density" : .2,
     
     "move_key" : "w",
     "menu_key" : "c",
     "interact_key" : "e",
-    "find_key" : "x"
+    "find_key" : "x",
+    "no_look_key" : "q"
     
     
 

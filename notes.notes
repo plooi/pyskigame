@@ -1,11 +1,15 @@
 '''Fix the annoying wind sound'''
-Make a mode where you can ski without turning your head
+Make a mode where you can ski without turning your head YES!!! DO IT!
 make bumps more dense
 '''constant wind'''
 snow needs to be less regular
 faster loading
+terminals need to be quieter
+wind has to be less scary
+make building a world object
 
-
+lifts when stretching
+weird natural bump patterns
 
 
 
@@ -368,145 +372,119 @@ fix the depth buffer problem with rocks
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-old
-                """
-                turn = angle_distance(self.world.properties["ski_direction"], self.world.view.hor_rot)
-                self.world.properties["ski_direction"] = self.world.view.hor_rot
-                
-                p1,p2,p3 = self.xyz_of_current_triangle(v.z, v.x)
-                floor_hr, floor_vr = get_plane_rotation(p1[0],p1[1],p1[2],p2[0],p2[1],p2[2],p3[0],p3[1],p3[2])
-                
-                if floor_vr < 0:
-                    floor_vr = -floor_vr
-                    floor_hr += math.pi
-                
-                floor_slope = math.pi/2 - floor_vr
-                
-                resistance = angle_distance(self.world.properties["ski_direction"], floor_hr)   
-                
-                equivalent_floor_slope = math.cos(resistance) * floor_slope
-                
-                f_parallel = ski_g * math.sin(equivalent_floor_slope)
-                
-                fhorizontal = f_parallel * math.cos(equivalent_floor_slope)
-                
-                self.world.properties["momentum"] += fhorizontal
-                self.world.properties["momentum_direction"] = self.world.properties["ski_direction"]
-                
-                if turn > math.pi/4:
-                    turn = math.pi/4
-                    
-                turn = (turn) ** 1.2
-                
-                #print(turn)
-                self.world.properties["momentum"] *= (1 - turn/(math.pi/4))
-                friction = friction_coefficient * self.world.properties["momentum"]**2
-                if friction < min_friction:
-                    friction = min_friction
-                self.world.properties["momentum"] -= friction
-                if self.world.properties["momentum"] > max_speed:
-                    self.world.properties["momentum"] = max_speed
-                
-                
-                if self.world.properties["momentum"] < 0:
-                    self.world.properties["momentum"] = 0
-                #bump = 0
-                #if self.world.properties["momentum"] / max_speed > .8:
-                #    bump = random() * (self.world.properties["momentum"] / max_speed) ** 4 * .2
-                #    self.world.view.vert_rot += (random()*2-1) * (self.world.properties["momentum"] / max_speed) ** 4 * math.pi/40
-                
-                v.x += self.world.properties["momentum"] * math.cos(self.world.properties["momentum_direction"])
-                v.z += self.world.properties["momentum"] * -math.sin(self.world.properties["momentum_direction"])
-                v.y = self.get_elevation_continuous(v.z, v.x)*self.world.properties["vertical_stretch"] + self.world.properties["player_height"]# + bump
-                """
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                """
-    oops i don't think pan chunk texture is possible
-    def get_pan_chunk_texture(self, chunk_z, chunk_x):
-        if self.colors_changed:
-            cs = self.world.properties["chunk_size"]
-            ul_z = chunk_z * cs
-            ul_x = chunk_x * cs
-            s = self.world.properties["horizontal_stretch"]
-            
-            
-            ret = Image.new("RGBA", (8,8))
-            pixels = ret.load()
-            
-            for r in range(ul_z, ul_z+cs):
-                for c in range(ul_x, ul_x+cs):
-                    
-                    shade = self.world.get_proper_floor_color(r, c)[0]
-                        
-                        
-                        for obj in self.world.floors[r][c].containedObjects:
-                            if instanceof(obj,Tree):
-                                floor_color = (100*shade,255*shade,100*shade,255)
-                                break
-                        else:
-                            floor_color = (255*shade,255*shade,255*shade,255)
-                                
-                    pixels[c-ul_x, r-ul_r] = floor_color
-        return return (
-                [ul_x*s, self.world.get_elevation(ul_z, ul_x, scaled=True), ul_z*s], 
-                [(ul_x+cs)*s, self.world.get_elevation(ul_z, ul_x+cs, scaled=True), ul_z*s], 
-                [(ul_x+cs)*s, self.world.get_elevation(ul_z+cs, ul_x+cs, scaled=True), (ul_z+cs)*s], 
-                [ul_x*s, self.world.get_elevation(ul_z+cs, ul_x, scaled=True), (ul_z+cs)*s], 
-                self.last_pan_chunk_color
-                )
+def read(path):
     """
+    if "unlayered_looi_objects" in os.listdir(path):
+        #unpickle everything
+        f = open(path+"/unlayered_looi_objects", "rb")
+        unlayered_looi_objects = picke.load(f)
+        f.close()
+        f = open(path+"/layered_looi_objects", "rb")
+        layered_looi_objects = picke.load(f)
+        f.close()
+        f = open(path+"/transfer_to_unlayered_looi_objects", "rb")
+        transfer_to_unlayered_looi_objects = picke.load(f)
+        f.close()
+        f = open(path+"/transfer_to_layered_looi_objects", "rb")
+        transfer_to_layered_looi_objects = picke.load(f)
+        f.close()
+        f = open(path+"/to_remove", "rb")
+        to_remove = picke.load(f)
+        f.close()
+        
+        pylooiengine.main_window.unlayered_looi_objects=unlayered_looi_objects
+        pylooiengine.main_window.layered_looi_objects=layered_looi_objects
+        pylooiengine.main_window.transfer_to_unlayered_looi_objects=transfer_to_unlayered_looi_objects
+        pylooiengine.main_window.transfer_to_layered_looi_objects=transfer_to_layered_looi_objects
+        pylooiengine.main_window.to_remove=to_remove
+        
+        
+        
+        return None
+    """
+    #otherwise do it the old fashioned way
+    #no, ALWAYS do it the old fashioned way
+    #conservative = good
+    from world import World,View
+    from tree import Tree
+    from lift import Lift#,chair_model_1,chair_model_2,chair_model_3,chair_model_4,rope_model_1,terminal_design_1,pole_design_1
+    from rock import Rock
+    
+    def new_view(x,y,z,hr,vr,spd,rotspd,los,maxvrot):
+        v = View()
+        v.x = x
+        v.y = y
+        v.z = z
+        v.hor_rot = hr
+        v.vert_rot = vr
+        v.rot_spd = rotspd
+        v.line_of_sight = los
+        v.max_vert_rot = maxvrot
+        v.speed = spd
+        return v
+    
+    
+    
+    
+    
+    
+    f = open(path+"/save", "r")
+    
+    elevations = []
+    world = None
+    
+    
+    mode = "read_elevations"
+    
+    objects_to_load = []
+    
+    for line in f:
+        line = line.strip()
+        if mode == "read_elevations":
+            if line == "WAHLAO EH!":
+                mode = "read_world_command"
+                continue
+            elevations.append([float(x) for x in line.split(",")])
+        if mode == "read_world_command":
+            if line == "WAHLAO EH!":
+                mode = "load_objects"
+                continue
+            
+            elevation_function = lambda z,x: elevations[z][x]
+            try:
+                world = eval(line)
+            except:
+                traceback.print_exc()
+                raise Exception("Tried to execute:"+line)
+        if mode == "load_objects":
+            
+            if line == "WAHLAO EH!":
+                break
+            
+            objects_to_load.append(line)
+            
+    loading.progress_bar("Loading 3/3")
+    for i in range(len(objects_to_load)):
+        try:
+            eval(objects_to_load[i])
+        except:
+            print("Can't load this object: " + objects_to_load[i])
+        if i %400 == 0:
+            loading.update(i/len(objects_to_load)*100)
+    loading.update(100)
+    return world
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

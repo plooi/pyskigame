@@ -11,7 +11,7 @@ from PIL import Image
 import numpy
 from OpenGL.arrays import vbo
 import array
-
+import traceback
 main_window = None
 import math
 
@@ -264,8 +264,9 @@ class Window():
         if (strict_in(looi_object, self.to_remove) 
             or 
             (not strict_in(looi_object, self.layered_looi_objects) and not strict_in(looi_object, self.unlayered_looi_objects))  ):
-            
             fail("Cannot remove this looi object as it is not currently active")
+        
+        
         self.to_remove.append(looi_object)
     def add_looi_object(self, looi_object):
         if is_num(looi_object.get_layer()):

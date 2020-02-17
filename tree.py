@@ -30,12 +30,6 @@ class Tree(Selectable):
         self.reset(delete=False)
         
         
-    def add_object_account(self):
-        
-        #object account
-        self.world.add_object_account(self, "Tree(%d, %d, world, %f, %s, %f)"%(self.z, self.x, self.darkness_factor, find_name(self.design_function), self.rotation))
-        
-        
     def reset(self, delete=True):
         z = self.z
         x = self.x
@@ -69,10 +63,9 @@ class Tree(Selectable):
                     self.design[i][2] *= brightness
                 
         self.vertex_handler_pointers = add_model_to_world_fixed(self.design, self.world, self.z, self.x, self,gradient_model=self.gradient_model)
-        self.add_object_account()
+        
     def delete(self):
         rm_model_from_world_fixed(self.vertex_handler_pointers, self.world, self.z, self.x, self)
-        self.world.delete_object_account(self)
         
     def open_menu(self):
         layout = [
