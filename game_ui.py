@@ -86,6 +86,8 @@ class UI(LooiObject):
         self.no_look = 0
         
         
+        
+        
     def stop_sounds(self):
         self.wind_sound.stop()
         self.lift_sound.stop()
@@ -188,15 +190,7 @@ class UI(LooiObject):
             self.world.properties["health"] = self.health_target
     def pole_sound(self, x, y, z):
         dist = ( (x-self.world.view.x)**2 + (y-self.world.view.y)**2 + (z-self.world.view.z)**2 )**.5
-        
         if dist < 20:
-            """
-            vol = dist/20
-            if vol>1:vol=1
-            vol *= 5
-            vol = int(vol)
-            vol /= 4
-            """
             self.pole_sound_obj.play(maxtime=1000)
             
     def sounds(self):
@@ -249,7 +243,7 @@ class UI(LooiObject):
         self.set_lift_vol(vol)
         
         #swish
-        if self.world.properties["momentum"] > .1 and self.swish_timer == 0 and angle_distance(self.world.view.hor_rot, self.world.properties["ski_direction"]) > math.pi/10:
+        if self.world.properties["momentum"] > .1 and self.swish_timer == 0 and angle_distance(self.world.view.hor_rot+self.no_look, self.world.properties["ski_direction"]) > math.pi/10:
             self.swish_sound.stop()
             self.swish_sound.play(maxtime=2000, fade_ms = 1000)
             self.swish_timer = 25

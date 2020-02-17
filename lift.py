@@ -226,8 +226,8 @@ class Lift(LooiObject, Selectable):
                     segment_index += 1
         
     def reset(self):
-        Lift(self.world).build(self.chairlift_array, self.rope_speed, self.terminal_speed, self.chair_time_distance, self.chair_model, self.blurry_chair_model, self.super_blurry_chair_model,terminal_model=self.terminal_model,pole_model=self.pole_model,chair_riding_model=self.chair_riding_model)
         self.delete()
+        Lift(self.world).build(self.chairlift_array, self.rope_speed, self.terminal_speed, self.chair_time_distance, self.chair_model, self.blurry_chair_model, self.super_blurry_chair_model,terminal_model=self.terminal_model,pole_model=self.pole_model,chair_riding_model=self.chair_riding_model)
         
     def do_rope(self):
         objs = [self.start_terminal] + self.poles_midpoints_objects + [self.end_terminal]
@@ -370,6 +370,9 @@ class Lift(LooiObject, Selectable):
                     
                     self.chair_positions[i] = chair_i_position
                     self.chair_angles[i] = chair_i_angle
+                    
+                    #if self.track.segments[segment_index].speed != constants[self.rope_speed] and self.track.segments[segment_index].speed != constants[self.terminal_speed]:
+                        #print("rope",constants[self.rope_speed],"term",constants[self.terminal_speed],"this dude",self.track.segments[segment_index].speed)
                     
                     if segment_index != self.chair_segments[i] and self.chair_segments[i] != -1:#if this chair is entering a new segment
                         if self.track.segments[segment_index-1].speed == constants[self.rope_speed]:#and the previous segment is rope speed

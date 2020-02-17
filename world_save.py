@@ -185,7 +185,8 @@ def read(path, new_version = True):
                         if isinstance(obj, Terminal):
                             if obj.top_or_bot == "bot":
                                 set_active_variable_false(obj.chairlift)
-                                obj.chairlift.activate()
+                                obj.chairlift.reset()
+                                
                         elif isinstance(obj, LooiObject):
                             if obj.active:
                                 set_active_variable_false(obj)
