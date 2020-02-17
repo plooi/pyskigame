@@ -243,7 +243,7 @@ class UI(LooiObject):
         self.set_lift_vol(vol)
         
         #swish
-        if self.world.properties["momentum"] > .1 and self.swish_timer == 0 and angle_distance(self.world.view.hor_rot+self.no_look, self.world.properties["ski_direction"]) > math.pi/10:
+        if self.world.properties["momentum"] > .1 and self.swish_timer == 0 and angle_distance(self.world.view.hor_rot+self.no_look, self.world.properties["ski_direction"]) > math.pi/13:
             self.swish_sound.stop()
             self.swish_sound.play(maxtime=2000, fade_ms = 1000)
             self.swish_timer = 25

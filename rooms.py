@@ -1,6 +1,7 @@
 from pylooiengine import *
 from pylooiengine.gui import *
 import pylooiengine
+import pygame
 import easygui
 import world
 from lift import Lift
@@ -45,7 +46,6 @@ def main_menu():
     abort.button_depth = 10
     
     
-    
 def ski_room():
     kill_all()
     new = Button(700, 250, 600, 85, "New Game", new_ski_world, Color(.6,.6,.6), black, 64)
@@ -54,6 +54,8 @@ def ski_room():
     load.button_depth = 10
     back = Button(700, 650, 600, 85, "<--", main_menu, Color(.6,.6,.6), black, 64)
     back.button_depth = 10
+    
+    
 
 def new_ski_world():
     col = []

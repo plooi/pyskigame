@@ -189,7 +189,7 @@ class Chunk:
             for r in range(ul_z, ul_z+cs):
                 for c in range(ul_x, ul_x+cs):
                     for obj in self.world.quads[r][c].containedObjects:
-                        if isinstance(obj, Tree):
+                        if obj.__class__ == Tree:
                             new_pan_chunk_color[0] += .3*8
                             new_pan_chunk_color[1] += .5*8
                             new_pan_chunk_color[2] += .19*8
