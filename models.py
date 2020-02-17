@@ -448,8 +448,10 @@ def terminal_design_1(
     terminal_roof_length = 7,
     terminal_track_indent = .5,
     terminal_belly_color = [.8,.7,.5],
-    terminal_roof_color = [.4,.4,.8],
-    terminal_wall_color = [.2,.2,.8],
+    terminal_roof_color = [.74,.74,.74],#[.4,.4,.8],
+    terminal_side_color = [.65,.65,.65],
+    terminal_wall_color = [.34,.38,.43],
+    terminal_roof_bulge = .23,
     
     rope_speed = 3,
     terminal_speed = 1,
@@ -458,8 +460,7 @@ def terminal_design_1(
     bullwheel_segments = 55,
     
     terminal_roof_height = 1.5,
-    terminal_roof_height2 = 1.2
-    
+    terminal_roof_height2 = .75
     
     ):
     
@@ -495,16 +496,33 @@ def terminal_design_1(
     
     [-terminal_roof_length/2, pole_height, -terminal_roof_width/2], [terminal_roof_length/2, pole_height, -terminal_roof_width/2], [terminal_roof_length/2, pole_height, terminal_roof_width/2], [-terminal_roof_length/2, pole_height, terminal_roof_width/2], terminal_belly_color,
     
-    [-terminal_roof_length/2, pole_height, -terminal_roof_width/2], [terminal_roof_length/2, pole_height, -terminal_roof_width/2], [terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2 + terminal_roof_width/5], [-terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2 + terminal_roof_width/5], terminal_roof_color,
-    [-terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2 + 2*terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2 + 2*terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2 + terminal_roof_width/5], [-terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2 + terminal_roof_width/5], terminal_roof_color,
-    [-terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2 + 2*terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2 + 2*terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2 + 3*terminal_roof_width/5], [-terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2 + 3*terminal_roof_width/5], terminal_roof_color,
-    [-terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2 + 4*terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2 + 4*terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2 + 3*terminal_roof_width/5], [-terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2 + 3*terminal_roof_width/5], terminal_roof_color,
-    [-terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2 + 4*terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2 + 4*terminal_roof_width/5], [terminal_roof_length/2, pole_height, terminal_roof_width/2], [-terminal_roof_length/2, pole_height, terminal_roof_width/2], terminal_roof_color,
+    #[-terminal_roof_length/2, pole_height, -terminal_roof_width/2], [terminal_roof_length/2, pole_height, -terminal_roof_width/2], [terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2 + terminal_roof_width/5], [-terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2 + terminal_roof_width/5], terminal_roof_color,
     
-    [-terminal_roof_length/2, pole_height, -terminal_roof_width/2], [-terminal_roof_length/2, pole_height, terminal_roof_width/2], [-terminal_roof_length/2, pole_height+terminal_roof_height2, terminal_roof_width/2-terminal_roof_width/5], [-terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2+terminal_roof_width/5], terminal_wall_color,
-    [-terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2+2*terminal_roof_width/5], [-terminal_roof_length/2, pole_height+terminal_roof_height, terminal_roof_width/2-2*terminal_roof_width/5], [-terminal_roof_length/2, pole_height+terminal_roof_height2, terminal_roof_width/2-terminal_roof_width/5], [-terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2+terminal_roof_width/5], terminal_wall_color,
-    [terminal_roof_length/2, pole_height, -terminal_roof_width/2], [terminal_roof_length/2, pole_height, terminal_roof_width/2], [terminal_roof_length/2, pole_height+terminal_roof_height2, terminal_roof_width/2-terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2+terminal_roof_width/5], terminal_wall_color,
-    [terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2+2*terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height, terminal_roof_width/2-2*terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height2, terminal_roof_width/2-terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2+terminal_roof_width/5], terminal_wall_color,
+    
+    [-terminal_roof_length/2, pole_height, -terminal_roof_width/2], [terminal_roof_length/2, pole_height, -terminal_roof_width/2], [terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2-terminal_roof_bulge],[-terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2-terminal_roof_bulge], terminal_side_color,
+    [terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2-terminal_roof_bulge],[-terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2-terminal_roof_bulge], [-terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2-terminal_roof_bulge + (terminal_roof_width+2*terminal_roof_bulge)/3],[terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2-terminal_roof_bulge + (terminal_roof_width+2*terminal_roof_bulge)/3],terminal_roof_color,
+    [-terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2-terminal_roof_bulge + (terminal_roof_width+2*terminal_roof_bulge)/3],[terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2-terminal_roof_bulge + (terminal_roof_width+2*terminal_roof_bulge)/3],[terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2-terminal_roof_bulge + 2*(terminal_roof_width+2*terminal_roof_bulge)/3],[-terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2-terminal_roof_bulge + 2*(terminal_roof_width+2*terminal_roof_bulge)/3], terminal_roof_color,
+    [-terminal_roof_length/2, pole_height, terminal_roof_width/2], [terminal_roof_length/2, pole_height, terminal_roof_width/2], [terminal_roof_length/2, pole_height+terminal_roof_height2, terminal_roof_width/2+terminal_roof_bulge],[-terminal_roof_length/2, pole_height+terminal_roof_height2, terminal_roof_width/2+terminal_roof_bulge], terminal_side_color,
+    [terminal_roof_length/2, pole_height+terminal_roof_height2, terminal_roof_width/2+terminal_roof_bulge],[-terminal_roof_length/2, pole_height+terminal_roof_height2, +terminal_roof_width/2+terminal_roof_bulge], [-terminal_roof_length/2, pole_height+terminal_roof_height, +terminal_roof_width/2+terminal_roof_bulge - (terminal_roof_width+2*terminal_roof_bulge)/3],[terminal_roof_length/2, pole_height+terminal_roof_height, terminal_roof_width/2+terminal_roof_bulge - (terminal_roof_width+2*terminal_roof_bulge)/3],terminal_roof_color,
+    
+    [-terminal_roof_length/2, pole_height, terminal_roof_width/2],[-terminal_roof_length/2, pole_height, -terminal_roof_width/2],[-terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2-terminal_roof_bulge],[-terminal_roof_length/2, pole_height+terminal_roof_height2, terminal_roof_width/2+terminal_roof_bulge], terminal_wall_color,
+    [-terminal_roof_length/2, pole_height+terminal_roof_height, (terminal_roof_width+terminal_roof_bulge*2)/6],[-terminal_roof_length/2, pole_height+terminal_roof_height, -(terminal_roof_width+terminal_roof_bulge*2)/6],[-terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2-terminal_roof_bulge],[-terminal_roof_length/2, pole_height+terminal_roof_height2, terminal_roof_width/2+terminal_roof_bulge], terminal_wall_color,
+    
+    [terminal_roof_length/2, pole_height, terminal_roof_width/2],[terminal_roof_length/2, pole_height, -terminal_roof_width/2],[terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2-terminal_roof_bulge],[terminal_roof_length/2, pole_height+terminal_roof_height2, terminal_roof_width/2+terminal_roof_bulge], terminal_wall_color,
+    [terminal_roof_length/2, pole_height+terminal_roof_height, (terminal_roof_width+terminal_roof_bulge*2)/6],[terminal_roof_length/2, pole_height+terminal_roof_height, -(terminal_roof_width+terminal_roof_bulge*2)/6],[terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2-terminal_roof_bulge],[terminal_roof_length/2, pole_height+terminal_roof_height2, terminal_roof_width/2+terminal_roof_bulge], terminal_wall_color,
+    
+    
+    
+    #[-terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2 + 2*terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2 + 2*terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2 + terminal_roof_width/5], [-terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2 + terminal_roof_width/5], terminal_roof_color,
+    #[-terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2 + 2*terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2 + 2*terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2 + 3*terminal_roof_width/5], [-terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2 + 3*terminal_roof_width/5], terminal_roof_color,
+    #[-terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2 + 4*terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2 + 4*terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2 + 3*terminal_roof_width/5], [-terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2 + 3*terminal_roof_width/5], terminal_roof_color,
+    #[-terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2 + 4*terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2 + 4*terminal_roof_width/5], [terminal_roof_length/2, pole_height, terminal_roof_width/2], [-terminal_roof_length/2, pole_height, terminal_roof_width/2], terminal_roof_color,
+    
+    #[-terminal_roof_length/2, pole_height, -terminal_roof_width/2], [-terminal_roof_length/2, pole_height, terminal_roof_width/2], [-terminal_roof_length/2, pole_height+terminal_roof_height2, terminal_roof_width/2-terminal_roof_width/5], [-terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2+terminal_roof_width/5], terminal_wall_color,
+    #[-terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2+2*terminal_roof_width/5], [-terminal_roof_length/2, pole_height+terminal_roof_height, terminal_roof_width/2-2*terminal_roof_width/5], [-terminal_roof_length/2, pole_height+terminal_roof_height2, terminal_roof_width/2-terminal_roof_width/5], [-terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2+terminal_roof_width/5], terminal_wall_color,
+    #[terminal_roof_length/2, pole_height, -terminal_roof_width/2], [terminal_roof_length/2, pole_height, terminal_roof_width/2], [terminal_roof_length/2, pole_height+terminal_roof_height2, terminal_roof_width/2-terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2+terminal_roof_width/5], terminal_wall_color,
+    #[terminal_roof_length/2, pole_height+terminal_roof_height, -terminal_roof_width/2+2*terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height, terminal_roof_width/2-2*terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height2, terminal_roof_width/2-terminal_roof_width/5], [terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2+terminal_roof_width/5], terminal_wall_color,
+    
     ], track
     
 
