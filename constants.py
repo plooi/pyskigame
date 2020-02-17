@@ -2,10 +2,10 @@ import math
 from pylooiengine import *
 x = {
 
-    "detachable_rope_speed" : .42,#.375,#.3,
+    "detachable_rope_speed" : .585,#.375,#.3,
     "detachable_terminal_speed" : .025,
     "gondola_terminal_speed" : .01,
-    "gondola_rope_speed" : .65,
+    "gondola_rope_speed" : .7,
     
     "fixed_grip_rope_speed" : .275,
     "ski_mode_walk_speed" : .075,
