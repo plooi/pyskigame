@@ -32,21 +32,24 @@ def natural_bumps(world, z1, x1, z2, x2, prog_bar=False):
         #print(z,"/",radius*2*hs)
         
         for x in range(int((middle_x - radius)*hs), int((middle_x + radius)*hs), bump_grid_space):
-            if world.is_bump(z, x):
-                #key1 and key2 should be over 50
-                def seedf(z,x,key1=55,key2=177):
-                    def abs(x): return x if x >= 0 else -x
-                    p = x + 1000000*z
-                    seed = abs(-abs(math.sin((p*key1)**2)+.5) + 1)
-                    seed2 = abs(-abs(math.sin((p*key2)**2)+.5) + 1)
-                    
-                    return seed,seed2
-                seed,seed2 = seedf(z, x)
-                seed *= bump_grid_space
-                seed2 *= bump_grid_space
-                if not world.valid_floor(int(z/hs+seed),int(x/hs+seed2)):
-                    continue
-                NaturalBump(z=z/hs+seed,x=x/hs+seed2, world=world)
+            #if world.is_bump(z, x):
+            #key1 and key2 should be over 50
+            def seedf(z,x,key1=55,key2=177):
+                def abs(x): return x if x >= 0 else -x
+                p = x + 1000000*z
+                seed = abs(-abs(math.sin((p*key1)**2)+.5) + 1)
+                seed2 = abs(-abs(math.sin((p*key2)**2)+.5) + 1)
+                
+                return seed,seed2
+            seed,seed2 = seedf(z, x)
+            seed *= bump_grid_space
+            seed2 *= bump_grid_space
+            
+            if not world.is_bump(z+seed*hs,x+seed2*hs):
+                continue
+            if not world.valid_floor(int(z/hs+seed),int(x/hs+seed2)):
+                continue
+            NaturalBump(z=z/hs+seed,x=x/hs+seed2, world=world)
     if prog_bar: loading.update(100)
     
 def remove_natural_bumps(world, z1, x1, z2, x2):
