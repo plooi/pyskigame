@@ -23,7 +23,7 @@ x = {
     "ice_radius" : 27,#scaled value
     
     
-    "bump_slope" : (math.pi/6,math.pi/10),
+    "bump_slope" : (math.pi/4.6,math.pi/10),
     "bump_density" : .3,
     "bump_group_density" : .2,
     
