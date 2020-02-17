@@ -895,6 +895,7 @@ class World(LooiObject):
         
         return color_value
     def is_ice(self, z, x, hr=None, vr=None):
+        return False
         if not self.valid_floor(z, x):
             return False
         hs = self.properties["horizontal_stretch"]

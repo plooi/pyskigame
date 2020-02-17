@@ -227,7 +227,7 @@ class Lift(LooiObject, Selectable):
         
     def reset(self):
         self.delete()
-        Lift(self.world).build(self.chairlift_array, self.rope_speed, self.terminal_speed, self.chair_time_distance, self.chair_model, self.blurry_chair_model, self.super_blurry_chair_model,terminal_model=self.terminal_model,pole_model=self.pole_model,chair_riding_model=self.chair_riding_model)
+        return Lift(self.world).build(self.chairlift_array, self.rope_speed, self.terminal_speed, self.chair_time_distance, self.chair_model, self.blurry_chair_model, self.super_blurry_chair_model,terminal_model=self.terminal_model,pole_model=self.pole_model,chair_riding_model=self.chair_riding_model)
         
     def do_rope(self):
         objs = [self.start_terminal] + self.poles_midpoints_objects + [self.end_terminal]

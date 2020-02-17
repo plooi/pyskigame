@@ -10,6 +10,9 @@ first use align_mouse_assistant to find out
 where in the screen your google earth altitude box is
 so that this program can click it to set the altitude
 
+before you start, make sure google earth view is perfectly facing down.
+Do NOT move the view from now on until the end of the procedure
+
 then use align_mouse_assistant to find out where the 
 dropdown menu is so that this program can click on it to
 update the altitude 
@@ -19,8 +22,8 @@ screen shot box
 
 change altitude_box_location and dropdown_menu_location 
 accordingly. They should be tuples
+screenshot_box is a len 4 tuple x1,y1,x2,y2
 
-before you start, make sure google earth view is perfectly facing down
 
 start get_data() and then go to google earth
 and just wait for the program to do it's thing
@@ -38,9 +41,9 @@ import pyautogui
 from time import sleep
 
 
-altitude_box_location = (153,302)
-dropdown_menu_location = (280,300)
-screenshot_box = (426, 85, 1490,926)
+altitude_box_location = (170,187)
+dropdown_menu_location = (307,187)
+screenshot_box = (830,431,1498,945)
 def align_mouse_assistant():
     while True:
         sleep(1)
@@ -78,7 +81,7 @@ def create_elevation_grid(name, lowest=500, highest=2500, step=3):
         print(img.width, img.height)
         for y in range(img.height):
             for x in range(img.width):
-                if ( color_distance(img.getpixel((x, y)), (160,43,160)) < 15 ) and grid[y][x]==None:
+                if ( color_distance(img.getpixel((x, y)), (161,43,158)) < 15 ) and grid[y][x]==None:
                     grid[y][x] = elevation
         print(elevation)
     
@@ -97,8 +100,8 @@ def color_distance(a, b):
     return (a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2
         
 def main():
-    #get_data("wb")
+    #get_data("fernie")
     #align_mouse_assistant()
-    create_elevation_grid("wb", lowest=500)
+    create_elevation_grid("fernie", lowest=950)
     
 if __name__ == "__main__": main()
