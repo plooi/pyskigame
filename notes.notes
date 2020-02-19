@@ -3,9 +3,13 @@ log
 //added distance measure feature
 //made snow beautiful
 
-
-
-
+#TEST PUTTING IN INCORRECT INPUTS TO SETTINGS! I JUST MADE LOS 8.5 and it crashed
+#with scenery mode, when you turn it on on the chairlift, it should allow you to just do near=5 , and all you can't see is 
+    the chair. dont worry about any direction youre looking or anything
+#make the pan chunk squares not look so bad
+#find a way to increase the line of sight
+#make texture on the cliffs
+#tree texture
 '''Fix the annoying wind sound'''
 '''Make a mode where you can ski without turning your head YES!!! DO IT!
 make bumps more dense'''
@@ -19,8 +23,9 @@ make a feature so that if you select 100000000 objects, it doesnt SPAM you with 
 '''#consider changing the ice texture to pure white because it looks so bad'''
 take everything and turn it into textures
 #user should be able to choose from multiple shaders
+#USER SHOULD BE ABLE TO CHOOSE FROM MULTIPLE SHADERS
 '''#make a measure distance feature that you can use to scale things'''
-#make the snow texture grayscale
+'''#make the snow texture grayscale'''
 '''#allow user to select from multiple snow textures so that depending on the hs, they can choose the one they like the most
     16*16 or 20*20 or 12*12
     i want this because I want the floor texture to be consistent across multiple hs settings
