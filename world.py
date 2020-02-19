@@ -30,16 +30,14 @@ from PIL import Image
 from time import time
 
 
-arr_155_255 = [x for x in range(155, 256, 4)]
-arr_155_255.reverse()
-
-
 #improves performance. 
 def conv_155_255(x):
     if x > 1 or x < 0: raise Exception()
     x = int(x*63)*4+3
     if x < 155:
         x = 155
+    if x >= 255:
+        x = 251#just please don't return the white square
     return x
     
     
@@ -198,7 +196,7 @@ class Chunk:
             for r in range(ul_z, ul_z+cs):
                 for c in range(ul_x, ul_x+cs):
                     floor_shade = self.world.get_proper_floor_color(r, c)[0]
-                    new_pan_chunk_color[0] += floor_shade*.97
+                    new_pan_chunk_color[0] += floor_shade
                     new_pan_chunk_color[1] += floor_shade
                     new_pan_chunk_color[2] += floor_shade
                     
@@ -238,7 +236,7 @@ class World(LooiObject):
             "height" : -1,
             "width_chunks" : -1,
             "height_chunks" : -1,
-            "horizontal_stretch" : 2,
+            "horizontal_stretch" : 4,
             "vertical_stretch" : .15,
             "sun_angle" : 0,
             "background_color" : Color(.7,.7,1),
@@ -467,7 +465,46 @@ class World(LooiObject):
         #END INIT
     def get_setup_3d(self):
         def setup_3d():
-            gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), .5, 6000 )
+            #gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), .5, 6000 )
+            hs = self.properties["horizontal_stretch"]
+            
+            #near = self.view.line_of_sight/14
+            #near = 1.5
+            
+            if self.game_ui.game_mode.startswith("ski"):
+                if self.game_ui.scenery:
+                    near = 3.5
+                    
+                    #in scenery mode, if youre looking down at the ground, we should forget about showing the scenery
+                    if self.valid_floor(self.view.z/hs, self.view.x/hs):
+                        floorhr, floorvr = self.get_rotation(int(self.view.z/hs), int(self.view.x/hs))
+                        if floorvr < 0:
+                            floorvr *= -1
+                            floorhr += math.pi
+                        
+                        
+                        floorhr += math.pi# these two lines are to turn the floor around
+                        floorvr *= -1#so taht the floorhr and floor vr are facing into the ground
+                        #so if the player is facing similar direction, they are also facing into the ground
+                        
+                        floorRvector = math.cos(floorhr)*math.cos(floorvr),math.sin(floorvr),math.sin(floorhr)*math.cos(floorvr)
+                        viewRvector = math.cos(self.view.hor_rot)*math.cos(self.view.vert_rot),math.sin(self.view.vert_rot),math.sin(self.view.hor_rot)*math.cos(self.view.vert_rot)
+                            
+                            
+                        if ((floorRvector[0]-viewRvector[0])**2+(floorRvector[1]-viewRvector[1])**2+(floorRvector[2]-viewRvector[2])**2) ** .5 < 1.5:
+                            near = .5
+                else:
+                    near = .5
+            else:
+                near = 10
+            
+            
+            
+            
+            
+            
+            
+            gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), near, 6000 )
             try:
                 glRotate(rad_to_deg(-(self.view.hor_rot-math.pi/2)), 0, 1, 0)
                 glRotate(rad_to_deg(-self.view.vert_rot), math.cos(self.view.hor_rot - math.pi/2), 0, -math.sin(self.view.hor_rot - math.pi/2))
@@ -746,13 +783,31 @@ class World(LooiObject):
     finds the floor that we're dealing with
     goes to the floor pointer in the floor's chunk's vertexhandler and sets the color
     """
-    def set_floor_texture(self, floor_z, floor_x, texture_str):
+    def set_floor_texture(self, floor_z, floor_x, texture_str, is_snow_texture=True):
         check(self.valid_floor(floor_z, floor_x))
         
         floor = self.quads[floor_z][floor_x]
         chunk = self.chunks[floor.my_chunk_z][floor.my_chunk_x]
         
-        texture.set_texture(chunk.tvh, floor.floor_pointer, texture_str)
+        texture.set_texture(chunk.tvh, floor.floor_pointer, texture_str)#THIS is where you make the special function to pick only as many pixels as the horizontal stretch allows. Start with 32X32 image, then select from that. pixels = 2 * hs
+        if is_snow_texture:
+            pixels = self.properties["horizontal_stretch"] * 2
+            if pixels < 1: pixels = 1
+            if pixels > 32: pixels = 32
+            
+            pixels_w = pixels/texture.totalw
+            pixels_h = pixels/texture.totalh
+            
+            coords = texture.texture_dictionary[texture_str]
+            
+            ul = coords[0]
+            ulx = ul[0]
+            uly = ul[1]
+            
+            chunk.tvh.vertex_colors[floor.floor_pointer] = coords[0]
+            chunk.tvh.vertex_colors[floor.floor_pointer+1] = [ulx+pixels_w,uly]
+            chunk.tvh.vertex_colors[floor.floor_pointer+2] = [ulx+pixels_w,uly-pixels_h]
+            chunk.tvh.vertex_colors[floor.floor_pointer+3] = [ulx,uly-pixels_h]
         chunk.colors_changed = True
         
         """
@@ -841,10 +896,16 @@ class World(LooiObject):
         
         
         color1 = self.calculate_floor_color(hr, vr)
+        """
         #cut short here
         return color1
         ##BUTT! Although it loads faster now, it will have just a bit less shading accuracy especially on those non-planar quads
         
+        ...
+        
+        
+        No, I want it to have full color accuracy
+        """
         hr, vr = normal.get_plane_rotation(ul[0],ul[1],ul[2],ll[0],ll[1],ll[2],lr[0],lr[1],lr[2])
         if vr < 0:
             vr = -vr
@@ -881,21 +942,31 @@ class World(LooiObject):
         extremity = .7
         """
         neutral_floor_color = .5
-        extremity = .5
+        #extremity = .5
+        #extremity = 1.5
+        extremity = 2
         
-        color_value = neutral_floor_color + inverse_angle_distance_from_sun_m1_to_p1*inverse_vertical_rotation_0_to_1*extremity
+        inverse_vertical_rotation_0_to_1 = (util.root(2,inverse_vertical_rotation_0_to_1*2-1)+1)/2
+        
+        color_value = neutral_floor_color + inverse_angle_distance_from_sun_m1_to_p1*inverse_vertical_rotation_0_to_1*extremity#original shader that doesn't give enough contrast
+        #color_value = neutral_floor_color + util.root(2, inverse_angle_distance_from_sun_m1_to_p1)*(inverse_vertical_rotation_0_to_1)**.5*extremity#I fell in love with this shader. extremity .5
+        #another thing that looks cool is doing extremity 2.5. But I feel like the contrast is too much there. it looks like fricking mars
+
         
         if color_value > 1: color_value = 1
         if color_value < 0: color_value = 0
         
         
-        #color_value = stretch(color_value, .2, .89)
-        color_value = color_value**.7
-        color_value = stretch(color_value, .6, 1)
+        
+        color_value = color_value**.5
+        #color_value = stretch(color_value, .6, 1)
+        #color_value = stretch(color_value, .54, 1)
+        color_value = stretch(color_value, .5, 1)
+        #color_value = stretch(color_value, .6, 1)
         
         return color_value
     def is_ice(self, z, x, hr=None, vr=None):
-        return False
+        return False#disabled
         if not self.valid_floor(z, x):
             return False
         hs = self.properties["horizontal_stretch"]
@@ -1358,7 +1429,46 @@ def round(x):
 
 
 
+'''
+BEST. SHADING. ALGORITHM. EVER
 
+def calculate_floor_color_single(self, hr, vr):
+    def stretch(_0_to_1,min, max):
+        return _0_to_1 * (max-min)+min
+    sun = self.properties["sun_angle"]
+    angle_distance_from_sun = normal.angle_distance(hr, sun)/math.pi
+    inverse_angle_distance_from_sun = 1 - angle_distance_from_sun
+    inverse_angle_distance_from_sun_m1_to_p1 = inverse_angle_distance_from_sun*2-1
+    
+    vertical_rotation_0_to_1 = vr/(math.pi/2)
+    inverse_vertical_rotation_0_to_1 = 1 - vertical_rotation_0_to_1
+    """
+    neutral_floor_color = .8
+    extremity = .7
+    """
+    neutral_floor_color = .5
+    #extremity = .5
+    #extremity = 1.5
+    extremity = 2
+    
+    inverse_vertical_rotation_0_to_1 = (util.root(2,inverse_vertical_rotation_0_to_1*2-1)+1)/2
+    
+    color_value = neutral_floor_color + inverse_angle_distance_from_sun_m1_to_p1*inverse_vertical_rotation_0_to_1*extremity#original shader that doesn't give enough contrast
+    #color_value = neutral_floor_color + util.root(2, inverse_angle_distance_from_sun_m1_to_p1)*(inverse_vertical_rotation_0_to_1)**.5*extremity#I fell in love with this shader. extremity .5
+    #another thing that looks cool is doing extremity 2.5. But I feel like the contrast is too much there. it looks like fricking mars
+
+    
+    if color_value > 1: color_value = 1
+    if color_value < 0: color_value = 0
+    
+    
+    
+    color_value = color_value**.5
+    #color_value = stretch(color_value, .6, 1)
+    #color_value = stretch(color_value, .54, 1)
+    color_value = stretch(color_value, .5, 1)
+    #color_value = stretch(color_value, .6, 1)
+'''
 
 
 

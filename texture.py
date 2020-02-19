@@ -51,6 +51,7 @@ def set_texture(vh, index, image_name, texture_dict=texture_dictionary):
     vh.vertex_colors[index+1] = coords[1]
     vh.vertex_colors[index+2] = coords[2]
     vh.vertex_colors[index+3] = coords[3]
+    
 
 
 def new_texture_handler(initial_capacity=2):

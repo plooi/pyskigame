@@ -22,7 +22,7 @@ def average_rgb(pixels):
 blends = 1
 
 
-name = "./3d_textures/IceTexture"
+name = "./3d_textures/MinecraftSnow"
 extension = "png"
 for blend in range(blends):
     for target in range(155, 256, 4):

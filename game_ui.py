@@ -33,6 +33,10 @@ class UI(LooiObject):
         self.crosshair_length = 30
         self.interface_mode = "game"#"game" or "menu" or "can_move_temporarily"
         self.game_mode = game_mode#"map editor" or "ski" or ski test
+        if self.game_mode == "map editor":
+            self.scenery = True
+        else:
+            self.scenery = False
         
         self.skis = "on"
         self.ski_put_on_timer = 0
@@ -84,6 +88,8 @@ class UI(LooiObject):
         self.pole_sound_obj = self.new_sound("sounds/PoleBump1.ogg",volume=.4)
         
         self.no_look = 0
+        
+        
         
         
         
@@ -259,19 +265,9 @@ class UI(LooiObject):
         
             
     def step(self):
-        if self.key("p", "pressed"):
-            print("layered",self.get_my_window().layered_looi_objects)
-            print("unlayered",self.get_my_window().unlayered_looi_objects)
-        """
-        if self.key("p", "pressed"):
-            if self.world.properties["active_missions"]:
-                self.world.view.x = self.world.properties["active_missions"][0][0][1] * self.world.properties["horizontal_stretch"]
-                self.world.view.z = self.world.properties["active_missions"][0][0][0] * self.world.properties["horizontal_stretch"]
-            else:
-                mc = mission_center.active_mission_centers[int(random() * len(mission_center.active_mission_centers))]
-                self.world.view.x = mc.args["model_x"]
-                self.world.view.z = mc.args["model_z"]
-        """
+        
+        if self.key(constants["scenery key"], "pressed"):self.scenery = not self.scenery
+        
         
         self.sounds()
                     
@@ -304,8 +300,12 @@ class UI(LooiObject):
                 ski_draw.draw_skis(self, ski_draw.models[self.world.properties["ski_model"]])
         
         if self.key("t", "pressed") and (not self.skis_changing):
-            if self.game_mode == "map editor": self.game_mode = "ski test"
-            elif self.game_mode == "ski test": self.game_mode = "map editor"
+            if self.game_mode == "map editor": 
+                self.game_mode = "ski test"
+                self.scenery = False
+            elif self.game_mode == "ski test": 
+                self.game_mode = "map editor"
+                self.scenery = True
         
         
         #draw sun

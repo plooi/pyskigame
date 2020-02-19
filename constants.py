@@ -31,7 +31,12 @@ x = {
     "menu_key" : "c",
     "interact_key" : "e",
     "find_key" : "x",
-    "no_look_key" : "q"
+    "no_look_key" : "q",
+    "scenery key" : "tab",
+    
+    "scaled_distance_to_meters" : 1.4,
+    
+    
     
     
 

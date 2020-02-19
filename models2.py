@@ -323,18 +323,18 @@ def bump_model_1(
             sun_is_to_the_left = True,
             ):
     if angle_distance_from_sun < math.pi/5:
-        tex1 = "MinecraftSnow-lighting-243"
-        tex2 = "MinecraftSnow-lighting-243"
+        tex1 = "BumpTextureL"
+        tex2 = "BumpTextureL"
     elif angle_distance_from_sun < 4*math.pi/5:
         if sun_is_to_the_left:
-            tex1 = "MinecraftSnow-lighting-231"
-            tex2 = "MinecraftSnow-lighting-211"
+            tex1 = "BumpTextureL"
+            tex2 = "BumpTextureD"
         else:
-            tex1 = "MinecraftSnow-lighting-211"
-            tex2 = "MinecraftSnow-lighting-231"
+            tex1 = "BumpTextureD"
+            tex2 = "BumpTextureL"
     else:
-        tex1 = "MinecraftSnow-lighting-223"
-        tex2 = "MinecraftSnow-lighting-223"
+        tex1 = "BumpTextureD"
+        tex2 = "BumpTextureD"
         
     
     d = diagonal_length
@@ -343,7 +343,35 @@ def bump_model_1(
             [-d/2, uphill_height, 0],[0, base, d/2],[d/2, downhill_height, 0],[0,height,0],tex2,
             [0,height,0],[-.1,height,0],[-.1,height+.4,0],[0,height+.4,0],"White",
             ]
-            
+def bump_model_4(
+            diagonal_length=12,
+            height = 1.1,
+            base=-4.6,
+            downhill_height = -4.9,
+            uphill_height = 1.1,
+            angle_distance_from_sun = 0,
+            sun_is_to_the_left = True,
+            ):
+    if angle_distance_from_sun < math.pi/5:
+        tex1 = "BumpTextureL"
+        tex2 = "BumpTextureL"
+    elif angle_distance_from_sun < 4*math.pi/5:
+        if sun_is_to_the_left:
+            tex1 = "BumpTextureL"
+            tex2 = "BumpTextureD"
+        else:
+            tex1 = "BumpTextureD"
+            tex2 = "BumpTextureL"
+    else:
+        tex1 = "BumpTextureD"
+        tex2 = "BumpTextureD"
+        
+    
+    d = diagonal_length
+    return [
+            [-d/2, uphill_height, 0],[0, base, -d/2],[d/2, downhill_height, 0],[0,height,0],tex1,
+            [-d/2, uphill_height, 0],[0, base, d/2],[d/2, downhill_height, 0],[0,height,0],tex2,
+            ]
 def bump_model_3(
             diagonal_length=12,
             height = 1.1,

@@ -35,4 +35,12 @@ def is_a_left_of_b(a, b):
     if normal.angle_distance(a + .00001, b) < normal.angle_distance(a, b):
         return False
     return True
+#takes the nth root of a number
+#catch, root(2,-4) = -2
+def root(n, number):
+    x = number if number >= 0 else -number
+    x = x**(1/n)
+    return x if number >= 0 else -x
+    
+    
     

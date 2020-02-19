@@ -6,7 +6,7 @@ from PIL import Image
 
 import os
 
-
+locked. warning. if you run this code, it will require all saved world to run reset sun angle
 
 def minus_extension(name):
     return name[0:name.rfind(".")]

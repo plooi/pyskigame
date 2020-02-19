@@ -54,6 +54,7 @@ def find_name(model):
     if m is bump_model_1: return "bump_model_1"
     if m is bump_model_2: return "bump_model_2"
     if m is bump_model_3: return "bump_model_3"
+    if m is bump_model_4: return "bump_model_4"
     
     if m is landmark_model_1: return "landmark_model_1"
     

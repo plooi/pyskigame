@@ -87,6 +87,10 @@ class Menu(LooiObject):
         self.btn8.set_layer(-2)
         self.add(self.btn8)
         
+        self.btn30 = Button(x = 1320, y=680, width=70, height=70, font_size=10, text="", image=image("textures/Telemetry.png"), action=Measure, action_parameter=self)
+        self.btn30.set_layer(-2)
+        self.add(self.btn30)
+        
         self.btn9 = Button(x = 1160, y=760, width=70, height=70, font_size=10, text="", image=image("Settings Icon.png"), action=settings, action_parameter=self)
         self.btn9.set_layer(-2)
         self.add(self.btn9)
@@ -382,7 +386,81 @@ class MapEdit(LooiObject):
         self.menu.ui.interface_mode = "menu"
         game_ui.set_mouse_mode("normal")
         self.menu.activate()
-
+class Measure(MapEdit):
+    def __init__(self, menu):
+        super().__init__(menu)
+        self.set_layer(9999)
+        menu.ui.enable_crosshairs(True)
+        game_ui.set_mouse_mode("3D")
+        menu.ui.interface_mode = "can_move_temporarily"
+        menu.deactivate()
+        
+        hs = self.world().properties["horizontal_stretch"]
+        self.x1, self.y1, self.z1 = int(self.world().view.x), self.world().get_elevation_continuous(self.world().view.z/hs,self.world().view.x/hs)*self.world().properties["vertical_stretch"], int(self.world().view.z)
+        self.x2=0
+        self.y2=0
+        self.z2=0
+    def step(self):
+        if self.mouse("left","pressed"):
+            self.deactivate()
+    def paint(self):
+        point = self.world().get_view_pointing()
+        if point == None:
+            return
+        elev = self.world().get_elevation(point[0],point[1],scaled=True)
+        
+        hs = self.world().properties["horizontal_stretch"]
+        self.x2, self.y2, self.z2 = point[1]*hs, elev, point[0]*hs
+        
+        
+        
+        
+        
+        self.draw_line_3d(self.x1, self.y1, self.z1, self.x2, self.y2, self.z2, green, 5, setup_3d=self.world().setup_3d)
+        
+        
+        
+        x1=self.x1
+        x2=self.x2
+        y1=self.y1
+        y2=self.y2
+        z1=self.z1
+        z2=self.z2
+        
+        size = 20
+        font = "Courier New"
+        line = 50
+        inc = 24
+        self.draw_text(0,line,"x=%d, y=%d, z=%d"%(x2,y2,z2), font_size = size, font = font)
+        line+=inc
+        self.draw_text(0,line,"grid_x=%d, grid_y=%d, grid_z=%d"%(x2/hs,y2/self.world().properties["vertical_stretch"],z2/hs), font_size = size, font=font)
+        
+        dx = x2-x1
+        dy = y2-y1
+        dz = z2-z1
+        dground = (dx**2+dz**2)**.5
+        if dx == 0:
+            hr = math.pi/2 if dz > 0 else -math.pi/2
+        else:
+            hr = math.atan(dz/dx)
+        if dx < 0:
+            hr += math.pi
+        
+        hr=-hr#flip for computer coordinates
+        if hr < 0:
+            hr += 2*math.pi
+        vr = math.atan(dy/dground)
+        
+        line+=inc
+        self.draw_text(0,line,"ground_angle= %f pi, vertical_angle=%f pi"%(hr/math.pi, vr/math.pi), font_size = size, font=font)
+        
+        q=constants["scaled_distance_to_meters"]
+        d3d = ((z1-z2)**2+(x1-x2)**2+(y1-y2)**2)**.5
+        line+=inc
+        self.draw_text(0,line,"ground_distance=%f, 3d_distance=%f, real_world_ground_distance_meters=%f, real_world_3d_distance_meters=%f"%(dground,d3d,dground*q,d3d*q), font_size = size, font=font)
+        
+        line+=inc
+        self.draw_text(0,line,"real_world_ground_distance_miles=%f, real_world_3d_distance_miles=%f"%(dground*q*.000621,d3d*q*.000621), font_size = size, font=font)
 
 class OnePointEdit(MapEdit):
     def __init__(self, menu, message1="Select point"):

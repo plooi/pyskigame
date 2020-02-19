@@ -10,12 +10,13 @@ first use align_mouse_assistant to find out
 where in the screen your google earth altitude box is
 so that this program can click it to set the altitude
 
-before you start, make sure google earth view is perfectly facing down.
-Do NOT move the view from now on until the end of the procedure
-
 then use align_mouse_assistant to find out where the 
 dropdown menu is so that this program can click on it to
 update the altitude 
+
+before you start, make sure google earth view is perfectly facing down.
+Use the eye thing to look perfectly down. the eye thing gets you the most perfectly facing down
+Do NOT move the view from now on until the end of the procedure
 
 use align_mouse_assistant to find the appropriate
 screen shot box
@@ -43,7 +44,7 @@ from time import sleep
 
 altitude_box_location = (170,187)
 dropdown_menu_location = (307,187)
-screenshot_box = (830,431,1498,945)
+screenshot_box = (735,237,1476,743)
 def align_mouse_assistant():
     while True:
         sleep(1)
@@ -81,7 +82,7 @@ def create_elevation_grid(name, lowest=500, highest=2500, step=3):
         print(img.width, img.height)
         for y in range(img.height):
             for x in range(img.width):
-                if ( color_distance(img.getpixel((x, y)), (161,43,158)) < 15 ) and grid[y][x]==None:
+                if ( color_distance(img.getpixel((x, y)), (164,43,161)) < 15 ) and grid[y][x]==None:
                     grid[y][x] = elevation
         print(elevation)
     
@@ -100,8 +101,8 @@ def color_distance(a, b):
     return (a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2
         
 def main():
-    #get_data("fernie")
+    #get_data("crystal")
     #align_mouse_assistant()
-    create_elevation_grid("fernie", lowest=950)
+    create_elevation_grid("crystal", lowest=950)
     
 if __name__ == "__main__": main()

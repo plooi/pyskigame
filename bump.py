@@ -34,7 +34,7 @@ class Bump(WorldObject):
             
 class NaturalBump(WorldObject):
     def __init__(self, **args):
-        default(args, "model", bump_model_3)
+        default(args, "model", bump_model_4)
         default(args, "model_type", "tex")
         default(args, "do_lighting", False)
         default(args, "rotation", args["world"].get_rotation(int(args["z"]), int(args["x"]))[0])
