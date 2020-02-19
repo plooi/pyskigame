@@ -766,6 +766,7 @@ class Select(TwoPointEdit):
         
         radius = ((midz-z1)**2 + (midx-x1)**2)**.5
         
+        
         selectables = []
         for z in range(int(midz-radius), int(midz+radius)+1):
             for x in range(int(midx-radius), int(midx+radius)+1):
@@ -780,28 +781,29 @@ class Select(TwoPointEdit):
                             
                         elif isinstance(obj, Selectable):
                             game_ui.set_mouse_mode("normal")
-                            #obj.open_menu()
                             selectables.append(obj)
                         elif isinstance(obj, WorldObject):
                             game_ui.set_mouse_mode("normal")
                             selectables.append(obj)
-            
-        try:
-            seen_lift = False
-            for selectable in selectables:
-                
-                if isinstance(selectable, Lift):
-                    if seen_lift:
-                        continue
-                    else:
-                        seen_lift=True
-                selectable.open_menu()
-                
-        except StopSelectingException:
-            layout = [[sg.Text("aborted")]]
-            window = sg.Window("", layout, size=(250, 150))
-            event, values = window.Read()
-            window.close()
+        if len(selectables) <= 70:
+            try:
+                seen_lift = False
+                for selectable in selectables:
+                    
+                    if isinstance(selectable, Lift):
+                        if seen_lift:
+                            continue
+                        else:
+                            seen_lift=True
+                    selectable.open_menu()
+                    
+            except StopSelectingException:
+                layout = [[sg.Text("aborted")]]
+                window = sg.Window("", layout, size=(250, 150))
+                event, values = window.Read()
+                window.close()
+        else:
+            sg.Popup("Cannot select more than 70 objects. Try again.")
 
 """
 terrain edits
