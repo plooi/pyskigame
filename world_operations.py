@@ -110,10 +110,10 @@ def fill_trees(world, z1, x1, z2, x2, chance = 1):
     for z in range(min([z1,z2]), max([z1,z2])+1):
         for x in range(min([x1,x2]), max([x1,x2])+1):
             if chance == 1:
-                Tree(z, x, world)
+                Tree(z=z, x=x, world=world)
             else:
                 if random() < chance:
-                    Tree(z, x, world)
+                    Tree(z=z, x=x, world=world)
             
 def chainsaw(world, z1, x1, z2, x2):
     for z in range(min([z1,z2]), max([z1,z2])+1):
@@ -142,10 +142,10 @@ def fill_trees_circular(world, z1, x1, z2, x2, chance = 1):
         for x in range(middle_x - radius, middle_x + radius):
             if ((z-middle_z)**2 + (x-middle_x)**2)**.5 <= radius and world.valid_floor(z, x):
                 if chance == 1:
-                    Tree(z, x, world)
+                    Tree(z=z, x=x, world=world)
                 else:
                     if random() < chance:
-                        Tree(z, x, world)
+                        Tree(z=z, x=x, world=world)
                 
 def chainsaw_circular(world, z1, x1, z2, x2, chance = 1):
     middle_z = int((z1+z2)/2)

@@ -3,13 +3,14 @@ log
 //added distance measure feature
 //made snow beautiful
 
-#TEST PUTTING IN INCORRECT INPUTS TO SETTINGS! I JUST MADE LOS 8.5 and it crashed
-#with scenery mode, when you turn it on on the chairlift, it should allow you to just do near=5 , and all you can't see is 
-    the chair. dont worry about any direction youre looking or anything
+'''#TEST PUTTING IN INCORRECT INPUTS TO SETTINGS! I JUST MADE LOS 8.5 and it crashed'''
+'''#with scenery mode, when you turn it on on the chairlift, it should allow you to just do near=5 , and all you can't see is 
+    the chair. dont worry about any direction youre looking or anything'''
 #make the pan chunk squares not look so bad
-#find a way to increase the line of sight
+'''#make the los allow floats'''
+'''#find a way to increase the line of sight'''
 #make texture on the cliffs
-#tree texture
+'''#tree texture'''
 '''Fix the annoying wind sound'''
 '''Make a mode where you can ski without turning your head YES!!! DO IT!
 make bumps more dense'''

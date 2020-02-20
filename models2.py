@@ -167,6 +167,63 @@ def tree_design_1(scale = 1):
     bark = [.6,.3,0]
     
     return [
+        [B/2,h1,-B/2],[B/2,h1,B/2],[-B/2,h1,B/2],[0,h3,0],"PineTexture",
+        [B/2,h1,-B/2],[-B/2,h1,-B/2],[-B/2,h1,B/2],[0,h3,0],"PineTexture",
+        [-A/2,h2,A/2],[A/2,h2,A/2],[A/2,h2,-A/2],[0,h3,0],"PineTexture",
+        [-A/2,h2,A/2],[-A/2,h2,-A/2],[A/2,h2,-A/2],[0,h3,0],"PineTexture",
+        
+        
+        
+        #[-x/2,0,0],[x/2,0,0],[x/2,h1,p],[-x/2,h1,-p],bark,
+        [-x/2,0,-x/2+p],[x/2,0,x/2],[-x/2+p,0,-x/2],[0,h3,0],"Bark",
+        
+    
+    ]
+
+
+
+def tree_design_2(scale = 1):
+    
+    
+    
+    """
+       
+       
+       
+         ___A
+        _____B
+          
+          
+       
+         / \                |
+        /___\               |
+         / \          |     |
+        /   \         |     |
+       /_____\        |     |
+         | |    |     |     |
+         |_|    |h1   |h2   |h3
+         
+          _x
+         
+          
+    """
+    A=2.3 * scale
+    B=2.7 * scale
+    h1=1.3 * scale
+    h2=5 * scale
+    h3=9 * scale
+    x=.7 * scale
+    p=.16 * scale
+    
+    #leaf_color=[0,.95,.45]
+    #leaf_color_bot=[0,.92,.42]
+    #leaf_color=[.62,.89,.27]
+    #leaf_color_bot=[.52,.79,.17]
+    leaf_color=[.62,.99,.27]
+    leaf_color_bot=[.52,.89,.17]
+    bark = [.6,.3,0]
+    
+    return [
         [-B/2,h1,-B/2],[-B/2,h1,B/2],[B/2,h1,B/2],[0,h3,0],leaf_color_bot,
         [-B/2,h1,-B/2],[B/2,h1,-B/2],[B/2,h1,B/2],[0,h3,0],leaf_color_bot,
         [-A/2,h2,-A/2],[-A/2,h2,A/2],[A/2,h2,A/2],[0,h3,0],leaf_color,
@@ -176,7 +233,6 @@ def tree_design_1(scale = 1):
         
     
     ]
-
 
 
 

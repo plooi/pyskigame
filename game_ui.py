@@ -338,33 +338,7 @@ class UI(LooiObject):
                                 if obj.touching(real_x, real_y, real_z):
                                     obj.touching_player_consequence()
                             if self.world.properties["momentum"] >= constants["crash_speed"]:
-                                if isinstance(obj, Rock):
-                                    if obj.design_function == models.rock_design_1:
-                                        dist = (((obj.z+.5)*hs-real_z)**2 + ((obj.x+.5)*hs-real_x)**2)**.5
-                                        if dist < 1:
-                                            self.falling = True
-                                            return
-                                    elif obj.design_function == models.rock_design_2:
-                                        dist = (((obj.z+.5)*hs-real_z)**2 + ((obj.x+.5)*hs-real_x)**2)**.5
-                                        
-                                        dist_under = obj.y - (real_y - self.world.properties["player_height"])
-                                        
-                                        
-                                        #dist bottom = 21 dist top = 7 height 30
-                                        m = -15/7
-                                        b = 15
-                                        height_of_rock_at_players_dist = m*dist + b
-                                        
-                                        if dist_under > 0 and dist <= 21:
-                                            if -dist_under < height_of_rock_at_players_dist:
-                                                self.falling = True
-                                                return
-                                elif isinstance(obj, Tree):
-                                    dist = (((obj.z+.5)*hs-real_z)**2 + ((obj.x+.5)*hs-real_x)**2)**.5
-                                    if dist < .85:
-                                        self.falling = True
-                                        return
-                                elif isinstance(obj, Pole):
+                                if isinstance(obj, Pole):
                                     dist = ((obj.real_z-real_z)**2 + (obj.real_x-real_x)**2)**.5
                                     if dist < .5:
                                         self.falling = True

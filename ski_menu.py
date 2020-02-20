@@ -52,8 +52,6 @@ def settings(menu):
 
     setting = OrderedDict()
     setting["Line of Sight"] = menu.ui.world.view.line_of_sight
-    setting["Texture Distance"] = menu.ui.world.properties["texture_distance"]
-    setting["Texture Radius"] = menu.ui.world.properties["texture_radius"]
     setting["Rotation Speed"] = menu.ui.world.view.rot_spd
     setting["Chair Time Interval Detachable"] = menu.ui.world.properties["chair_time_distance_detachable"]
     setting["Chair Time Interval Gondola"] = menu.ui.world.properties["chair_time_distance_gondola"]
@@ -90,30 +88,30 @@ def settings(menu):
         return not same(key)
     
     if event == "OK":
-        #do all the non-reload settings first...
-        menu.ui.world.view.line_of_sight = int(new_settings["Line of Sight"])
-        menu.ui.world.view.rot_spd = float(new_settings["Rotation Speed"])
-        menu.ui.world.properties["texture_distance"] = float(new_settings["Texture Distance"])
-        menu.ui.world.properties["texture_radius"] = float(new_settings["Texture Radius"])
-        menu.ui.world.properties["chair_time_distance_detachable"] = float(new_settings["Chair Time Interval Detachable"])
-        menu.ui.world.properties["chair_time_distance_gondola"] = float(new_settings["Chair Time Interval Gondola"])
-        menu.ui.world.properties["chair_time_distance_fixed"] = float(new_settings["Chair Time Interval Fixed Grip"])
-
-        
-        
-        #then do the settings that require lifts to redo chairs
-        if nsame("Chair Time Interval Detachable") or nsame("Chair Time Interval Gondola") or nsame("Chair Time Interval Fixed Grip"):
-            for chairlift in lift.active_lifts:
-                if chairlift.rope_speed != chairlift.terminal_speed:#if detachable
-                    if chairlift.super_blurry_chair_model == gondola_model_4:#if gondola
-                        chairlift.set_chair_time_distance(menu.ui.world.properties["chair_time_distance_gondola"])
-                    else:
-                        chairlift.set_chair_time_distance(menu.ui.world.properties["chair_time_distance_detachable"])
-                else:#if fixed grip
-                    chairlift.set_chair_time_distance(menu.ui.world.properties["chair_time_distance_fixed"])
-                chairlift.update_object_account()
-                        
-                    
+        try:
+            #do all the non-reload settings first...
+            menu.ui.world.view.line_of_sight = float(new_settings["Line of Sight"])
+            menu.ui.world.view.rot_spd = float(new_settings["Rotation Speed"])
+            menu.ui.world.properties["chair_time_distance_detachable"] = float(new_settings["Chair Time Interval Detachable"])
+            menu.ui.world.properties["chair_time_distance_gondola"] = float(new_settings["Chair Time Interval Gondola"])
+            menu.ui.world.properties["chair_time_distance_fixed"] = float(new_settings["Chair Time Interval Fixed Grip"])
+    
+            
+            
+            #then do the settings that require lifts to redo chairs
+            if nsame("Chair Time Interval Detachable") or nsame("Chair Time Interval Gondola") or nsame("Chair Time Interval Fixed Grip"):
+                for chairlift in lift.active_lifts:
+                    if chairlift.rope_speed != chairlift.terminal_speed:#if detachable
+                        if chairlift.super_blurry_chair_model == gondola_model_4:#if gondola
+                            chairlift.set_chair_time_distance(menu.ui.world.properties["chair_time_distance_gondola"])
+                        else:
+                            chairlift.set_chair_time_distance(menu.ui.world.properties["chair_time_distance_detachable"])
+                    else:#if fixed grip
+                        chairlift.set_chair_time_distance(menu.ui.world.properties["chair_time_distance_fixed"])
+        except Exception as e:
+            traceback.print_exc()
+            sg.Popup(str(e))            
+            
         
                 
         

@@ -83,7 +83,9 @@ class MissionCenter(WorldObject):
         default(args, "model_type", "std")
         default(args, "model_args", {"length" : 4, "width" : 4})
         default(args, "do_lighting", False)
+        default(args, "y", args["world"].get_elevation_continuous(args["z"], args["x"]) + .2)
         args["active"] = "always"
+        
         super().__init__(**args)
         
         self.beacon = beacon_model()

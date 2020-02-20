@@ -8,6 +8,7 @@ tex_b = tex.tobytes("raw", "RGBA", 0, -1)
 
 texture_dictionary = {}#input texture name, returns opengl coordinates of this texture where it lies on the master image
 
+
 f = open(key)
 i = 0
 for line in f:
@@ -28,8 +29,9 @@ for line in f:
     i+=1
 f.close()
 
+
 #end texture loading
-#print(texture_dictionary)
+print(texture_dictionary)
 
 def add_image_to_vertex_handler(vh, p1, p2, p3, p4, image_name, texture_dict=texture_dictionary):
     coords = texture_dict[image_name]

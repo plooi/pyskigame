@@ -132,7 +132,7 @@ class View:
         self.vert_rot = 0
         self.speed = 4
         self.rot_spd = .001
-        self.line_of_sight = 7 #IN NUMBER OF CHUNKS (not opengl space) #the radius
+        self.line_of_sight = 3 #IN NUMBER OF CHUNKS (not opengl space) #the radius
         self.max_vert_rot = math.pi/2.3
         
 
@@ -151,12 +151,14 @@ class Chunk:
         self.tvh = texture.new_texture_handler(initial_capacity=world.properties["chunk_size"]**2+1)
         
         #is this even used???
-        self.pan_chunk_square_pointer = -1 #pointer to it's chunk square location in the "vertex buffer for all chunk squares" (None if not added)
+        self.pan_chunk_square_pointers = None #list of pointers to the locations of the pan chunk squares in the "vertex buffer" (None if not added)
         
         self.world = world
         
-        self.colors_changed = False
-        self.last_pan_chunk_color = [0,0,0]
+        self.colors_changed = True
+        self.pan_chunk_squares = None
+    
+            
     """
     get_pan_chunk_square
     
@@ -168,51 +170,70 @@ class Chunk:
     
     
     """
-    def get_pan_chunk_square(self, chunk_z, chunk_x):
+    def get_pan_chunk_squares(self, chunk_z, chunk_x):
+        sub_chunks=self.world.properties["sub_chunk_squares"]
+        
         cs = self.world.properties["chunk_size"]
         ul_z = chunk_z * cs
         ul_x = chunk_x * cs
         s = self.world.properties["horizontal_stretch"]
         
         if self.colors_changed:
-            #if the floor tile colors have changed since last time we calculated the pan chunk square
-            #recalculate a new pan chunk square color
-            new_pan_chunk_color = [0,0,0]
-            self.colors_changed = False
+            self.colors_changed=False
+            side_length_in_sub_chunks = int(sub_chunks**.5)#how many sub chunks does this chunk have in each row?
+            sub_chunk_side_length = int(cs/side_length_in_sub_chunks)#how many floors does each sub chunk have on each row?
+            self.pan_chunk_squares = []
             
-            
-            
-            total_quads = 0
-            
-            for r in range(ul_z, ul_z+cs):
-                for c in range(ul_x, ul_x+cs):
-                    for obj in self.world.quads[r][c].containedObjects:
-                        if obj.__class__ == Tree:
-                            new_pan_chunk_color[0] += .3*8
-                            new_pan_chunk_color[1] += .5*8
-                            new_pan_chunk_color[2] += .19*8
-                            
-                            total_quads+=8
-            for r in range(ul_z, ul_z+cs):
-                for c in range(ul_x, ul_x+cs):
-                    floor_shade = self.world.get_proper_floor_color(r, c)[0]
-                    new_pan_chunk_color[0] += floor_shade
-                    new_pan_chunk_color[1] += floor_shade
-                    new_pan_chunk_color[2] += floor_shade
+            #for each sub chunk within this chunk
+            #print("making",side_length_in_sub_chunks**2,"sub chunk squares")
+            for scr in range(side_length_in_sub_chunks):
+                for scc in range(side_length_in_sub_chunks):
+                    start_z = ul_z + scr*sub_chunk_side_length
+                    start_x = ul_x + scc*sub_chunk_side_length
                     
-                    total_quads += 1
-            new_pan_chunk_color[0] /= total_quads
-            new_pan_chunk_color[1] /= total_quads
-            new_pan_chunk_color[2] /= total_quads
-            self.last_pan_chunk_color = new_pan_chunk_color
-        return (
-                [ul_x*s, self.world.get_elevation(ul_z, ul_x, scaled=True), ul_z*s], 
-                [(ul_x+cs)*s, self.world.get_elevation(ul_z, ul_x+cs, scaled=True), ul_z*s], 
-                [(ul_x+cs)*s, self.world.get_elevation(ul_z+cs, ul_x+cs, scaled=True), (ul_z+cs)*s], 
-                [ul_x*s, self.world.get_elevation(ul_z+cs, ul_x, scaled=True), (ul_z+cs)*s], 
-                self.last_pan_chunk_color
-                )
-    
+                    
+                    
+                    #calculate this sub chunk's position
+                    ul = [start_x*s, self.world.get_elevation(start_z, start_x, scaled=True), start_z*s]
+                    ur = [(start_x+sub_chunk_side_length)*s, self.world.get_elevation(start_z, start_x+sub_chunk_side_length, scaled=True), start_z*s]
+                    lr = [(start_x+sub_chunk_side_length)*s, self.world.get_elevation(start_z+sub_chunk_side_length, start_x+sub_chunk_side_length, scaled=True), (start_z+sub_chunk_side_length)*s]
+                    ll = [(start_x)*s, self.world.get_elevation(start_z+sub_chunk_side_length, start_x, scaled=True), (start_z+sub_chunk_side_length)*s]
+                    
+                    #print(ul,ur,lr,ll)
+                    
+                    #for each floor in this sub chunk, use its shade to calculate the average color
+                    total_quads = 0
+                    color = [0,0,0]
+                    for r in range(start_z, start_z + sub_chunk_side_length):
+                        for c in range(start_x, start_x + sub_chunk_side_length):
+                            floor_shade = self.world.get_proper_floor_color(r, c)[0]
+                            color[0] += floor_shade
+                            color[1] += floor_shade
+                            color[2] += floor_shade
+                            total_quads += 1
+                            for obj in self.world.quads[r][c].containedObjects:
+                                if obj.__class__ == Tree:
+                                    color[0] += .3*8
+                                    color[1] += .5*8
+                                    color[2] += .19*8
+                                    
+                                    total_quads+=8
+                    color[0]/=total_quads
+                    color[1]/=total_quads
+                    color[2]/=total_quads
+                    
+                    #now we know the corner positions and the color. we can add the sub chunk to the array
+                    self.pan_chunk_squares.append(ul)
+                    self.pan_chunk_squares.append(ur)
+                    self.pan_chunk_squares.append(lr)
+                    self.pan_chunk_squares.append(ll)
+                    self.pan_chunk_squares.append(color)
+                            
+        #print(self.pan_chunk_squares)
+        return self.pan_chunk_squares
+        
+    def get_pan_chunk_square(self, chunk_z, chunk_x):#This is for backward compatibility
+        return self.get_pan_chunk_squares(chunk_z, chunk_x)[0:5]
 class World(LooiObject):
     
 ###################################
@@ -231,7 +252,9 @@ class World(LooiObject):
         #just a dictionary that stores all properties of this world
         self.properties = {
             "name" : "unnamed",
-            "chunk_size" : 8,
+            #"chunk_size" : 8,
+            "chunk_size" : 32,
+            "sub_chunk_squares" : 16,
             "width" : -1,
             "height" : -1,
             "width_chunks" : -1,
@@ -347,6 +370,11 @@ class World(LooiObject):
         allocates a spot in the current chunk's buffer for the floor square, and hands that pointer over to the quadrilateral
     """
     def init(self, name, width, height, more_properties={}, elevation_function=lambda z,x:0, view=None, prog_bar=True):
+        self.quads = []
+        self.chunks = []
+        self.pan_chunk_squares = VertexHandler(3)
+    
+    
         if prog_bar: loading.progress_bar("Loading 1/2")
         
         
@@ -476,23 +504,24 @@ class World(LooiObject):
                     near = 3.5
                     
                     #in scenery mode, if youre looking down at the ground, we should forget about showing the scenery
-                    if self.valid_floor(self.view.z/hs, self.view.x/hs):
-                        floorhr, floorvr = self.get_rotation(int(self.view.z/hs), int(self.view.x/hs))
-                        if floorvr < 0:
-                            floorvr *= -1
-                            floorhr += math.pi
-                        
-                        
-                        floorhr += math.pi# these two lines are to turn the floor around
-                        floorvr *= -1#so taht the floorhr and floor vr are facing into the ground
-                        #so if the player is facing similar direction, they are also facing into the ground
-                        
-                        floorRvector = math.cos(floorhr)*math.cos(floorvr),math.sin(floorvr),math.sin(floorhr)*math.cos(floorvr)
-                        viewRvector = math.cos(self.view.hor_rot)*math.cos(self.view.vert_rot),math.sin(self.view.vert_rot),math.sin(self.view.hor_rot)*math.cos(self.view.vert_rot)
+                    if self.game_ui.my_lift == None:
+                        if self.valid_floor(self.view.z/hs, self.view.x/hs):
+                            floorhr, floorvr = self.get_rotation(int(self.view.z/hs), int(self.view.x/hs))
+                            if floorvr < 0:
+                                floorvr *= -1
+                                floorhr += math.pi
                             
                             
-                        if ((floorRvector[0]-viewRvector[0])**2+(floorRvector[1]-viewRvector[1])**2+(floorRvector[2]-viewRvector[2])**2) ** .5 < 1.5:
-                            near = .5
+                            floorhr += math.pi# these two lines are to turn the floor around
+                            floorvr *= -1#so taht the floorhr and floor vr are facing into the ground
+                            #so if the player is facing similar direction, they are also facing into the ground
+                            
+                            floorRvector = math.cos(floorhr)*math.cos(floorvr),math.sin(floorvr),math.sin(floorhr)*math.cos(floorvr)
+                            viewRvector = math.cos(self.view.hor_rot)*math.cos(self.view.vert_rot),math.sin(self.view.vert_rot),math.sin(self.view.hor_rot)*math.cos(self.view.vert_rot)
+                                
+                                
+                            if ((floorRvector[0]-viewRvector[0])**2+(floorRvector[1]-viewRvector[1])**2+(floorRvector[2]-viewRvector[2])**2) ** .5 < 1.5:
+                                near = .5
                 else:
                     near = .5
             else:
@@ -1081,31 +1110,32 @@ class World(LooiObject):
         
         
         player_z_chunk, player_x_chunk = self.convert_to_chunk_coords(unscaled_view_z, unscaled_view_x)
-
         
-        for r in range(player_z_chunk - self.view.line_of_sight, player_z_chunk + self.view.line_of_sight):
-            for c in range(player_x_chunk - self.view.line_of_sight, player_x_chunk + self.view.line_of_sight):
-                if self.valid_chunk(r, c):
-                    if ( (r-player_z_chunk) ** 2 + (c-player_x_chunk) ** 2 ) ** .5 <= self.view.line_of_sight:#check that the chunk is within the player's los
+        cs = self.properties["chunk_size"]
+        los =self.view.line_of_sight
+        
+        def nearest_multiple(x, m):
+            return int(x/m + .5)*m
+        
+        for z in range(nearest_multiple(unscaled_view_z - los*cs, cs), nearest_multiple(unscaled_view_z + los*cs, cs)+1, cs):
+            for x in range(nearest_multiple(unscaled_view_x - los*cs, cs), nearest_multiple(unscaled_view_x + los*cs, cs)+1, cs):
+                
+                if ( (z-unscaled_view_z)**2 + (x-unscaled_view_x)**2 )**.5 <= los*cs:#check if this chunk intersection point is within the los of player
+                    
+                    if (  
+                            ((z-unscaled_view_z)**2 + (x-unscaled_view_x)**2)**.5 <= 1.2*cs #!!!the chunk must either be super close to the player...
+                            or 
+                            math.pi/2 > normal.angle_distance(self.view.hor_rot, util.get_angle(unscaled_view_z, unscaled_view_x, z, x))  ):#!!!or the player must be looking at the chunk
+                        #then all four neighboring chunks are active
+                        cz = int(z/cs)
+                        cx = int(x/cs)
                         
-                        if (    ( (r-player_z_chunk) ** 2 + (c-player_x_chunk) ** 2 ) ** .5 <= 3#!!!the chunk must either be super close to the player (3 chunks)
-                                
-                            or
-                                
-                                math.pi/2 > normal.angle_distance( 
-                                                                            normal.get_angle( 
-                                                                                unscaled_view_x, 
-                                                                                -unscaled_view_z, 
-                                                                                (c+.5)*self.properties["chunk_size"], 
-                                                                                -(r+.5)*self.properties["chunk_size"] ) , 
-                                                                                
-                                                                            self.view.hor_rot)#!!!or the player must be looking at the chunk
-                                                                            ):
-                            try:
-                                chunk_load_grid[r][c] = 1
-                            except:
-                                print("%d, %d out of range of %d, %d" %(r, c, len(chunk_load_grid), len(chunk_load_grid[0])))
-        
+                        if self.valid_chunk(cz, cx): chunk_load_grid[cz][cx] = 1
+                        if self.valid_chunk(cz-1, cx-1): chunk_load_grid[cz-1][cx-1] = 1
+                        if self.valid_chunk(cz, cx-1): chunk_load_grid[cz][cx-1] = 1
+                        if self.valid_chunk(cz-1, cx): chunk_load_grid[cz-1][cx] = 1
+                            
+                       
         return chunk_load_grid
     def draw_mobile(self):
         mobile_vertices = numpy.array(self.mobile_vertices)
@@ -1160,44 +1190,108 @@ class World(LooiObject):
         
         
         #iterate through every single chunk
-        for z in range(height):
-            for x in range(width):
-            
-                #if the chunk load grid says that the chunk should be loaded
-                if chunk_load_grid[z][x] == 1:
+        
+        
+        
+        if hasattr(self.chunks[0][0], "pan_chunk_square_pointer"):#this one is for backward compatibility
+            for z in range(height):
+                for x in range(width):
                     
-                    #add this chunk's vertices and colors to the stuff that's gonna be drawn
-                    vertices_draw.append(self.chunks[z][x].vh.vertices)
-                    colors_draw.append(self.chunks[z][x].vh.vertex_colors)
+                    if chunk_load_grid[z][x] == 1:
+                        
+                        #add this chunk's vertices and colors to the stuff that's gonna be drawn
+                        vertices_draw.append(self.chunks[z][x].vh.vertices)
+                        colors_draw.append(self.chunks[z][x].vh.vertex_colors)
+                        
+                        tex_vertices_draw.append(self.chunks[z][x].tvh.vertices)
+                        tex_coords_draw.append(self.chunks[z][x].tvh.vertex_colors)
+                        
+                        #if the pan chunk square is showing, get rid of it
+                        if self.chunks[z][x].pan_chunk_square_pointer != -1:
+                            self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer)
+                            self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer+1)
+                            self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer+2)
+                            self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer+3)
+                            self.chunks[z][x].pan_chunk_square_pointer = -1
+                    else:#if the chunk load grid says to not load that chunk
+                        #if the pan chunk square is not added then add it
+                        if self.chunks[z][x].pan_chunk_square_pointer == -1:
+                            p1,p2,p3,p4,color = self.chunks[z][x].get_pan_chunk_square(z, x)
+                            self.chunks[z][x].pan_chunk_square_pointer = self.pan_chunk_squares.add_vertex(p1, color)
+                            self.pan_chunk_squares.add_vertex(p2, color)
+                            self.pan_chunk_squares.add_vertex(p3, color)
+                            self.pan_chunk_squares.add_vertex(p4, color)
+                        if self.chunks[z][x].colors_changed:
+                            self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer)
+                            self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer+1)
+                            self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer+2)
+                            self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer+3)
+                            p1,p2,p3,p4,color = self.chunks[z][x].get_pan_chunk_square(z, x)
+                            self.chunks[z][x].pan_chunk_square_pointer = self.pan_chunk_squares.add_vertex(p1, color)
+                            self.pan_chunk_squares.add_vertex(p2, color)
+                            self.pan_chunk_squares.add_vertex(p3, color)
+                            self.pan_chunk_squares.add_vertex(p4, color)
+        else:#this one is for the new style of chunks
+            for z in range(height):
+                for x in range(width):
+                    #if the chunk load grid says that the chunk should be loaded
+                    if chunk_load_grid[z][x] == 1:
+                        
+                        #add this chunk's vertices and colors to the stuff that's gonna be drawn
+                        vertices_draw.append(self.chunks[z][x].vh.vertices)
+                        colors_draw.append(self.chunks[z][x].vh.vertex_colors)
+                        
+                        tex_vertices_draw.append(self.chunks[z][x].tvh.vertices)
+                        tex_coords_draw.append(self.chunks[z][x].tvh.vertex_colors)
+                        
+                        #if the pan chunk square is showing, get rid of it
+                        if self.chunks[z][x].pan_chunk_square_pointers != None:
+                            for pcs in self.chunks[z][x].pan_chunk_square_pointers:
+                                self.pan_chunk_squares.rm_vertex(pcs)
+                                self.pan_chunk_squares.rm_vertex(pcs+1)
+                                self.pan_chunk_squares.rm_vertex(pcs+2)
+                                self.pan_chunk_squares.rm_vertex(pcs+3)
+                            self.chunks[z][x].pan_chunk_square_pointers = None
+                    else:#if the chunk load grid says to not load that chunk
+                        
+                        #if the pan chunk square is not added then add it
+                        if self.chunks[z][x].pan_chunk_square_pointers == None:
+                            pan_chunk_squares = self.chunks[z][x].get_pan_chunk_squares(z, x)
+                            self.chunks[z][x].pan_chunk_square_pointers = []
+                            for i in range(0, len(pan_chunk_squares), 5):
+                                p1 = pan_chunk_squares[i]
+                                p2 = pan_chunk_squares[i+1]
+                                p3 = pan_chunk_squares[i+2]
+                                p4 = pan_chunk_squares[i+3]
+                                color = pan_chunk_squares[i+4]
+                                
+                                self.chunks[z][x].pan_chunk_square_pointers.append(self.pan_chunk_squares.add_vertex(p1, color))
+                                self.pan_chunk_squares.add_vertex(p2, color)
+                                self.pan_chunk_squares.add_vertex(p3, color)
+                                self.pan_chunk_squares.add_vertex(p4, color)
+                            
+                        elif self.chunks[z][x].colors_changed:
+                            for pcs in self.chunks[z][x].pan_chunk_square_pointers:
+                                self.pan_chunk_squares.rm_vertex(pcs)
+                                self.pan_chunk_squares.rm_vertex(pcs+1)
+                                self.pan_chunk_squares.rm_vertex(pcs+2)
+                                self.pan_chunk_squares.rm_vertex(pcs+3)
+                                
+                            pan_chunk_squares = self.chunks[z][x].get_pan_chunk_squares(z, x)
+                            self.chunks[z][x].pan_chunk_square_pointers = []
+                            for i in range(0, len(pan_chunk_squares), 5):
+                                p1 = pan_chunk_squares[i]
+                                p2 = pan_chunk_squares[i+1]
+                                p3 = pan_chunk_squares[i+2]
+                                p4 = pan_chunk_squares[i+3]
+                                color = pan_chunk_squares[i+4]
+                                
+                                self.chunks[z][x].pan_chunk_square_pointers.append(self.pan_chunk_squares.add_vertex(p1, color))
+                                self.pan_chunk_squares.add_vertex(p2, color)
+                                self.pan_chunk_squares.add_vertex(p3, color)
+                                self.pan_chunk_squares.add_vertex(p4, color)
+                        
                     
-                    tex_vertices_draw.append(self.chunks[z][x].tvh.vertices)
-                    tex_coords_draw.append(self.chunks[z][x].tvh.vertex_colors)
-                    
-                    #if the pan chunk square is showing, get rid of it
-                    if self.chunks[z][x].pan_chunk_square_pointer != -1:
-                        self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer)
-                        self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer+1)
-                        self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer+2)
-                        self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer+3)
-                        self.chunks[z][x].pan_chunk_square_pointer = -1
-                else:#if the chunk load grid says to not load that chunk
-                    #if the pan chunk square is not added then add it
-                    if self.chunks[z][x].pan_chunk_square_pointer == -1:
-                        p1,p2,p3,p4,color = self.chunks[z][x].get_pan_chunk_square(z, x)
-                        self.chunks[z][x].pan_chunk_square_pointer = self.pan_chunk_squares.add_vertex(p1, color)
-                        self.pan_chunk_squares.add_vertex(p2, color)
-                        self.pan_chunk_squares.add_vertex(p3, color)
-                        self.pan_chunk_squares.add_vertex(p4, color)
-                    if self.chunks[z][x].colors_changed:
-                        self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer)
-                        self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer+1)
-                        self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer+2)
-                        self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer+3)
-                        p1,p2,p3,p4,color = self.chunks[z][x].get_pan_chunk_square(z, x)
-                        self.chunks[z][x].pan_chunk_square_pointer = self.pan_chunk_squares.add_vertex(p1, color)
-                        self.pan_chunk_squares.add_vertex(p2, color)
-                        self.pan_chunk_squares.add_vertex(p3, color)
-                        self.pan_chunk_squares.add_vertex(p4, color)
         
         
         #add the pan_chunk_squares to all the stuff that's gonna be drawn

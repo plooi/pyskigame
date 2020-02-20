@@ -165,10 +165,10 @@ class Menu(LooiObject):
         self.draw_rect(self.x1, self.y1, self.x2, self.y2, self.menu_color)
 
 def settings(menu):
-
     setting = OrderedDict()
     setting["Horizontal Stretch"] = menu.ui.world.properties["horizontal_stretch"]
     setting["Vertical Stretch"] = menu.ui.world.properties["vertical_stretch"]
+    setting["Sub Chunk Squares"] = menu.ui.world.properties["sub_chunk_squares"]
     setting["Sun Angle"] = menu.ui.world.properties["sun_angle"]
     setting["Line of Sight"] = menu.ui.world.view.line_of_sight
     setting["Movement Speed"] = menu.ui.world.view.speed
@@ -219,7 +219,7 @@ def settings(menu):
     if event == "OK":
         try:
             #do all the non-reload settings first...
-            menu.ui.world.view.line_of_sight = int(new_settings["Line of Sight"])
+            menu.ui.world.view.line_of_sight = float(new_settings["Line of Sight"])
             menu.ui.world.view.speed = float(new_settings["Movement Speed"])
             menu.ui.world.view.rot_spd = float(new_settings["Rotation Speed"])
             menu.ui.world.properties["chair_time_distance_detachable"] = float(new_settings["Chair Time Interval Detachable"])
@@ -266,6 +266,14 @@ def settings(menu):
                 world = menu.ui.world
                 remove_natural_bumps(world, 0,0,world.get_width_points(), world.get_width_points())
                 natural_bumps(world, 0,0,world.get_width_points(), world.get_width_points(), prog_bar=True)
+            
+            if nsame("Sub Chunk Squares"):
+                menu.ui.world.properties["sub_chunk_squares"] = int(new_settings["Sub Chunk Squares"])
+                
+                for chunk_row in menu.ui.world.chunks:
+                    for chunk in chunk_row:
+                        chunk.colors_changed = True
+                
                 
             if nsame("Horizontal Stretch") or nsame("Vertical Stretch"):
                 layout = [[sg.Text("Changing the horizontal or vertical stretch will require a reload. Confirm can?")],
@@ -917,7 +925,7 @@ class PlaceRock(OnePointEdit):
     def __init__(self, menu):
         super().__init__(menu)
     def execute(self, point):
-        Rock(point[0], point[1], self.world())
+        Rock(z=point[0], x=point[1], world=self.world())
 class PlaceWorldObject(OnePointEdit):
     def __init__(self, menu):
         super().__init__(menu)
@@ -927,7 +935,7 @@ class PlaceRock2(OnePointEdit):
     def __init__(self, menu):
         super().__init__(menu)
     def execute(self, point):
-        Rock(point[0], point[1], self.world(), design_function=rock_design_2)
+        BigRock(z=point[0], x=point[1], world=self.world())
 class PlaceLandmark(OnePointEdit):
     def __init__(self, menu):
         super().__init__(menu)

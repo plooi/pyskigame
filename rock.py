@@ -7,27 +7,26 @@ from models import *
 from pylooiengine import *
 import PySimpleGUI as sg
 
+from world_object import *
+from constants import x as constants
 
 
 
+class Rock(WorldObject):
+    def __init__(self, **args):
+        default(args, "model", rock_design_1)
+        default(args, "model_type", "std")
+        default(args, "do_lighting", True)
+        default(args, "rotation", random()*math.pi)
+        super().__init__(**args)
+    def touching(self, x, y, z): return ((x-self.args["model_x"])**2 + (z-self.args["model_z"])**2) < 1
+    def touching_player_consequence(self): 
+        if self.world.properties["momentum"] >= constants["crash_speed"]: self.world.game_ui.falling = True
 
-
-class Rock(Tree):
-    def __init__(self, z, x, world, darkness_factor=.4, design_function=rock_design_1, rotation=None):
-        super().__init__(z,x,world,darkness_factor,design_function,rotation)
-    def add_object_account(self):
-        self.world.add_object_account(self, "Rock(%d, %d, world, %f, %s, %f)"%(self.z, self.x, self.darkness_factor, find_name(self.design_function), self.rotation ))
-        
-        
-    def open_menu(self):
-        layout = [
-            [sg.Button("Delete")],
-        ]
-        
-        
-        window = sg.Window("Rock", layout, size=(500,800))
-        event, values = window.Read()
-        
-        if event == "Delete":
-            self.delete()
-        window.close()
+class BigRock(Rock):
+    def __init__(self, **args):
+        default(args, "model", rock_design_2)
+        super().__init__(**args)
+    def touching(self, x, y, z): 
+        dist_under = self.args["model_y"] - (y - self.world.properties["player_height"])
+        return ((x-self.args["model_x"])**2 + (z-self.args["model_z"])**2)**.5 < 21 and dist_under > 0
