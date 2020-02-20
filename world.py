@@ -1193,103 +1193,64 @@ class World(LooiObject):
         
         
         
-        if hasattr(self.chunks[0][0], "pan_chunk_square_pointer"):#this one is for backward compatibility
-            for z in range(height):
-                for x in range(width):
+        for z in range(height):
+            for x in range(width):
+                #if the chunk load grid says that the chunk should be loaded
+                if chunk_load_grid[z][x] == 1:
                     
-                    if chunk_load_grid[z][x] == 1:
-                        
-                        #add this chunk's vertices and colors to the stuff that's gonna be drawn
-                        vertices_draw.append(self.chunks[z][x].vh.vertices)
-                        colors_draw.append(self.chunks[z][x].vh.vertex_colors)
-                        
-                        tex_vertices_draw.append(self.chunks[z][x].tvh.vertices)
-                        tex_coords_draw.append(self.chunks[z][x].tvh.vertex_colors)
-                        
-                        #if the pan chunk square is showing, get rid of it
-                        if self.chunks[z][x].pan_chunk_square_pointer != -1:
-                            self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer)
-                            self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer+1)
-                            self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer+2)
-                            self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer+3)
-                            self.chunks[z][x].pan_chunk_square_pointer = -1
-                    else:#if the chunk load grid says to not load that chunk
-                        #if the pan chunk square is not added then add it
-                        if self.chunks[z][x].pan_chunk_square_pointer == -1:
-                            p1,p2,p3,p4,color = self.chunks[z][x].get_pan_chunk_square(z, x)
-                            self.chunks[z][x].pan_chunk_square_pointer = self.pan_chunk_squares.add_vertex(p1, color)
-                            self.pan_chunk_squares.add_vertex(p2, color)
-                            self.pan_chunk_squares.add_vertex(p3, color)
-                            self.pan_chunk_squares.add_vertex(p4, color)
-                        if self.chunks[z][x].colors_changed:
-                            self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer)
-                            self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer+1)
-                            self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer+2)
-                            self.pan_chunk_squares.rm_vertex(self.chunks[z][x].pan_chunk_square_pointer+3)
-                            p1,p2,p3,p4,color = self.chunks[z][x].get_pan_chunk_square(z, x)
-                            self.chunks[z][x].pan_chunk_square_pointer = self.pan_chunk_squares.add_vertex(p1, color)
-                            self.pan_chunk_squares.add_vertex(p2, color)
-                            self.pan_chunk_squares.add_vertex(p3, color)
-                            self.pan_chunk_squares.add_vertex(p4, color)
-        else:#this one is for the new style of chunks
-            for z in range(height):
-                for x in range(width):
-                    #if the chunk load grid says that the chunk should be loaded
-                    if chunk_load_grid[z][x] == 1:
-                        
-                        #add this chunk's vertices and colors to the stuff that's gonna be drawn
-                        vertices_draw.append(self.chunks[z][x].vh.vertices)
-                        colors_draw.append(self.chunks[z][x].vh.vertex_colors)
-                        
-                        tex_vertices_draw.append(self.chunks[z][x].tvh.vertices)
-                        tex_coords_draw.append(self.chunks[z][x].tvh.vertex_colors)
-                        
-                        #if the pan chunk square is showing, get rid of it
-                        if self.chunks[z][x].pan_chunk_square_pointers != None:
-                            for pcs in self.chunks[z][x].pan_chunk_square_pointers:
-                                self.pan_chunk_squares.rm_vertex(pcs)
-                                self.pan_chunk_squares.rm_vertex(pcs+1)
-                                self.pan_chunk_squares.rm_vertex(pcs+2)
-                                self.pan_chunk_squares.rm_vertex(pcs+3)
-                            self.chunks[z][x].pan_chunk_square_pointers = None
-                    else:#if the chunk load grid says to not load that chunk
-                        
-                        #if the pan chunk square is not added then add it
-                        if self.chunks[z][x].pan_chunk_square_pointers == None:
-                            pan_chunk_squares = self.chunks[z][x].get_pan_chunk_squares(z, x)
-                            self.chunks[z][x].pan_chunk_square_pointers = []
-                            for i in range(0, len(pan_chunk_squares), 5):
-                                p1 = pan_chunk_squares[i]
-                                p2 = pan_chunk_squares[i+1]
-                                p3 = pan_chunk_squares[i+2]
-                                p4 = pan_chunk_squares[i+3]
-                                color = pan_chunk_squares[i+4]
-                                
-                                self.chunks[z][x].pan_chunk_square_pointers.append(self.pan_chunk_squares.add_vertex(p1, color))
-                                self.pan_chunk_squares.add_vertex(p2, color)
-                                self.pan_chunk_squares.add_vertex(p3, color)
-                                self.pan_chunk_squares.add_vertex(p4, color)
+                    #add this chunk's vertices and colors to the stuff that's gonna be drawn
+                    vertices_draw.append(self.chunks[z][x].vh.vertices)
+                    colors_draw.append(self.chunks[z][x].vh.vertex_colors)
+                    
+                    tex_vertices_draw.append(self.chunks[z][x].tvh.vertices)
+                    tex_coords_draw.append(self.chunks[z][x].tvh.vertex_colors)
+                    
+                    #if the pan chunk square is showing, get rid of it
+                    if self.chunks[z][x].pan_chunk_square_pointers != None:
+                        for pcs in self.chunks[z][x].pan_chunk_square_pointers:
+                            self.pan_chunk_squares.rm_vertex(pcs)
+                            self.pan_chunk_squares.rm_vertex(pcs+1)
+                            self.pan_chunk_squares.rm_vertex(pcs+2)
+                            self.pan_chunk_squares.rm_vertex(pcs+3)
+                        self.chunks[z][x].pan_chunk_square_pointers = None
+                else:#if the chunk load grid says to not load that chunk
+                    
+                    #if the pan chunk square is not added then add it
+                    if self.chunks[z][x].pan_chunk_square_pointers == None:
+                        pan_chunk_squares = self.chunks[z][x].get_pan_chunk_squares(z, x)
+                        self.chunks[z][x].pan_chunk_square_pointers = []
+                        for i in range(0, len(pan_chunk_squares), 5):
+                            p1 = pan_chunk_squares[i]
+                            p2 = pan_chunk_squares[i+1]
+                            p3 = pan_chunk_squares[i+2]
+                            p4 = pan_chunk_squares[i+3]
+                            color = pan_chunk_squares[i+4]
                             
-                        elif self.chunks[z][x].colors_changed:
-                            for pcs in self.chunks[z][x].pan_chunk_square_pointers:
-                                self.pan_chunk_squares.rm_vertex(pcs)
-                                self.pan_chunk_squares.rm_vertex(pcs+1)
-                                self.pan_chunk_squares.rm_vertex(pcs+2)
-                                self.pan_chunk_squares.rm_vertex(pcs+3)
-                                
-                            pan_chunk_squares = self.chunks[z][x].get_pan_chunk_squares(z, x)
-                            self.chunks[z][x].pan_chunk_square_pointers = []
-                            for i in range(0, len(pan_chunk_squares), 5):
-                                p1 = pan_chunk_squares[i]
-                                p2 = pan_chunk_squares[i+1]
-                                p3 = pan_chunk_squares[i+2]
-                                p4 = pan_chunk_squares[i+3]
-                                color = pan_chunk_squares[i+4]
-                                
-                                self.chunks[z][x].pan_chunk_square_pointers.append(self.pan_chunk_squares.add_vertex(p1, color))
-                                self.pan_chunk_squares.add_vertex(p2, color)
-                                self.pan_chunk_squares.add_vertex(p3, color)
-                                self.pan_chunk_squares.add_vertex(p4, color)
+                            self.chunks[z][x].pan_chunk_square_pointers.append(self.pan_chunk_squares.add_vertex(p1, color))
+                            self.pan_chunk_squares.add_vertex(p2, color)
+                            self.pan_chunk_squares.add_vertex(p3, color)
+                            self.pan_chunk_squares.add_vertex(p4, color)
+                        
+                    elif self.chunks[z][x].colors_changed:
+                        for pcs in self.chunks[z][x].pan_chunk_square_pointers:
+                            self.pan_chunk_squares.rm_vertex(pcs)
+                            self.pan_chunk_squares.rm_vertex(pcs+1)
+                            self.pan_chunk_squares.rm_vertex(pcs+2)
+                            self.pan_chunk_squares.rm_vertex(pcs+3)
+                            
+                        pan_chunk_squares = self.chunks[z][x].get_pan_chunk_squares(z, x)
+                        self.chunks[z][x].pan_chunk_square_pointers = []
+                        for i in range(0, len(pan_chunk_squares), 5):
+                            p1 = pan_chunk_squares[i]
+                            p2 = pan_chunk_squares[i+1]
+                            p3 = pan_chunk_squares[i+2]
+                            p4 = pan_chunk_squares[i+3]
+                            color = pan_chunk_squares[i+4]
+                            
+                            self.chunks[z][x].pan_chunk_square_pointers.append(self.pan_chunk_squares.add_vertex(p1, color))
+                            self.pan_chunk_squares.add_vertex(p2, color)
+                            self.pan_chunk_squares.add_vertex(p3, color)
+                            self.pan_chunk_squares.add_vertex(p4, color)
                         
                     
         

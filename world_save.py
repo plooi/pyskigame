@@ -195,16 +195,7 @@ def read(path, new_version = True):
             set_active_variable_false(the_world)
             
             the_world.setup_3d = the_world.get_setup_3d()
-            
-            #for backward compatibility. will remove later
-            for chunk_row in the_world.chunks:
-                for chunk in chunk_row:
-                    if hasattr(chunk, "last_pan_chunk_color"):
-                        chunk.colors_changed = True
-                        the_world.properties["sub_chunk_squares"]=1
-                    else:
-                        break#not a old version. forget this
-            
+
             #ensure that this world has all the needed properties, for backward compatibility reasons
             example_world = world_module.World()
             for key in example_world.properties:
