@@ -1123,9 +1123,10 @@ class World(LooiObject):
                 if ( (z-unscaled_view_z)**2 + (x-unscaled_view_x)**2 )**.5 <= los*cs:#check if this chunk intersection point is within the los of player
                     
                     if (  
-                            ((z-unscaled_view_z)**2 + (x-unscaled_view_x)**2)**.5 <= 1.2*cs #!!!the chunk must either be super close to the player...
+                            ((z-unscaled_view_z)**2 + (x-unscaled_view_x)**2)**.5 <= .6*cs#1.2*cs #!!!the chunk must either be super close to the player...
                             or 
-                            math.pi/2 > normal.angle_distance(self.view.hor_rot, util.get_angle(unscaled_view_z, unscaled_view_x, z, x))  ):#!!!or the player must be looking at the chunk
+                            #math.pi/2 > normal.angle_distance(self.view.hor_rot, util.get_angle(unscaled_view_z, unscaled_view_x, z, x))  ):#!!!or the player must be looking at the chunk
+                            math.pi*.35 > normal.angle_distance(self.view.hor_rot, util.get_angle(unscaled_view_z, unscaled_view_x, z, x))  ):#!!!or the player must be looking at the chunk
                         #then all four neighboring chunks are active
                         cz = int(z/cs)
                         cx = int(x/cs)

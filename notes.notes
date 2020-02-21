@@ -9,7 +9,9 @@ building texture
 midpoints
 fog
 '''rocks collision fix'''
-
+When you die, you respawn at a random nearby location with 25% health
+more line of sight... is it the poles are too many quads?
+    Line of sight increased by 50 % by just cutting some corners
 
 
 
