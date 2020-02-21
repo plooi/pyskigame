@@ -697,8 +697,8 @@ Pole Models
 """
 
 
-def pole_design_2():
-    return pole_design_1(pole_height = 4)
+def pole_design_2(sun_ang_rel_to_lift_ang):
+    return pole_design_1(sun_ang_rel_to_lift_ang,pole_height = 4)
 
 
 """
