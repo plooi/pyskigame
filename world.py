@@ -277,8 +277,8 @@ class World(LooiObject):
             "terrain_mod_step_size(map_editor)" : 15, #in unscaled height
             "chair_time_distance_detachable" : 210,#in terms of ticks
             "chair_time_distance_gondola" : 300,#in terms of ticks
-            "chair_time_distance_fixed" : 390, #in terms of ticks
-            "build_chair_pole_distance(map_editor)" : 23, #in real distance
+            "chair_time_distance_fixed" : 300, #in terms of ticks
+            "build_chair_pole_distance(map_editor)" : 85, #in real distance
             "bump_placement_chance(map_editor)" : 1, #0-1
             
             

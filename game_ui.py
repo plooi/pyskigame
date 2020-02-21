@@ -107,11 +107,13 @@ class UI(LooiObject):
         z = self.world.view.z
         
         
-        
+        action_made = False
         for chairlift in lift.active_lifts:
+            if action_made == True: break
             if chairlift.broken: continue
             cp = chairlift.chair_positions
             for term in [chairlift.start_terminal, chairlift.end_terminal]:
+                if action_made == True: break
                 dist = ( (term.real_z-z)**2 + (term.real_y-y)**2 + (term.real_x-x)**2 )**.5
                 if dist <= 10:#if close to a terminal
                     if self.my_lift == None and self.my_chair == None:#if not currently riding
@@ -126,14 +128,16 @@ class UI(LooiObject):
                                     self.my_chair = i
                                     self.my_lift.player_riding = i
                                     self.world.properties["momentum"] = 0
-                                    #return
+                                    action_made = True
+                                    break
                     else:#if currently riding
                         self.can_unload = True
                         if self.key(constants["interact_key"], "pressed"):
                             self.my_lift.player_riding = None
                             self.my_lift = None
                             self.my_chair = None
-                            #return
+                            action_made = True
+                            break
         
         
         

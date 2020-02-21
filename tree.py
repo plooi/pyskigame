@@ -17,6 +17,17 @@ class Tree(WorldObject):
     #scale parameter is currently not used
     def __init__(self, **args):
         default(args, "model", tree_design_1)
+        hr,vr = args["world"].get_rotation(int(args["z"]),int(args["x"]))
+        if vr < 0:
+            vr = -vr
+            hr += math.pi
+            
+            
+        if args["z"]%1==0 and args["x"]%1==0:#if z and x are pointing toward the corner of the square
+            args["z"] = args["z"]+.5#put them in the middle of square
+            args["x"] = args["x"]+.5#middle of square
+        shade = args["world"].calculate_floor_color_single(hr,vr)
+        args["model_args"] = {"shade":shade}
         default(args, "model_type", "tex")
         default(args, "do_lighting", False)
         default(args, "rotation", random()*math.pi)

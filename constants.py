@@ -8,6 +8,7 @@ x = {
     "gondola_rope_speed" : .7,
     
     "fixed_grip_rope_speed" : .275,
+    "fixed_grip_terminal_speed" : .274999,
     "ski_mode_walk_speed" : .075,
     
     "chair_ride_distance" : 1.5, #in terms of real distance. How far away you need to be from a chair in order to get on it

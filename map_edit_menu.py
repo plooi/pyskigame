@@ -21,6 +21,13 @@ from landmark import Landmark
 from world_object import WorldObject
 from bump import *
 import mission_center
+
+
+build_hs_terminal_model = hs_terminal_design_gray
+build_fg_terminal_model = terminal_design_2
+
+
+
 class Menu(LooiObject):
     def __init__(self, ui):
         super().__init__()
@@ -34,7 +41,6 @@ class Menu(LooiObject):
         self.btn10 = Button(x = 520, y=120, width=70, height=70, font_size=10, text="", image=image("D-8G Icon.png"), action=GondolaBuild, action_parameter=self)
         self.btn10.set_layer(-2)
         self.add(self.btn10)
-        
         self.btn11 = Button(x = 760, y=120, width=70, height=70, font_size=10, text="", image=image("C4 Icon.png"), action=C4Build, action_parameter=self)
         self.btn11.set_layer(-5)
         self.add(self.btn11)
@@ -161,10 +167,17 @@ class Menu(LooiObject):
         self.current_action = None
         
         
+        
     def paint(self):
         self.draw_rect(self.x1, self.y1, self.x2, self.y2, self.menu_color)
 
 def settings(menu):
+    
+    global build_hs_terminal_model
+    global build_fg_terminal_model
+    
+    
+    
     setting = OrderedDict()
     setting["Horizontal Stretch"] = menu.ui.world.properties["horizontal_stretch"]
     setting["Vertical Stretch"] = menu.ui.world.properties["vertical_stretch"]
@@ -180,6 +193,7 @@ def settings(menu):
     setting["Map Editor: Line Thickness"] = menu.ui.world.properties["line_thickness(map_editor)"]
     setting["Map Editor: Terrain Mod Step Size"] = menu.ui.world.properties["terrain_mod_step_size(map_editor)"]
     setting["Map Editor: Bump Placement Chance"] = menu.ui.world.properties["bump_placement_chance(map_editor)"]
+
     
     """
     "chair_time_distance_detachable" : 210,
@@ -192,13 +206,23 @@ def settings(menu):
         setting[key] = str(setting[key])
         col.append([sg.Text(key), sg.Input(setting[key])])
     
-    col = sg.Column(col, size=(500,800), scrollable=True)
+    #FOR ADDING NEW TERMINALS, CHANGE HERE
+    col.append([sg.Text("Map Editor: High Speed Terminal Model ("+find_name(build_hs_terminal_model)+")"), sg.Combo(values=["hs_terminal_design_gray", "hs_terminal_design_red","hs_terminal_design_green","hs_terminal_design_blue"], size=(35,10))])
+    col.append([sg.Text("Map Editor: Fixed Grip Terminal Model ("+find_name(build_fg_terminal_model)+")"), sg.Combo(values=["terminal_design_2","fg_terminal_design_red","fg_terminal_design_green","fg_terminal_design_blue","fg_terminal_design_black"], size=(35,10))])
+    
+    
+    
+    
+    
+    
+    
+    col = sg.Column(col, size=(1000,800), scrollable=True)
     
     layout = [    [sg.OK(), sg.Cancel()],
                   [sg.Text("Name: %s" % menu.ui.world.properties["name"])],
                   [col],
                    ]
-    window = sg.Window('', layout, size = (500,800))
+    window = sg.Window('', layout, size = (1000,800))
     event, values = window.Read()
     
     
@@ -208,6 +232,9 @@ def settings(menu):
     for key in setting:
         new_settings[key] = values[i]
         i += 1
+    hs_tm = values[i]
+    i+=1
+    fg_tm = values[i]
     
     window.close()
     
@@ -229,6 +256,24 @@ def settings(menu):
             menu.ui.world.properties["terrain_mod_step_size(map_editor)"] = float(new_settings["Map Editor: Terrain Mod Step Size"])
             menu.ui.world.properties["build_chair_pole_distance(map_editor)"] = float(new_settings["Map Editor: Lift Build Pole Distance"])
             menu.ui.world.properties["bump_placement_chance(map_editor)"] = float(new_settings["Map Editor: Bump Placement Chance"])
+            
+            
+            
+            #hs terminal model
+            #FOR ADDING NEW TERMINALS, CHANGE HERE
+            
+            if hs_tm == "hs_terminal_design_gray": build_hs_terminal_model=hs_terminal_design_gray
+            if hs_tm == "hs_terminal_design_red": build_hs_terminal_model=hs_terminal_design_red
+            if hs_tm == "hs_terminal_design_green": build_hs_terminal_model=hs_terminal_design_green
+            if hs_tm == "hs_terminal_design_blue": build_hs_terminal_model=hs_terminal_design_blue
+            
+            if fg_tm == "terminal_design_2": build_fg_terminal_model=terminal_design_2
+            if fg_tm == "fg_terminal_design_red": build_fg_terminal_model=fg_terminal_design_red
+            if fg_tm == "fg_terminal_design_green": build_fg_terminal_model=fg_terminal_design_green
+            if fg_tm == "fg_terminal_design_blue": build_fg_terminal_model=fg_terminal_design_blue
+            if fg_tm == "fg_terminal_design_gray": build_fg_terminal_model=fg_terminal_design_gray
+            if fg_tm == "fg_terminal_design_black": build_fg_terminal_model=fg_terminal_design_black
+            
             
             
             
@@ -256,15 +301,27 @@ def settings(menu):
                 event2, _ = window.Read()
                 window.close()
                 if event2 == "OK":
+                    loading.progress_bar("Loading 1/2...")
                     menu.ui.world.properties["sun_angle"] = float(new_settings["Sun Angle"])
                     for z in range(menu.ui.world.get_height_floors()):
                         for x in range(menu.ui.world.get_width_floors()):
                             menu.ui.world.reset_floor_texture(z, x)
-                            for obj in menu.ui.world.quads[z][x].containedObjects:
-                                if isinstance(obj, Tree):
+                        if z % 7 == 0: loading.update(z/menu.ui.world.properties["height"]*50)
+                    for z in range(menu.ui.world.get_height_floors()):
+                        for x in range(menu.ui.world.get_width_floors()):
+                            for obj in list(menu.ui.world.quads[z][x].containedObjects):
+                                if isinstance(obj, NaturalBump):
+                                    obj.delete()
+                                elif isinstance(obj, Terminal):
+                                    if obj.top_or_bot == 'bot':
+                                        obj.chairlift.reset()
+                                elif isinstance(obj, Pole):
+                                    pass
+                                else:
                                     obj.reset()
+                        if z % 7 == 0: loading.update(z/menu.ui.world.properties["height"]*50+50)
+                loading.update(100)
                 world = menu.ui.world
-                remove_natural_bumps(world, 0,0,world.get_width_points(), world.get_width_points())
                 natural_bumps(world, 0,0,world.get_width_points(), world.get_width_points(), prog_bar=True)
             
             if nsame("Sub Chunk Squares"):
@@ -318,20 +375,16 @@ def settings(menu):
                         if z % 7 == 0: loading.update(z/world.properties["height"]*33+33)
                     for z in range(world.get_height_floors()):
                         for x in range(world.get_width_floors()):
-                            objs = world.quads[z][x].containedObjects
-                            i=0
-                            while i < len(objs):
-                                if isinstance(objs[i], NaturalBump):
-                                    objs[i].delete()#this automatically deletes the bump from the list
-                                    i -= 1#but I still have to do i -= 1
-                                elif isinstance(objs[i], Terminal):
-                                    if objs[i].top_or_bot == 'bot':
-                                        objs[i].chairlift.reset()
-                                elif isinstance(objs[i], Pole):
+                            for obj in list(menu.ui.world.quads[z][x].containedObjects):
+                                if isinstance(obj, NaturalBump):
+                                    obj.delete()
+                                elif isinstance(obj, Terminal):
+                                    if obj.top_or_bot == 'bot':
+                                        obj.chairlift.reset()
+                                elif isinstance(obj, Pole):
                                     pass
                                 else:
-                                    objs[i].reset()
-                                i += 1
+                                    obj.reset()
                                 
                         if z % 7 == 0: loading.update(z/world.properties["height"]*33+66)
                     loading.update(100)
@@ -385,8 +438,14 @@ class MapEdit(LooiObject):
     def __init__(self, menu):
         super().__init__()
         self.menu = menu
+        self.live_pointer = Pointer(self.world(), 0, 0)
     def world(self):
         return self.menu.ui.world
+    def live_pointer_update(self):
+        live_point = self.world().get_view_pointing()
+        if live_point != None:
+            self.live_pointer.z = live_point[0]
+            self.live_pointer.x = live_point[1]
     def upon_deactivation(self):
         super().upon_deactivation()
         self.menu.ui.enable_crosshairs(False)
@@ -394,6 +453,7 @@ class MapEdit(LooiObject):
         self.menu.ui.interface_mode = "menu"
         game_ui.set_mouse_mode("normal")
         self.menu.activate()
+        self.live_pointer.deactivate()
 class Measure(MapEdit):
     def __init__(self, menu):
         super().__init__(menu)
@@ -485,6 +545,7 @@ class OnePointEdit(MapEdit):
         menu.current_action = self
         
     def step(self):
+        self.live_pointer_update()
         if self.mouse("left", "pressed") or self.mouse("left", "released"):
             if self.stage == "select point":
                 self.p1 = self.world().get_view_pointing()
@@ -517,8 +578,13 @@ class TwoPointEdit(MapEdit):
         menu.ui.interface_mode = "can_move_temporarily"
         menu.deactivate()
         menu.current_action = self
-        
+    
     def step(self):
+        self.live_pointer_update()
+            
+        
+    
+    
         if self.mouse("left", "pressed") or self.mouse("left", "released"):
             if self.stage == "select p1":
                 self.p1 = self.world().get_view_pointing()
@@ -626,7 +692,7 @@ class LiftBuild(TwoPointEdit):
         distance_between_poles = self.world().properties["build_chair_pole_distance(map_editor)"]
         #end
         
-        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], chair_time_distance = self.world().properties["chair_time_distance_detachable"])
+        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], chair_time_distance = self.world().properties["chair_time_distance_detachable"], terminal_model=build_hs_terminal_model)
 
 class GondolaBuild(TwoPointEdit):
     def __init__(self, menu):
@@ -645,7 +711,7 @@ class GondolaBuild(TwoPointEdit):
         distance_between_poles = self.world().properties["build_chair_pole_distance(map_editor)"]
         #end
         
-        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], chair_model=gondola_model_1, blurry_chair_model=gondola_model_2, super_blurry_chair_model=gondola_model_4, chair_riding_model = gondola_model_1_riding, chair_time_distance = self.world().properties["chair_time_distance_gondola"], terminal_speed="gondola_terminal_speed", rope_speed="gondola_rope_speed")
+        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], chair_model=gondola_model_1, blurry_chair_model=gondola_model_2, super_blurry_chair_model=gondola_model_4, chair_riding_model = gondola_model_1_riding, chair_time_distance = self.world().properties["chair_time_distance_gondola"], terminal_speed="gondola_terminal_speed", rope_speed="gondola_rope_speed", terminal_model=build_hs_terminal_model)
         
         
         
@@ -665,7 +731,7 @@ class C4Build(TwoPointEdit):#quad moves a bit faster than the other fixed grip c
         distance_between_poles = self.world().properties["build_chair_pole_distance(map_editor)"]
         #end
         
-        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed="fixed_grip_rope_speed", rope_speed="fixed_grip_rope_speed", terminal_model=terminal_design_2, chair_time_distance = self.world().properties["chair_time_distance_fixed"])
+        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed="fixed_grip_terminal_speed", rope_speed="fixed_grip_rope_speed", terminal_model=build_fg_terminal_model, chair_time_distance = self.world().properties["chair_time_distance_fixed"])
 class D_6CBuild(TwoPointEdit):
     def __init__(self, menu):
         super().__init__(menu, "Select bottom", "Select top")
@@ -682,7 +748,7 @@ class D_6CBuild(TwoPointEdit):
         distance_between_poles = self.world().properties["build_chair_pole_distance(map_editor)"]
         #end
         
-        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], chair_model = sixpack_model_1, blurry_chair_model = sixpack_model_2, super_blurry_chair_model=sixpack_model_3, chair_time_distance = self.world().properties["chair_time_distance_detachable"], chair_riding_model = sixpack_model_1)
+        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], chair_model = sixpack_model_1, blurry_chair_model = sixpack_model_2, super_blurry_chair_model=sixpack_model_3, chair_time_distance = self.world().properties["chair_time_distance_detachable"], chair_riding_model = sixpack_model_1, terminal_model=build_hs_terminal_model)
 
 class C3Build(TwoPointEdit):
     def __init__(self, menu):
@@ -700,7 +766,7 @@ class C3Build(TwoPointEdit):
         distance_between_poles = self.world().properties["build_chair_pole_distance(map_editor)"]
         #end
         
-        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed="fixed_grip_rope_speed", rope_speed="fixed_grip_rope_speed", terminal_model=terminal_design_2, chair_model = triple_model_1, blurry_chair_model = triple_model_2, super_blurry_chair_model=triple_model_3, chair_time_distance = self.world().properties["chair_time_distance_fixed"], chair_riding_model = triple_model_1)
+        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed="fixed_grip_terminal_speed", rope_speed="fixed_grip_rope_speed", terminal_model=build_fg_terminal_model, chair_model = triple_model_1, blurry_chair_model = triple_model_2, super_blurry_chair_model=triple_model_3, chair_time_distance = self.world().properties["chair_time_distance_fixed"], chair_riding_model = triple_model_1)
 class C2Build(TwoPointEdit):
     def __init__(self, menu):
         super().__init__(menu, "Select bottom", "Select top")
@@ -717,7 +783,7 @@ class C2Build(TwoPointEdit):
         distance_between_poles = self.world().properties["build_chair_pole_distance(map_editor)"]
         #end
         
-        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed="fixed_grip_rope_speed", rope_speed="fixed_grip_rope_speed", terminal_model=terminal_design_2, chair_model = double_model_1, blurry_chair_model = double_model_2, super_blurry_chair_model=double_model_3, chair_time_distance = self.world().properties["chair_time_distance_fixed"], chair_riding_model = double_model_1)
+        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed="fixed_grip_terminal_speed", rope_speed="fixed_grip_rope_speed", terminal_model=build_fg_terminal_model, chair_model = double_model_1, blurry_chair_model = double_model_2, super_blurry_chair_model=double_model_3, chair_time_distance = self.world().properties["chair_time_distance_fixed"], chair_riding_model = double_model_1)
 class TBarBuild(TwoPointEdit):
     def __init__(self, menu):
         super().__init__(menu, "Select bottom", "Select top")
@@ -734,7 +800,7 @@ class TBarBuild(TwoPointEdit):
         distance_between_poles = self.world().properties["build_chair_pole_distance(map_editor)"]
         #end
         
-        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed="fixed_grip_rope_speed", rope_speed="fixed_grip_rope_speed", terminal_model=terminal_design_2, chair_model = tbar_model_1, blurry_chair_model = tbar_model_1, super_blurry_chair_model=tbar_model_1,pole_model=pole_design_2, chair_time_distance = self.world().properties["chair_time_distance_fixed"], chair_riding_model = tbar_model_1)
+        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], terminal_speed="fixed_grip_terminal_speed", rope_speed="fixed_grip_rope_speed", terminal_model=build_fg_terminal_model, chair_model = tbar_model_1, blurry_chair_model = tbar_model_1, super_blurry_chair_model=tbar_model_1,pole_model=pole_design_2, chair_time_distance = self.world().properties["chair_time_distance_fixed"], chair_riding_model = tbar_model_1)
 
 
 #terminal_design_2
@@ -778,7 +844,7 @@ class Select(TwoPointEdit):
         selectables = []
         for z in range(int(midz-radius), int(midz+radius)+1):
             for x in range(int(midx-radius), int(midx+radius)+1):
-                if ((z-midz)**2 + (x-midx)**2)**.5 <= radius:
+                if ((z-midz)**2 + (x-midx)**2)**.5 <= radius and self.world().valid_floor(z, x):
                     objs = self.world().quads[z][x].containedObjects
                     for obj in objs:
                         
@@ -853,6 +919,7 @@ class TerrainMod(TwoPointEdit):
             
         
     def step(self):
+        self.live_pointer_update()
         if self.stage == "modify terrain":
             if self.key("up", "down"):
                 self.up()

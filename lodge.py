@@ -18,6 +18,7 @@ class Lodge(WorldObject):
         default(args, "model_args", {"length" : 8, "width" : 8, "height": 6, "roof_height":8, "wall_color1": [.82,.7,.54], "wall_color2": [.77,.65,.49]})
         default(args, "do_lighting", False)
         default(args, "active", "always")
+        default(args, "y", args["world"].get_elevation_continuous(args["z"], args["x"]) + .2)
         super().__init__(**args)
         
         self.draw_icon = False

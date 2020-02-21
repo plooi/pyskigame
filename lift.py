@@ -101,6 +101,10 @@ class Lift(LooiObject, Selectable):
         self.center_z = (self.z1+self.z2)/2
         self.distance = ( (self.x1-self.x2)**2 + (self.z1-self.z2)**2 )**.5
         self.angle = get_angle(self.z1,self.x1,self.z2,self.x2)
+        
+        self.sun_ang_rel_to_lift_ang = self.world.properties["sun_angle"] - self.angle
+        
+        
         self.poles_midpoints = chairlift_array[2]
         if len(self.poles_midpoints) == 0: self.poles_midpoints.append(.5)
         if self.start_terminal != None: self.start_terminal.deactivate()
@@ -515,7 +519,7 @@ class Pole:
         self.real_x = self.x * self.chairlift.world.properties["horizontal_stretch"]
         self.real_z = self.z * self.chairlift.world.properties["horizontal_stretch"]
         
-        self.model,self.up_point,self.down_point = self.pole_model()
+        self.model,self.up_point,self.down_point = self.pole_model(self.chairlift.sun_ang_rel_to_lift_ang)
         horizontal_rotate_model_around_origin(self.model, self.angle)
         move_model(self.model, self.real_x, self.real_y, self.real_z)
         self.vhkeys = add_model_to_world_fixed(self.model, self.chairlift.world, int(self.z), int(self.x), self)

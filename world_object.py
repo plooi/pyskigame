@@ -38,6 +38,12 @@ class WorldObject(LooiObject):
         default(args, "rotation", 0)
         
         
+        if not self.world.valid_floor(int(self.args["z"]), int(self.args["x"])):
+            raise Exception("Invalid z and x position " + str(self.args["x"]) + " " + str(self.args["z"]) + ". World dimensions are h%d w%d" % (self.world.get_height_floors(), self.world.get_width_floors()))
+        for obj in self.world.quads[int(self.args["z"])][int(self.args["x"])].containedObjects:
+            if isinstance(obj, WorldObject):
+                return
+        
         #z and x are the non scaled coordinates of the world object. Quad z x is where this object is pinned
         self.set_anchor(args["z"], args["x"], relocate_model=False)
         
@@ -49,9 +55,9 @@ class WorldObject(LooiObject):
         if "model" in args:
             check("model_type" in args and (args["model_type"] == "std" or args["model_type"] == "grad" or args["model_type"] == "tex"))
             
-            default(args, "model_z", args["z"]*self.h)
-            default(args, "model_x", args["x"]*self.h)
-            default(args, "model_y", args["y"]*self.v)
+            default(args, "model_z", (args["z"])*self.h)
+            default(args, "model_x", (args["x"])*self.h)
+            default(args, "model_y", (args["y"])*self.v)
             
             default(args, "do_lighting", True)
             
@@ -94,7 +100,10 @@ class WorldObject(LooiObject):
     #you can override this one if you want differnt lighting
     """
     def do_lighting(self, model, min_brightness=.4):
-        
+        if self.args["do_lighting"] and self.args["model_type"]!="tex":
+            pass# do lighting
+        else:
+            return
         brightness = self.world.get_proper_floor_color(int(self.args["z"]), int(self.args["x"]))[0]
         if brightness < min_brightness: brightness = min_brightness
         
@@ -149,8 +158,8 @@ class WorldObject(LooiObject):
         horizontal_rotate_model_around_origin(model, self.args["rotation"], gradient_model=gm, texture_model=tex)
         move_model(model, self.args["model_x"], self.args["model_y"], self.args["model_z"],gradient_model=gm, texture_model=tex)
         
-        if self.args["do_lighting"] and not tex:
-            self.do_lighting(model)
+        
+        self.do_lighting(model)
         
         self.vertex_handler_pointers = add_model_to_world_fixed(model, self.world, int(self.args["z"]), int(self.args["x"]), self,gradient_model=gm, texture_model=tex)
         

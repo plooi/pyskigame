@@ -1,4 +1,4 @@
-1220_113
+1811_165
 Black_0_0_4_4
 White_4_0_4_4
 MinecraftSnow-lighting-155_8_0_32_32
@@ -29,5 +29,10 @@ MinecraftSnow-lighting-251_776_0_32_32
 MinecraftSnow-lighting-255_808_0_32_32
 BumpTextureD_840_0_121_113
 BumpTextureL_961_0_121_113
-PineTexture_1082_0_89_89
-Bark_1171_0_49_46
+PineTexture1_1082_0_89_89
+PineTexture2_1171_0_89_89
+PineTexture3_1260_0_89_89
+PineTexture4_1349_0_89_89
+Bark_1438_0_49_46
+CliffTexture_1487_0_163_165
+RockTexture_1650_0_161_156

@@ -125,7 +125,7 @@ def tree_design_1():
     
     ]
 """
-def tree_design_1(scale = 1):
+def tree_design_1(shade=.8, scale = 1):
     
     
     
@@ -158,19 +158,21 @@ def tree_design_1(scale = 1):
     x=.7 * scale
     p=.16 * scale
     
-    #leaf_color=[0,.95,.45]
-    #leaf_color_bot=[0,.92,.42]
-    #leaf_color=[.62,.89,.27]
-    #leaf_color_bot=[.52,.79,.17]
-    leaf_color=[.62,.99,.27]
-    leaf_color_bot=[.52,.89,.17]
-    bark = [.6,.3,0]
+    if shade < .75:
+        tex="PineTexture1"
+    elif shade < .83:
+        tex = "PineTexture2"
+    elif shade < .91:
+        tex = "PineTexture3"
+    else:
+        tex="PineTexture4"
+    
     
     return [
-        [B/2,h1,-B/2],[B/2,h1,B/2],[-B/2,h1,B/2],[0,h3,0],"PineTexture",
-        [B/2,h1,-B/2],[-B/2,h1,-B/2],[-B/2,h1,B/2],[0,h3,0],"PineTexture",
-        [-A/2,h2,A/2],[A/2,h2,A/2],[A/2,h2,-A/2],[0,h3,0],"PineTexture",
-        [-A/2,h2,A/2],[-A/2,h2,-A/2],[A/2,h2,-A/2],[0,h3,0],"PineTexture",
+        [B/2,h1,-B/2],[B/2,h1,B/2],[-B/2,h1,B/2],[0,h3,0],tex,
+        [B/2,h1,-B/2],[-B/2,h1,-B/2],[-B/2,h1,B/2],[0,h3,0],tex,
+        [-A/2,h2,A/2],[A/2,h2,A/2],[A/2,h2,-A/2],[0,h3,0],tex,
+        [-A/2,h2,A/2],[-A/2,h2,-A/2],[A/2,h2,-A/2],[0,h3,0],tex,
         
         
         

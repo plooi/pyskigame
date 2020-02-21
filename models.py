@@ -36,7 +36,15 @@ def find_name(model):
     
     if m is terminal_design_1: return "terminal_design_1"
     if m is terminal_design_2: return "terminal_design_2"
-    if m is terminal_design_3: return "terminal_design_3"
+    if m is hs_terminal_design_red: return "hs_terminal_design_red"
+    if m is hs_terminal_design_green: return "hs_terminal_design_green"
+    if m is hs_terminal_design_blue: return "hs_terminal_design_blue"
+    if m is hs_terminal_design_gray: return "hs_terminal_design_gray"
+    if m is fg_terminal_design_red: return "fg_terminal_design_red"
+    if m is fg_terminal_design_green: return "fg_terminal_design_green"
+    if m is fg_terminal_design_blue: return "fg_terminal_design_blue"
+    if m is fg_terminal_design_gray: return "fg_terminal_design_gray"
+    if m is fg_terminal_design_black: return "fg_terminal_design_black"
     
     if m is pole_design_1: return "pole_design_1"
     if m is pole_design_2: return "pole_design_2"
@@ -83,7 +91,7 @@ def chair_model_1():
 def chair_model_2(
     hanger_width = .05,
     hanger_height = .5,
-    hanger_color = [.3,.3,.3],
+    hanger_color = [.65,.65,.65],
     seat_back_color = [.1,.1,.1],
     seat_color = [.2,.2,.2],
     
@@ -111,7 +119,7 @@ def chair_model_2(
 def chair_model_3(
     hanger_width = .05,
     hanger_height = .5,
-    hanger_color = [.3,.3,.3],
+    hanger_color = [.65,.65,.65],
     seat_back_color = [.1,.1,.1],
     seat_color = [.2,.2,.2],
     
@@ -134,7 +142,7 @@ def chair_model_3(
 def chair_model_4(
     hanger_width = .05,
     hanger_height = .5,
-    hanger_color = [.3,.3,.3],
+    hanger_color = [.65,.65,.65],
     seat_back_color = [.1,.1,.1],
     seat_color = [.2,.2,.2],
     
@@ -192,7 +200,7 @@ depth/   /to/\
 def gondola_model_1(
     hanger_width = .05,
     hanger_height = .5,
-    hanger_color = [.3,.3,.3],
+    hanger_color = [.65,.65,.65],
     top_color = [.2,.3,.2],
     bottom_color =[.5,.5,.5],
     side_color = [.2,.3,.2],
@@ -439,6 +447,83 @@ def tbar_model_1(
     ]
 
 
+
+def fg_terminal_design_red(**args):
+    args["terminal_roof_color"] = [.5,.2,.2]
+    args["terminal_wall_color"] = [.4,.15,.15]
+    args["terminal_side_color"] = [.4,.15,.15]
+    
+    args["terminal_roof_height"] = 1.85
+    args["terminal_roof_height2"] = 1.2
+    args["terminal_roof_width"] = 3
+    args["terminal_track_indent"] = 0
+    args["terminal_roof_length"] = 4
+    args["bullwheel_distance_from_pole"] = .5
+    
+    return terminal_design_1(**args)
+
+def fg_terminal_design_green(**args):
+    args["terminal_roof_color"] = [.26,.43,.22]
+    args["terminal_wall_color"] = [.7,.7,.7]
+    args["terminal_side_color"] = [.26,.35,.22]
+    args["terminal_roof_height"] = 1.85
+    args["terminal_roof_height2"] = 1.2
+    args["terminal_roof_width"] = 3
+    args["terminal_track_indent"] = 0
+    args["terminal_roof_length"] = 4
+    args["bullwheel_distance_from_pole"] = .5
+    return terminal_design_1(**args)
+def fg_terminal_design_blue(**args):
+    args["terminal_roof_color"] = [.2,.4,.6]
+    args["terminal_wall_color"] = [.1,.3,.5]
+    args["terminal_side_color"] = [.1,.3,.5]
+    args["terminal_roof_height"] = 1.85
+    args["terminal_roof_height2"] = 1.2
+    args["terminal_roof_width"] = 3
+    args["terminal_track_indent"] = 0
+    args["terminal_roof_length"] = 4
+    args["bullwheel_distance_from_pole"] = .5
+    return terminal_design_1(**args)
+def fg_terminal_design_gray(**args):
+    args["terminal_roof_height"] = 1.85
+    args["terminal_roof_height2"] = 1.2
+    args["terminal_roof_width"] = 3
+    args["terminal_track_indent"] = 0
+    args["terminal_roof_length"] = 4
+    args["bullwheel_distance_from_pole"] = .5
+    return terminal_design_1(**args)
+def fg_terminal_design_black(**args):
+    args["terminal_roof_color"] = [.22,.22,.22]
+    args["terminal_wall_color"] = [.13,.13,.13]
+    args["terminal_side_color"] = [.18,.18,.18]
+    args["terminal_roof_height"] = 1.85
+    args["terminal_roof_height2"] = 1.2
+    args["terminal_roof_width"] = 3
+    args["terminal_track_indent"] = 0
+    args["terminal_roof_length"] = 4
+    args["bullwheel_distance_from_pole"] = .5
+    return terminal_design_1(**args)
+
+
+
+def hs_terminal_design_red(**args):
+    args["terminal_roof_color"] = [.5,.2,.2]
+    args["terminal_wall_color"] = [.4,.15,.15]
+    args["terminal_side_color"] = [.4,.15,.15]
+    return terminal_design_1(**args)
+def hs_terminal_design_green(**args):
+    args["terminal_roof_color"] = [.26,.43,.22]
+    args["terminal_wall_color"] = [.7,.7,.7]
+    args["terminal_side_color"] = [.26,.35,.22]
+    return terminal_design_1(**args)
+def hs_terminal_design_blue(**args):
+    args["terminal_roof_color"] = [.2,.4,.6]
+    args["terminal_wall_color"] = [.1,.3,.5]
+    args["terminal_side_color"] = [.1,.3,.5]
+    return terminal_design_1(**args)
+def hs_terminal_design_gray(**args):
+    return terminal_design_1(**args)
+
 def terminal_design_1(
     pole_length = 1,
     pole_width = .6,
@@ -488,7 +573,7 @@ def terminal_design_1(
         x_pos = (percent_round_up) * terminal_roof_length/2 
         vel = terminal_speed + (percent_round_up) * speed_diff
         track.add_point(lift_util.Point(x_pos, pole_height, terminal_roof_width/2-terminal_track_indent, vel))
-    #WORKING HERE
+
     return [
     [-pole_length/2,0,-pole_width/2], [pole_length/2,0,-pole_width/2], [pole_length/2,pole_height,-pole_width/2], [-pole_length/2,pole_height,-pole_width/2], pole_color,
     [-pole_length/2,0,pole_width/2], [pole_length/2,0,pole_width/2], [pole_length/2,pole_height,pole_width/2], [-pole_length/2,pole_height,pole_width/2], pole_color,
@@ -630,16 +715,21 @@ def pole_design_2():
         |
 """
 def pole_design_1(
+        sun_ang_rel_to_lift_ang,
         pole_width = .5,
-        pole_height = 7,
+        pole_height = 9,
         t_width = 3,
         t_height = .3,
-        pole_color = [.2,.2,.2],
+        pole_color = [1,1,1],
         t_color = [.6,.6,.6],
+        t_top_color = [.69,.69,.69],
+        t_bottom_color = [.51,.51,.51],
+        v_outside_color = [.61,.61,.61],
+        v_inside_color = [.59,.59,.59],
         
         
         
-        h = 1.5,
+        h = 1.1,
         a = 1.4,
         b = 2.5,
         c = 4,
@@ -650,19 +740,49 @@ def pole_design_1(
     p_2 = pole_width/2
     v_2 = v_depth /2
     
-    
-    return [
+    def scale(scalar,arr):
+        #-1 to 1
+        scalar *=.5 
+        scalar += .5
+        #0 to 1
+        scalar = scalar**5
+        scalar *= .3
+        scalar += .2
+        #.2 to .5
+        
+        ret = [0]*len(arr)
+        for i in range(len(arr)):
+            ret[i] = arr[i]*scalar
+        return ret
+        
+    #make the cylindrical pole
+    the_pole = []
+    segs = 40
+    for i in range(segs):
+        angle = i * math.pi*2/segs
+        angle2 = (i+1) * math.pi*2/segs
+        
+        x1 = math.cos(angle)*p_2
+        z1 = -math.sin(angle)*p_2
+        
+        x2 = math.cos(angle2)*p_2
+        z2 = -math.sin(angle2)*p_2
+        
+        the_pole.append([x1,0,z1])
+        the_pole.append([x2,0,z2])
+        the_pole.append([x2,pole_height,z2])
+        the_pole.append([x1,pole_height,z1])
+        the_pole.append(scale(math.cos(-sun_ang_rel_to_lift_ang+angle), pole_color))
+        #print(sun_ang_rel_to_lift_ang)
+        
+        
+    return the_pole+[
     
     #The pole
-    [-p_2/2,0,-p_2], [-p_2,0,p_2], [-p_2,pole_height,p_2], [-p_2,pole_height,-p_2], pole_color,
-    [p_2/2,0,-p_2], [p_2,0,p_2], [p_2,pole_height,p_2], [p_2,pole_height,-p_2], pole_color,
-    [-p_2/2,0,-p_2], [p_2/2,0,-p_2], [p_2,pole_height,-p_2], [-p_2,pole_height,-p_2], pole_color, 
-    [-p_2/2,0,p_2], [p_2/2,0,p_2], [p_2,pole_height,p_2], [-p_2,pole_height,p_2], pole_color, 
-    
     
     #The T
-    [-p_2,pole_height,-t_width/2], [p_2,pole_height,-t_width/2], [p_2,pole_height,t_width/2], [-p_2,pole_height,t_width/2], t_color,
-    [-p_2,pole_height+t_height,-t_width/2], [p_2,pole_height+t_height,-t_width/2], [p_2,pole_height+t_height,t_width/2], [-p_2,pole_height+t_height,t_width/2], t_color,
+    [-p_2,pole_height,-t_width/2], [p_2,pole_height,-t_width/2], [p_2,pole_height,t_width/2], [-p_2,pole_height,t_width/2], t_bottom_color,
+    [-p_2,pole_height+t_height,-t_width/2], [p_2,pole_height+t_height,-t_width/2], [p_2,pole_height+t_height,t_width/2], [-p_2,pole_height+t_height,t_width/2], t_top_color,
     [-p_2,pole_height,-t_width/2], [p_2,pole_height,-t_width/2], [p_2,pole_height+t_height,-t_width/2], [-p_2,pole_height+t_height,-t_width/2], t_color,
     [-p_2,pole_height,t_width/2], [p_2,pole_height,t_width/2], [p_2,pole_height+t_height,t_width/2], [-p_2,pole_height+t_height,t_width/2], t_color,
     [-p_2,pole_height,-t_width/2], [-p_2,pole_height+t_height,-t_width/2], [-p_2,pole_height+t_height,t_width/2], [-p_2,pole_height,t_width/2],  t_color,
@@ -670,10 +790,10 @@ def pole_design_1(
     
     
     #The v
-    [-p_2,pole_height + t_height,a/2-v_2], [p_2,pole_height + t_height,a/2-v_2], [p_2,pole_height + t_height + h,b/2-v_2], [-p_2,pole_height + t_height + h,b/2-v_2], t_color,
-    [-p_2,pole_height + t_height,a/2+v_2], [p_2,pole_height + t_height,a/2+v_2], [p_2,pole_height + t_height + h,b/2+v_2], [-p_2,pole_height + t_height + h,b/2+v_2], t_color,
-    [-p_2,pole_height + t_height,-a/2-v_2], [p_2,pole_height + t_height,-a/2-v_2], [p_2,pole_height + t_height + h,-b/2-v_2], [-p_2,pole_height + t_height + h,-b/2-v_2], t_color,
-    [-p_2,pole_height + t_height,-a/2+v_2], [p_2,pole_height + t_height,-a/2+v_2], [p_2,pole_height + t_height + h,-b/2+v_2], [-p_2,pole_height + t_height + h,-b/2+v_2], t_color,
+    [-p_2,pole_height + t_height,a/2-v_2], [p_2,pole_height + t_height,a/2-v_2], [p_2,pole_height + t_height + h,b/2-v_2], [-p_2,pole_height + t_height + h,b/2-v_2], v_inside_color,
+    [-p_2,pole_height + t_height,a/2+v_2], [p_2,pole_height + t_height,a/2+v_2], [p_2,pole_height + t_height + h,b/2+v_2], [-p_2,pole_height + t_height + h,b/2+v_2], v_outside_color,
+    [-p_2,pole_height + t_height,-a/2-v_2], [p_2,pole_height + t_height,-a/2-v_2], [p_2,pole_height + t_height + h,-b/2-v_2], [-p_2,pole_height + t_height + h,-b/2-v_2], v_outside_color,
+    [-p_2,pole_height + t_height,-a/2+v_2], [p_2,pole_height + t_height,-a/2+v_2], [p_2,pole_height + t_height + h,-b/2+v_2], [-p_2,pole_height + t_height + h,-b/2+v_2], v_inside_color,
     
     [-p_2,pole_height + t_height,-a/2-v_2], [-p_2,pole_height + t_height,-a/2+v_2], [-p_2,pole_height + t_height + h,-b/2+v_2], [-p_2,pole_height + t_height + h,-b/2-v_2], t_color,
     [p_2,pole_height + t_height,-a/2-v_2], [p_2,pole_height + t_height,-a/2+v_2], [p_2,pole_height + t_height + h,-b/2+v_2], [p_2,pole_height + t_height + h,-b/2-v_2], t_color,
@@ -681,8 +801,8 @@ def pole_design_1(
     [p_2,pole_height + t_height,a/2-v_2], [p_2,pole_height + t_height,a/2+v_2], [p_2,pole_height + t_height + h,b/2+v_2], [p_2,pole_height + t_height + h,b/2-v_2], t_color,
     
     #The bar on top of the V
-    [-p_2, pole_height + t_height + h, -c/2], [p_2, pole_height + t_height + h, -c/2], [p_2, pole_height + t_height + h, c/2], [-p_2, pole_height + t_height + h, c/2], t_color,
-    [-p_2, pole_height + t_height + h + t_height, -c/2], [p_2, pole_height + t_height + h + t_height, -c/2], [p_2, pole_height + t_height + h + t_height, c/2], [-p_2, pole_height + t_height + h + t_height, c/2], t_color,
+    [-p_2, pole_height + t_height + h, -c/2], [p_2, pole_height + t_height + h, -c/2], [p_2, pole_height + t_height + h, c/2], [-p_2, pole_height + t_height + h, c/2], t_bottom_color,
+    [-p_2, pole_height + t_height + h + t_height, -c/2], [p_2, pole_height + t_height + h + t_height, -c/2], [p_2, pole_height + t_height + h + t_height, c/2], [-p_2, pole_height + t_height + h + t_height, c/2], t_top_color,
     [-p_2,pole_height + t_height + h,-c/2], [p_2,pole_height + t_height + h,-c/2], [p_2,pole_height + t_height + h + t_height,-c/2], [-p_2,pole_height + t_height + h + t_height,-c/2], t_color,
     [-p_2,pole_height + t_height + h,c/2], [p_2,pole_height + t_height + h,c/2], [p_2,pole_height + t_height + h + t_height,c/2], [-p_2,pole_height + t_height + h + t_height,c/2], t_color,
     [-p_2,pole_height + t_height + h,-c/2], [-p_2,pole_height + t_height + h,c/2], [-p_2,pole_height + t_height + h + t_height,c/2], [-p_2,pole_height + t_height + h + t_height,-c/2], t_color,
@@ -721,12 +841,12 @@ def rock_design_1(
     top = [.9,.9,.9] ):
     
     
-    return [list(x) for x in [
-    u1,u2,u3,u4,top,
-    u1,u2,l2,l1,back,
-    u3,u2,l2,l3,right,
-    u3,u4,l4,l3,front,
-    l1,u1,u4,l4,left
+    return [list(x) if isinstance(x,list) else x for x in [
+    u1,u2,u3,u4,"RockTexture",
+    u1,u2,l2,l1,"RockTexture",
+    u3,u2,l2,l3,"RockTexture",
+    u3,u4,l4,l3,"RockTexture",
+    l1,u1,u4,l4,"RockTexture"
     
     
     ]]
@@ -734,15 +854,15 @@ def rock_design_1(
     
 def rock_design_2(
     
-    l1 = [-14,-30,-16],
-    l2 = [16,-30,-15.8],
-    l3 = [18,-30,16],
-    l4 = [-18,-30,16],
+    l1 = [-14,-30,-14],
+    l2 = [14,-30,-14],
+    l3 = [14,-30,14],
+    l4 = [-14,-30,14],
     
     u1 = [-5,0,-5],
-    u2 = [6,0,-5],
-    u3 = [4.5,0,6],
-    u4 = [-4.5,0,6],
+    u2 = [5,0,-5],
+    u3 = [5,0,5],
+    u4 = [-5,0,5],
     
     front=[.8,.8,.8],
     right=[.7,.7,.7],
@@ -751,12 +871,12 @@ def rock_design_2(
     top = [.9,.9,.9] ):
     
     
-    return [list(x) for x in [
-    u1,u2,u3,u4,top,
-    u1,u2,l2,l1,back,
-    u3,u2,l2,l3,right,
-    u3,u4,l4,l3,front,
-    l1,u1,u4,l4,left
+    return [list(x) if isinstance(x,list) else x for x in [
+    u1,u2,u3,u4,"CliffTexture",
+    u1,u2,l2,l1,"CliffTexture",
+    u3,u2,l2,l3,"CliffTexture",
+    u3,u4,l4,l3,"CliffTexture",
+    l1,u1,u4,l4,"CliffTexture"
     
     
     ]]
