@@ -216,7 +216,8 @@ class UI(LooiObject):
         
         if self.key(constants["interact_key"], "down"): self.health(0)
         if self.game_mode.startswith("ski"):
-            self.health(-.00185,False)
+            if self.my_lift == None:
+                self.health(-.00185,False)
             health_bar_speed = 2
             if self.world.properties["health"] < self.health_target - health_bar_speed:
                 self.world.properties["health"] += health_bar_speed

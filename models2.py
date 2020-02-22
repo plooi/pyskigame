@@ -153,8 +153,8 @@ def tree_design_1(shade=.8, scale = 1):
     A=2.3 * scale
     B=2.7 * scale
     h1=1.3 * scale
-    h2=5 * scale
-    h3=9 * scale
+    h2=6.5 * scale
+    h3=12.5 * scale
     x=.7 * scale
     p=.16 * scale
     
