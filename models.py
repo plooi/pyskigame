@@ -634,6 +634,7 @@ def terminal_design_1(
 
     
 def terminal_design_2(
+    is_midpoint_terminal = False,
     pole_length = 1,
     pole_width = .6,
     pole_height = 2,
