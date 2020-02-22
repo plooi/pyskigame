@@ -53,7 +53,10 @@ class BigRock(Rock):
         return((((x-self.args["model_x"])**2 + (z-self.args["model_z"])**2)**.5) < d) and (dist_under > 0) and (dist_under < 30)
     def touching_player_consequence(self): 
         if self.world.properties["momentum"] >= constants["crash_speed"]: 
-            self.world.game_ui.falling = True
+            if self.world.properties["momentum"] >= .4:
+                self.world.game_ui.falling = 2
+            else:
+                self.world.game_ui.falling = 1
         else:
             angle = get_angle(self.args["model_z"], self.args["model_x"], self.world.view.z, self.world.view.x)
             self.world.view.z -= .8*math.sin(angle)

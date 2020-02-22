@@ -34,6 +34,15 @@ class Menu(LooiObject):
         self.set_layer(2)
         self.ui = ui
         
+        
+        self.btn31 = Button(x = 1240, y=120, width=70, height=70, font_size=12, text="botend", action=bot_button, action_parameter=self)
+        self.btn31.set_layer(-2)
+        self.add(self.btn31)
+        
+        self.btn32 = Button(x = 1320, y=120, width=70, height=70, font_size=12, text="topend", action=top_button, action_parameter=self)
+        self.btn32.set_layer(-2)
+        self.add(self.btn32)
+        
         self.btn1 = Button(x = 680, y=120, width=70, height=70, font_size=10, text="", image=image("D-4C Icon.png"), action=LiftBuild, action_parameter=self)
         self.btn1.set_layer(-4)
         self.add(self.btn1)
@@ -170,6 +179,25 @@ class Menu(LooiObject):
         
     def paint(self):
         self.draw_rect(self.x1, self.y1, self.x2, self.y2, self.menu_color)
+
+def top_button(menu):
+    if menu.btn32.text == "topend":
+        menu.btn32.text = "topmid"
+    else:
+        menu.btn32.text = "topend"
+
+def bot_button(menu):
+    if menu.btn31.text == "botend":
+        menu.btn31.text = "botmid"
+    else:
+        menu.btn31.text = "botend"
+        
+def get_mids(menu):
+    if menu.btn32.text == "topend" and menu.btn31.text == "botend": return "neither"
+    if menu.btn32.text == "topmid" and menu.btn31.text == "botend": return "topmid"
+    if menu.btn32.text == "topend" and menu.btn31.text == "botmid": return "botmid"
+    if menu.btn32.text == "topmid" and menu.btn31.text == "botmid": return "both"
+    fail("???")
 
 def settings(menu):
     
@@ -692,7 +720,7 @@ class LiftBuild(TwoPointEdit):
         distance_between_poles = self.world().properties["build_chair_pole_distance(map_editor)"]
         #end
         
-        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], chair_time_distance = self.world().properties["chair_time_distance_detachable"], terminal_model=build_hs_terminal_model)
+        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], chair_time_distance = self.world().properties["chair_time_distance_detachable"], terminal_model=build_hs_terminal_model, mids=get_mids(self.menu))
 
 class GondolaBuild(TwoPointEdit):
     def __init__(self, menu):
@@ -711,7 +739,7 @@ class GondolaBuild(TwoPointEdit):
         distance_between_poles = self.world().properties["build_chair_pole_distance(map_editor)"]
         #end
         
-        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], chair_model=gondola_model_1, blurry_chair_model=gondola_model_2, super_blurry_chair_model=gondola_model_4, chair_riding_model = gondola_model_1_riding, chair_time_distance = self.world().properties["chair_time_distance_gondola"], terminal_speed="gondola_terminal_speed", rope_speed="gondola_rope_speed", terminal_model=build_hs_terminal_model)
+        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], chair_model=gondola_model_1, blurry_chair_model=gondola_model_2, super_blurry_chair_model=gondola_model_4, chair_riding_model = gondola_model_1_riding, chair_time_distance = self.world().properties["chair_time_distance_gondola"], terminal_speed="gondola_terminal_speed", rope_speed="gondola_rope_speed", terminal_model=build_hs_terminal_model, mids=get_mids(self.menu))
         
         
         
@@ -748,7 +776,7 @@ class D_6CBuild(TwoPointEdit):
         distance_between_poles = self.world().properties["build_chair_pole_distance(map_editor)"]
         #end
         
-        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], chair_model = sixpack_model_1, blurry_chair_model = sixpack_model_2, super_blurry_chair_model=sixpack_model_3, chair_time_distance = self.world().properties["chair_time_distance_detachable"], chair_riding_model = sixpack_model_1, terminal_model=build_hs_terminal_model)
+        l.build([p1[0],p1[1],[x/distance for x in range(int(distance_between_poles), int(distance-distance_between_poles), int(distance_between_poles))],p2[0],p2[1]], chair_model = sixpack_model_1, blurry_chair_model = sixpack_model_2, super_blurry_chair_model=sixpack_model_3, chair_time_distance = self.world().properties["chair_time_distance_detachable"], chair_riding_model = sixpack_model_1, terminal_model=build_hs_terminal_model, mids=get_mids(self.menu))
 
 class C3Build(TwoPointEdit):
     def __init__(self, menu):

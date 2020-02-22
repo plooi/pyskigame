@@ -302,8 +302,18 @@ def cube_building_model(
             [door_sep/2,0,door_bulge+width/2],[door_sep/2+door_width,0,door_bulge+width/2],[door_sep/2+door_width,door_height,door_bulge+width/2],[door_sep/2,door_height,door_bulge+width/2],door_color,
             ], face_remove)
         
-            
-        
+def default(dictionary, key, value):
+    if key not in dictionary:
+        dictionary[key] = value
+def building_with_slanted_roof_tex(**args):
+    default(args, "wall_color1", "BuildingStoneTexture")
+    default(args, "wall_color2", "BuildingStoneTexture")
+    default(args, "floor_color", "BuildingWoodTexture")
+    default(args, "roof_color1", "BuildingWoodTexture2")
+    default(args, "roof_color2", "BuildingWoodTexture2")
+    default(args, "sub_roof_wall_color", "BuildingWoodTexture")
+    default(args, "door_color", "DoorTexture")
+    return building_with_slanted_roof(**args)
 def building_with_slanted_roof(
         scale = 1,
         hscale = 1,
@@ -336,30 +346,47 @@ def building_with_slanted_roof(
         x = -roof_overhang_side - length/2
         height_roof_overhang_side = m*x + b
         #print(height_roof_overhang_side)
+        if isinstance(wall_color1, list):
+            wall_color1 = list(wall_color1)
+            wall_color2 = list(wall_color2)
+            floor_color = list(floor_color)
+            roof_color1 = list(roof_color1)
+            roof_color2 = list(roof_color2)
+            sub_roof_wall_color=list(sub_roof_wall_color)
+            door_color = list(door_color)
         
-        wall_color1 = list(wall_color1)
-        wall_color2 = list(wall_color2)
-        floor_color = list(floor_color)
-        roof_color1 = list(roof_color1)
-        roof_color2 = list(roof_color2)
-        sub_roof_wall_color=list(sub_roof_wall_color)
-        door_color = list(door_color)
-        
-        return remove_faces([
-            [-length/2,0,-width/2],[length/2,0,-width/2],[length/2,0,width/2],[-length/2,0,width/2],floor_color,
-            [-length/2,0,-width/2],[length/2,0,-width/2],[length/2,height,-width/2],[-length/2,height,-width/2],wall_color1,
-            [-length/2,0,width/2],[length/2,0,width/2],[length/2,height,width/2],[-length/2,height,width/2],wall_color1,
-            [-length/2,0,-width/2],[-length/2,0,width/2],[-length/2,height,width/2],[-length/2,height,-width/2],wall_color2,
-            [length/2,0,-width/2],[length/2,0,width/2],[length/2,height,width/2],[length/2,height,-width/2],wall_color2,
-            [-length/2-roof_overhang_side, height_roof_overhang_side, -width/2-roof_overhang_front],[-length/2-roof_overhang_side, height_roof_overhang_side, width/2+roof_overhang_front],[0,roof_height,width/2+roof_overhang_front],[0,roof_height,-width/2-roof_overhang_front],roof_color1,
-            [length/2+roof_overhang_side, height_roof_overhang_side, -width/2-roof_overhang_front],[length/2+roof_overhang_side, height_roof_overhang_side, width/2+roof_overhang_front],[0,roof_height,width/2+roof_overhang_front],[0,roof_height,-width/2-roof_overhang_front],roof_color1,
-            [-length/2,height,-width/2],[length/2,height,-width/2],[0,roof_height,-width/2],[0,roof_height,-width/2],sub_roof_wall_color,
-            [-length/2,height,width/2],[length/2,height,width/2],[0,roof_height,width/2],[0,roof_height,width/2],sub_roof_wall_color,
-            [-door_sep/2,0,-door_bulge+width/2],[-door_sep/2-door_width,0,-door_bulge+width/2],[-door_sep/2-door_width,door_height,-door_bulge+width/2],[-door_sep/2,door_height,-door_bulge+width/2],door_color,
-            [door_sep/2,0,-door_bulge+width/2],[door_sep/2+door_width,0,-door_bulge+width/2],[door_sep/2+door_width,door_height,-door_bulge+width/2],[door_sep/2,door_height,-door_bulge+width/2],door_color,
-            [-door_sep/2,0,door_bulge+width/2],[-door_sep/2-door_width,0,door_bulge+width/2],[-door_sep/2-door_width,door_height,door_bulge+width/2],[-door_sep/2,door_height,door_bulge+width/2],door_color,
-            [door_sep/2,0,door_bulge+width/2],[door_sep/2+door_width,0,door_bulge+width/2],[door_sep/2+door_width,door_height,door_bulge+width/2],[door_sep/2,door_height,door_bulge+width/2],door_color,
-        ], face_remove)
+        if len(face_remove) == 0:
+            return [
+                [-length/2,0,-width/2],[length/2,0,-width/2],[length/2,0,width/2],[-length/2,0,width/2],floor_color,
+                [-length/2,0,-width/2],[length/2,0,-width/2],[length/2,height,-width/2],[-length/2,height,-width/2],wall_color1,
+                [-length/2,0,width/2],[length/2,0,width/2],[length/2,height,width/2],[-length/2,height,width/2],wall_color1,
+                [-length/2,0,-width/2],[-length/2,0,width/2],[-length/2,height,width/2],[-length/2,height,-width/2],wall_color2,
+                [length/2,0,-width/2],[length/2,0,width/2],[length/2,height,width/2],[length/2,height,-width/2],wall_color2,
+                [-length/2-roof_overhang_side, height_roof_overhang_side, -width/2-roof_overhang_front],[-length/2-roof_overhang_side, height_roof_overhang_side, width/2+roof_overhang_front],[0,roof_height,width/2+roof_overhang_front],[0,roof_height,-width/2-roof_overhang_front],roof_color1,
+                [length/2+roof_overhang_side, height_roof_overhang_side, -width/2-roof_overhang_front],[length/2+roof_overhang_side, height_roof_overhang_side, width/2+roof_overhang_front],[0,roof_height,width/2+roof_overhang_front],[0,roof_height,-width/2-roof_overhang_front],roof_color1,
+                [-length/2,height,-width/2],[length/2,height,-width/2],[0,roof_height,-width/2],[0,roof_height,-width/2],sub_roof_wall_color,
+                [-length/2,height,width/2],[length/2,height,width/2],[0,roof_height,width/2],[0,roof_height,width/2],sub_roof_wall_color,
+                [-door_sep/2,0,-door_bulge+width/2],[-door_sep/2-door_width,0,-door_bulge+width/2],[-door_sep/2-door_width,door_height,-door_bulge+width/2],[-door_sep/2,door_height,-door_bulge+width/2],door_color,
+                [door_sep/2,0,-door_bulge+width/2],[door_sep/2+door_width,0,-door_bulge+width/2],[door_sep/2+door_width,door_height,-door_bulge+width/2],[door_sep/2,door_height,-door_bulge+width/2],door_color,
+                [-door_sep/2,0,door_bulge+width/2],[-door_sep/2-door_width,0,door_bulge+width/2],[-door_sep/2-door_width,door_height,door_bulge+width/2],[-door_sep/2,door_height,door_bulge+width/2],door_color,
+                [door_sep/2,0,door_bulge+width/2],[door_sep/2+door_width,0,door_bulge+width/2],[door_sep/2+door_width,door_height,door_bulge+width/2],[door_sep/2,door_height,door_bulge+width/2],door_color,
+            ]
+        else:
+            return remove_faces([
+                [-length/2,0,-width/2],[length/2,0,-width/2],[length/2,0,width/2],[-length/2,0,width/2],floor_color,
+                [-length/2,0,-width/2],[length/2,0,-width/2],[length/2,height,-width/2],[-length/2,height,-width/2],wall_color1,
+                [-length/2,0,width/2],[length/2,0,width/2],[length/2,height,width/2],[-length/2,height,width/2],wall_color1,
+                [-length/2,0,-width/2],[-length/2,0,width/2],[-length/2,height,width/2],[-length/2,height,-width/2],wall_color2,
+                [length/2,0,-width/2],[length/2,0,width/2],[length/2,height,width/2],[length/2,height,-width/2],wall_color2,
+                [-length/2-roof_overhang_side, height_roof_overhang_side, -width/2-roof_overhang_front],[-length/2-roof_overhang_side, height_roof_overhang_side, width/2+roof_overhang_front],[0,roof_height,width/2+roof_overhang_front],[0,roof_height,-width/2-roof_overhang_front],roof_color1,
+                [length/2+roof_overhang_side, height_roof_overhang_side, -width/2-roof_overhang_front],[length/2+roof_overhang_side, height_roof_overhang_side, width/2+roof_overhang_front],[0,roof_height,width/2+roof_overhang_front],[0,roof_height,-width/2-roof_overhang_front],roof_color1,
+                [-length/2,height,-width/2],[length/2,height,-width/2],[0,roof_height,-width/2],[0,roof_height,-width/2],sub_roof_wall_color,
+                [-length/2,height,width/2],[length/2,height,width/2],[0,roof_height,width/2],[0,roof_height,width/2],sub_roof_wall_color,
+                [-door_sep/2,0,-door_bulge+width/2],[-door_sep/2-door_width,0,-door_bulge+width/2],[-door_sep/2-door_width,door_height,-door_bulge+width/2],[-door_sep/2,door_height,-door_bulge+width/2],door_color,
+                [door_sep/2,0,-door_bulge+width/2],[door_sep/2+door_width,0,-door_bulge+width/2],[door_sep/2+door_width,door_height,-door_bulge+width/2],[door_sep/2,door_height,-door_bulge+width/2],door_color,
+                [-door_sep/2,0,door_bulge+width/2],[-door_sep/2-door_width,0,door_bulge+width/2],[-door_sep/2-door_width,door_height,door_bulge+width/2],[-door_sep/2,door_height,door_bulge+width/2],door_color,
+                [door_sep/2,0,door_bulge+width/2],[door_sep/2+door_width,0,door_bulge+width/2],[door_sep/2+door_width,door_height,door_bulge+width/2],[door_sep/2,door_height,door_bulge+width/2],door_color,
+            ], face_remove)
 
 
 

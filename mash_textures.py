@@ -47,7 +47,12 @@ names = [
 "PineTexture1.png","PineTexture2.png","PineTexture3.png","PineTexture4.png",
 "Bark.png",
 "CliffTexture.png",
-"RockTexture.png"]
+"RockTexture.png",
+"BuildingStoneTexture.png",
+"BuildingWoodTexture.png",
+"BuildingWoodTexture2.png",
+"DoorTexture.png"
+]
 n = []
 for name in names:
     #if not name.startswith("Ice"):

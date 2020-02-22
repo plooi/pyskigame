@@ -58,6 +58,7 @@ def find_name(model):
     
     if m is cube_building_model: return "cube_building_model"
     if m is building_with_slanted_roof:return "building_with_slanted_roof"
+    if m is building_with_slanted_roof_tex:return "building_with_slanted_roof_tex"
     
     if m is bump_model_1: return "bump_model_1"
     if m is bump_model_2: return "bump_model_2"
@@ -546,12 +547,18 @@ def terminal_design_1(
     bullwheel_segments = 55,
     
     terminal_roof_height = 1.5,
-    terminal_roof_height2 = .75
+    terminal_roof_height2 = .75,
     
+    is_midpoint_terminal = False
     ):
+    if is_midpoint_terminal:
+        #slow_terminal_speed = terminal_speed/3.5
+        terminal_speed = terminal_speed/3.5
     
     bullwheel_radius = terminal_roof_width/2-terminal_track_indent
     track = lift_util.Track()
+    
+    
     
     speed_diff = rope_speed-terminal_speed
     
@@ -560,18 +567,31 @@ def terminal_design_1(
         percent_round_up = x/(slow_down_segments-1) if slow_down_segments > 1 else 1
         x_pos = (1 - percent_round_down) * terminal_roof_length/2 
         vel = terminal_speed + (1 - percent_round_up) * speed_diff
-        track.add_point(lift_util.Point(x_pos, pole_height, -terminal_roof_width/2+terminal_track_indent, vel))
+        if is_midpoint_terminal:
+            track.add_point(lift_util.Point(x_pos, pole_height, -terminal_roof_width/2+terminal_track_indent, rope_speed))
+        else:
+            track.add_point(lift_util.Point(x_pos, pole_height, -terminal_roof_width/2+terminal_track_indent, vel))
     for bws in range(0, bullwheel_segments+1):
         theta = bws / bullwheel_segments * math.pi + math.pi/2
         z = -math.sin(theta) * bullwheel_radius
         x = math.cos(theta) * bullwheel_radius
         x -= bullwheel_distance_from_pole
-        track.add_point(lift_util.Point(x, pole_height, z, terminal_speed))
+        if is_midpoint_terminal:
+            if bws == bullwheel_segments:
+                track.add_point(lift_util.Point(x, pole_height, z, terminal_speed))
+            else:
+                track.add_point(lift_util.Point(x, pole_height, z, 10))
+        else:
+            track.add_point(lift_util.Point(x, pole_height, z, terminal_speed))
+
     for x in range(0, slow_down_segments):
         percent_round_down = x/slow_down_segments
         percent_round_up = x/(slow_down_segments-1) if slow_down_segments > 1 else 1
         x_pos = (percent_round_up) * terminal_roof_length/2 
         vel = terminal_speed + (percent_round_up) * speed_diff
+        
+        if x == slow_down_segments-1:
+            vel = rope_speed
         track.add_point(lift_util.Point(x_pos, pole_height, terminal_roof_width/2-terminal_track_indent, vel))
 
     return [

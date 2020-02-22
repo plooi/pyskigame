@@ -13,14 +13,13 @@ eat_icon = image("textures/Eat Icon.png")
 
 class Lodge(WorldObject):
     def __init__(self, **args):
-        default(args, "model", building_with_slanted_roof)
-        default(args, "model_type", "std")
-        default(args, "model_args", {"length" : 8, "width" : 8, "height": 6, "roof_height":8, "wall_color1": [.82,.7,.54], "wall_color2": [.77,.65,.49]})
+        default(args, "model", building_with_slanted_roof_tex)
+        default(args, "model_type", "tex")
+        default(args, "model_args", {"length" : 8, "width" : 8, "height": 6, "roof_height":8})
         default(args, "do_lighting", False)
         default(args, "active", "always")
         default(args, "y", args["world"].get_elevation_continuous(args["z"], args["x"]) + .2)
         super().__init__(**args)
-        
         self.draw_icon = False
         self.set_layer(None)
     def step(self):
@@ -42,7 +41,15 @@ class Lodge(WorldObject):
 
 class Hut(Lodge):
     def __init__(self, **args):
-        default(args, "model_args", {"length" : 4, "width" : 4, "height": 4, "roof_height":6,"wall_color1": [.82,.7,.54], "wall_color2": [.77,.65,.49]})
+        default(args, "model_args", {
+                "length" : 4, 
+                "width" : 4, 
+                "height": 4, 
+                "roof_height":6,
+                "roof_color1":"BuildingWoodTexture2",
+                "roof_color2":"BuildingWoodTexture2",
+                "sub_roof_wall_color": "BuildingWoodTexture2",
+                })
         super().__init__(**args)
     def touching_player_consequence(self):
         if self.world.properties["health"] < 69:

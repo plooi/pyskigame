@@ -79,9 +79,15 @@ active_mission_centers = []
 
 class MissionCenter(WorldObject):
     def __init__(self, **args):
-        default(args, "model", building_with_slanted_roof)
-        default(args, "model_type", "std")
-        default(args, "model_args", {"length" : 4, "width" : 4})
+        default(args, "model", building_with_slanted_roof_tex)
+        default(args, "model_type", "tex")
+        default(args, "model_args", {
+                "length" : 4, 
+                "width" : 4, 
+                "roof_color1":"BuildingStoneTexture",
+                "roof_color2":"BuildingStoneTexture",
+                "sub_roof_wall_color": "BuildingStoneTexture",
+                })
         default(args, "do_lighting", False)
         default(args, "y", args["world"].get_elevation_continuous(args["z"], args["x"]) + .2)
         args["active"] = "always"

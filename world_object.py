@@ -152,6 +152,7 @@ class WorldObject(LooiObject):
         if "model_args" in self.args: model = self.args["model"](**self.args["model_args"])
         else: model = self.args["model"]()
         
+        if("Lodge" in str(type(self))):print(model)
         
         gm = True if self.args["model_type"] == "grad" else False
         tex = True if self.args["model_type"] == "tex" else False

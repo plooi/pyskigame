@@ -81,7 +81,7 @@ class Lift(LooiObject, Selectable):
     [z1, x1, [.1, .2, .3, .4, .5, .6, -.7, .8], z2, x2]
     """
     def build(self, chairlift_array, rope_speed = "detachable_rope_speed", terminal_speed = "detachable_terminal_speed", chair_time_distance = 210,
-                        chair_model = chair_model_2, blurry_chair_model = chair_model_3, super_blurry_chair_model=chair_model_4, rope_model=rope_model_1,terminal_model=terminal_design_1, pole_model=pole_design_1, chair_riding_model=chair_model_2):
+                        chair_model = chair_model_2, blurry_chair_model = chair_model_3, super_blurry_chair_model=chair_model_4, rope_model=rope_model_1,terminal_model=terminal_design_1, pole_model=pole_design_1, chair_riding_model=chair_model_2, mids="neither"):
         self.chair_model = chair_model
         self.chair_riding_model = chair_riding_model
         self.blurry_chair_model = blurry_chair_model
@@ -105,6 +105,7 @@ class Lift(LooiObject, Selectable):
         self.sun_ang_rel_to_lift_ang = self.world.properties["sun_angle"] - self.angle
         
         
+        self.mids = mids
         self.poles_midpoints = chairlift_array[2]
         if len(self.poles_midpoints) == 0: self.poles_midpoints.append(.5)
         if self.start_terminal != None: self.start_terminal.deactivate()
@@ -231,7 +232,9 @@ class Lift(LooiObject, Selectable):
         
     def reset(self):
         self.delete()
-        return Lift(self.world).build(self.chairlift_array, self.rope_speed, self.terminal_speed, self.chair_time_distance, self.chair_model, self.blurry_chair_model, self.super_blurry_chair_model,terminal_model=self.terminal_model,pole_model=self.pole_model,chair_riding_model=self.chair_riding_model)
+        if not hasattr(self, "mids"):#for backward compatibility
+            self.mids = "neither"
+        return Lift(self.world).build(self.chairlift_array, self.rope_speed, self.terminal_speed, self.chair_time_distance, self.chair_model, self.blurry_chair_model, self.super_blurry_chair_model,terminal_model=self.terminal_model,pole_model=self.pole_model,chair_riding_model=self.chair_riding_model,mids=self.mids)
         
     def do_rope(self):
         objs = [self.start_terminal] + self.poles_midpoints_objects + [self.end_terminal]
@@ -383,7 +386,7 @@ class Lift(LooiObject, Selectable):
                             if self.track.segments[segment_index].speed == constants[self.rope_speed]:#and this new segment is rope speed
                                 #then we must be going over a bu bu bump
                                 self.world.game_ui.pole_sound(chair_i_position[0], chair_i_position[1], chair_i_position[2])
-                    
+                        
                     
                     self.chair_segments[i] = segment_index
                     
@@ -534,16 +537,21 @@ class Terminal:
     def __init__(self, chairlift, top_or_bot, terminal_model):
         self.chairlift = chairlift
         self.angle = 0
+        self.is_midpoint = False
         
         if top_or_bot == "top":
             self.angle = chairlift.angle + math.pi
             self.x = chairlift.x2
             self.z = chairlift.z2
+            if self.chairlift.mids == "both" or self.chairlift.mids=="topmid":
+                self.is_midpoint = True
             
         else:
             self.angle = chairlift.angle
             self.x = chairlift.x1
             self.z = chairlift.z1
+            if self.chairlift.mids == "both" or self.chairlift.mids=="botmid":
+                self.is_midpoint = True
         self.top_or_bot = top_or_bot
         
         
@@ -552,7 +560,7 @@ class Terminal:
         self.real_x = self.x * self.chairlift.world.properties["horizontal_stretch"]
         self.real_z = self.z * self.chairlift.world.properties["horizontal_stretch"]
         
-        self.model,self.track = terminal_model(rope_speed=constants[chairlift.rope_speed], terminal_speed=constants[chairlift.terminal_speed])
+        self.model,self.track = terminal_model(rope_speed=constants[chairlift.rope_speed], terminal_speed=constants[chairlift.terminal_speed], is_midpoint_terminal=self.is_midpoint)
         horizontal_rotate_model_around_origin(self.model, self.angle)
         move_model(self.model, self.real_x, self.real_y, self.real_z)
         self.vhkeys = add_model_to_world_fixed(self.model, self.chairlift.world, int(self.z), int(self.x), self)

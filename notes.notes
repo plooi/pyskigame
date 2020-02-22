@@ -3,15 +3,20 @@ multiplayer
 '''tree overlap'''
 '''rock texture'''
 '''pole shading'''
-building texture
+#building texture
 '''map editor point accuracy, and ease of finding a square'''
 '''customizable lifts'''   
-midpoints
+'''#midpoints'''
 fog
 '''rocks collision fix'''
-When you die, you respawn at a random nearby location with 25% health
+ '''#When you die, you respawn at a random nearby location with 25% health'''
+ '''better fps counter'''
+ got rid of world.fps object, but it is perfectly backward compatible still.
+careful. when you change a class' fields, that makes the serialization have undefined behavior. Basically
+
+
 more line of sight... is it the poles are too many quads?
-    Line of sight increased by 50 % by just cutting some corners
+    Line of sight increased by 50 % by just cutting some corners!!!!!!!
 
 
 

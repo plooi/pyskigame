@@ -12,6 +12,8 @@ x = {
     "ski_mode_walk_speed" : .075,
     
     "chair_ride_distance" : 1.5, #in terms of real distance. How far away you need to be from a chair in order to get on it
+    "midpoint_hop_distance" : 3.5,
+    "midpoint_hop_cooldown" : 240,
     "chair_sit_under_distance" : .5,
     "fall_speed" : .7,
     "ice_fall_speed" : .67,
@@ -36,6 +38,7 @@ x = {
     "scenery key" : "tab",
     
     "scaled_distance_to_meters" : 1.4,
+    
     
     
     

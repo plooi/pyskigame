@@ -1,4 +1,4 @@
-1811_165
+2261_165
 Black_0_0_4_4
 White_4_0_4_4
 MinecraftSnow-lighting-155_8_0_32_32
@@ -36,3 +36,7 @@ PineTexture4_1349_0_89_89
 Bark_1438_0_49_46
 CliffTexture_1487_0_163_165
 RockTexture_1650_0_161_156
+BuildingStoneTexture_1811_0_152_93
+BuildingWoodTexture_1963_0_118_118
+BuildingWoodTexture2_2081_0_158_116
+DoorTexture_2239_0_22_57
