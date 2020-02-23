@@ -303,7 +303,6 @@ class UI(LooiObject):
             self.frames = 0
         self.frames += 1
     def step(self):
-        
         self.fps_calc()
         if self.key(constants["scenery key"], "pressed"):self.scenery = not self.scenery
         
@@ -784,6 +783,8 @@ class UI(LooiObject):
                 #ski turns toward view, but lags behind view
                 angle_d = angle_distance(self.world.properties["ski_direction"], self.world.view.hor_rot+self.no_look)
                 angle_inc = math.pi/6.5 *angle_d/(math.pi/2)
+                
+                
                 if angle_inc < math.pi/550:
                     angle_inc = math.pi/550
                 if angle_d > angle_inc and self.world.properties["momentum"] > .05:
@@ -797,7 +798,8 @@ class UI(LooiObject):
                     
                 else:
                     self.world.properties["ski_direction"] = self.world.view.hor_rot+self.no_look
-            
+                
+                
                 
                 
                 #calculate floor slope
@@ -849,33 +851,7 @@ class UI(LooiObject):
                 self.world.properties["momentum"] -= .0068 * self.world.properties["momentum"]**2
                 
                 
-                
-                
-                #momentum direction
-                if is_ice:#ice momentum
-                    if self.world.properties["momentum"] < .2:
-                        inc = 99999999999999
-                    else:
-                        inc = math.pi/100
-                    target = self.world.properties["ski_direction"]
-                    if angle_distance(target, floor_hr) > math.pi/6:
-                        if angle_distance(target, floor_hr+math.pi/6)<angle_distance(target, floor_hr-math.pi/6):
-                            target = floor_hr+math.pi/6
-                        else:
-                            target= floor_hr-math.pi/6
-                    #target = angle_avg(self.world.properties["ski_direction"], floor_hr)
-                    #print("floor hr",simp(floor_hr)/math.pi, "ski dir", simp(self.world.properties["ski_direction"])/math.pi,"target",simp(target)/math.pi)
-                    if angle_distance(self.world.properties["momentum_direction"],target) < inc:
-                        self.world.properties["momentum_direction"] = target
-                    else:
-                        if angle_distance(self.world.properties["momentum_direction"]+inc,target) < angle_distance(self.world.properties["momentum_direction"]-inc,target):
-                            self.world.properties["momentum_direction"] += inc
-                        else:
-                            self.world.properties["momentum_direction"] -= inc
-                else:#snow momentum
-                    
-                    if not recovering_from_ice:
-                        self.world.properties["momentum_direction"] = self.world.properties["ski_direction"]
+                self.world.properties["momentum_direction"] = self.world.properties["ski_direction"]
                     
                     
                 
@@ -898,6 +874,8 @@ class UI(LooiObject):
                 
                 #no going backwards
                 if self.world.properties["momentum"] < 0: self.world.properties["momentum"] = 0
+                
+                
                 
                 #increment view x,y,z
                 v.x += self.world.properties["momentum"] * math.cos(self.world.properties["momentum_direction"])
