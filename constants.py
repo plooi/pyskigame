@@ -27,7 +27,7 @@ x = {
     
     
     "bump_slope" : (math.pi/4.6,math.pi/10),
-    "bump_density" : .3,
+    "bump_density" : .36,#.3,
     "bump_group_density" : .2,
     
     "move_key" : "w",

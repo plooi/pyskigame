@@ -399,12 +399,12 @@ def building_with_slanted_roof(
 
 
 def bump_model_1(
-            diagonal_length=12,
-            diagonal_depth=17,
+            diagonal_length=15,
+            diagonal_depth=22,
             height = 1.1,
             base=-4.6,
-            downhill_height = -4.9,
-            uphill_height = 1.1,
+            downhill_height = -6.5,
+            uphill_height = 1.4,
             angle_distance_from_sun = 0,
             sun_is_to_the_left = True,
             ):
@@ -431,12 +431,12 @@ def bump_model_1(
             [0,height,0],[-.1,height,0],[-.1,height+.4,0],[0,height+.4,0],"White",
             ]
 def bump_model_4(
-            diagonal_length=12,
-            diagonal_depth=17,
+            diagonal_length=15,
+            diagonal_depth=22,
             height = 1.1,
             base=-4.6,
-            downhill_height = -4.9,
-            uphill_height = 1.1,
+            downhill_height = -6.5,
+            uphill_height = 1.4,
             angle_distance_from_sun = 0,
             sun_is_to_the_left = True,
             ):
