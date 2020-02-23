@@ -657,7 +657,7 @@ class UI(LooiObject):
             
             
             if self.key("w", "down") and self.key("d", "down"):
-                if floor_slope < math.pi/6 or angle_distance(self.world.view.hor_rot+math.pi/4, floor_hr) > math.pi/2:
+                if floor_slope < math.pi/6 or angle_distance(self.world.view.hor_rot-math.pi/4, floor_hr) > math.pi/2:
                     d_x, d_z = self.convert_to_x_z(self.world.view.hor_rot+math.pi/4, constants["ski_mode_walk_speed"])
                     self.world.view.x += d_x
                     self.world.view.z += d_z
@@ -666,7 +666,7 @@ class UI(LooiObject):
                     else:
                         self.health(-.00085,False)
             elif self.key("w", "down") and self.key("a", "down"):
-                if floor_slope < math.pi/6 or angle_distance(self.world.view.hor_rot+3*math.pi/4, floor_hr) > math.pi/2:
+                if floor_slope < math.pi/6 or angle_distance(self.world.view.hor_rot+1*math.pi/4, floor_hr) > math.pi/2:
                     d_x, d_z = self.convert_to_x_z(self.world.view.hor_rot+3*math.pi/4, constants["ski_mode_walk_speed"])
                     self.world.view.x += d_x
                     self.world.view.z += d_z
@@ -675,7 +675,7 @@ class UI(LooiObject):
                     else:
                         self.health(-.00085,False)
             elif self.key("a", "down") and self.key("s", "down"):
-                if floor_slope < math.pi/6 or angle_distance(self.world.view.hor_rot+5*math.pi/4, floor_hr) > math.pi/2:
+                if floor_slope < math.pi/6 or angle_distance(self.world.view.hor_rot+3*math.pi/4, floor_hr) > math.pi/2:
                     d_x, d_z = self.convert_to_x_z(self.world.view.hor_rot+5*math.pi/4, constants["ski_mode_walk_speed"])
                     self.world.view.x += d_x
                     self.world.view.z += d_z
@@ -684,7 +684,7 @@ class UI(LooiObject):
                     else:
                         self.health(-.00085,False)
             elif self.key("d", "down") and self.key("s", "down"):
-                if floor_slope < math.pi/6 or angle_distance(self.world.view.hor_rot+7*math.pi/4, floor_hr) > math.pi/2:
+                if floor_slope < math.pi/6 or angle_distance(self.world.view.hor_rot+5*math.pi/4, floor_hr) > math.pi/2:
                     d_x, d_z = self.convert_to_x_z(self.world.view.hor_rot+7*math.pi/4, constants["ski_mode_walk_speed"])
                     self.world.view.x += d_x
                     self.world.view.z += d_z
