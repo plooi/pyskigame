@@ -17,7 +17,7 @@ x = {
     "chair_sit_under_distance" : .5,
     "fall_speed" : .7,
     "ice_fall_speed" : .67,
-    "fall_slope" : math.pi/4.75,
+    "fall_slope" : math.pi/5.5,#math.pi/4.75,
     "ice_slope" : (math.pi/5.5,math.pi/7.5),#(math.pi/5.5,math.pi/10),#(math.pi/5.5,math.pi/8.5),
     "no_ice_zone" : math.pi/3,
     "crash_speed" : .15,
