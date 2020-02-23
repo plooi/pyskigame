@@ -27,7 +27,7 @@ class Bump(WorldObject):
 
     def touching(self, x, y, z):
         dist = ((x-self.args["model_x"])**2 + (z-self.args["model_z"])**2) ** .5
-        if dist < 1.8:
+        if dist < 1.6:
             return True
         return False
     def touching_player_consequence(self):
@@ -49,7 +49,7 @@ class NaturalBump(WorldObject):
         super().__init__(**args)
     def touching(self, x, y, z):
         dist = ((x-self.args["model_x"])**2 + (z-self.args["model_z"])**2) ** .5
-        if dist < 1.8:
+        if dist < 1.6:
             return True
         return False
     def touching_player_consequence(self):
