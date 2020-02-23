@@ -21,14 +21,14 @@ class Menu(LooiObject):
         self.set_layer(2)
         self.ui = ui
         
-        
-        self.btn7 = Button(x = 1240, y=760, width=80, height=80, font_size=10, text="", image=image("Save Icon.png"), action=save, action_parameter=self)
-        self.btn7.set_layer(-2)
-        self.add(self.btn7)
-        
-        self.btn8 = Button(x = 1320, y=760, width=80, height=80, font_size=10, text="", image=image("Exit Icon.png"), action=exit, action_parameter=self)
-        self.btn8.set_layer(-2)
-        self.add(self.btn8)
+        if self.ui.game_mode == "ski":
+            self.btn7 = Button(x = 1240, y=760, width=80, height=80, font_size=10, text="", image=image("Save Icon.png"), action=save, action_parameter=self)
+            self.btn7.set_layer(-2)
+            self.add(self.btn7)
+            
+            self.btn8 = Button(x = 1320, y=760, width=80, height=80, font_size=10, text="", image=image("Exit Icon.png"), action=exit, action_parameter=self)
+            self.btn8.set_layer(-2)
+            self.add(self.btn8)
         
         self.btn9 = Button(x = 1160, y=760, width=80, height=80, font_size=10, text="", image=image("Settings Icon.png"), action=settings, action_parameter=self)
         self.btn9.set_layer(-2)
