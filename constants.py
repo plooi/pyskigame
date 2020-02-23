@@ -9,7 +9,7 @@ x = {
     
     "fixed_grip_rope_speed" : .275,
     "fixed_grip_terminal_speed" : .274999,
-    "ski_mode_walk_speed" : .075,
+    "ski_mode_walk_speed" : .17,#.075,
     
     "chair_ride_distance" : 1.5, #in terms of real distance. How far away you need to be from a chair in order to get on it
     "midpoint_hop_distance" : 3.5,
