@@ -24,14 +24,14 @@ class Bump(WorldObject):
         super().__init__(**args)
 
     def touching(self, x, y, z):
-        if ((x-self.args["model_x"])**2 + (z-self.args["model_z"])**2) ** .5 < 1.4:
+        if ((x-self.args["model_x"])**2 + (z-self.args["model_z"])**2) ** .5 < 1.7:
             return True
         return False
     def touching_player_consequence(self):
         if self.world.properties["momentum"] >= constants["crash_speed"]:
             self.world.game_ui.falling = True
             
-            
+
 class NaturalBump(WorldObject):
     def __init__(self, **args):
         default(args, "model", bump_model_4)
@@ -45,7 +45,7 @@ class NaturalBump(WorldObject):
         
         super().__init__(**args)
     def touching(self, x, y, z):
-        if ((x-self.args["model_x"])**2 + (z-self.args["model_z"])**2) ** .5 < 1.4:
+        if ((x-self.args["model_x"])**2 + (z-self.args["model_z"])**2) ** .5 < 1.7:
             return True
         return False
     def touching_player_consequence(self):

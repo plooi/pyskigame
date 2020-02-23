@@ -400,6 +400,7 @@ def building_with_slanted_roof(
 
 def bump_model_1(
             diagonal_length=12,
+            diagonal_depth=17,
             height = 1.1,
             base=-4.6,
             downhill_height = -4.9,
@@ -423,13 +424,15 @@ def bump_model_1(
         
     
     d = diagonal_length
+    dd = diagonal_depth
     return [
-            [-d/2, uphill_height, 0],[0, base, -d/2],[d/2, downhill_height, 0],[0,height,0],tex1,
-            [-d/2, uphill_height, 0],[0, base, d/2],[d/2, downhill_height, 0],[0,height,0],tex2,
+            [-d/2, uphill_height, 0],[0, base, -dd/2],[d/2, downhill_height, 0],[0,height,0],tex1,
+            [-d/2, uphill_height, 0],[0, base, dd/2],[d/2, downhill_height, 0],[0,height,0],tex2,
             [0,height,0],[-.1,height,0],[-.1,height+.4,0],[0,height+.4,0],"White",
             ]
 def bump_model_4(
             diagonal_length=12,
+            diagonal_depth=17,
             height = 1.1,
             base=-4.6,
             downhill_height = -4.9,
@@ -453,9 +456,10 @@ def bump_model_4(
         
     
     d = diagonal_length
+    dd = diagonal_depth
     return [
-            [-d/2, uphill_height, 0],[0, base, -d/2],[d/2, downhill_height, 0],[0,height,0],tex1,
-            [-d/2, uphill_height, 0],[0, base, d/2],[d/2, downhill_height, 0],[0,height,0],tex2,
+            [-d/2, uphill_height, 0],[0, base, -dd/2],[d/2, downhill_height, 0],[0,height,0],tex1,
+            [-d/2, uphill_height, 0],[0, base, dd/2],[d/2, downhill_height, 0],[0,height,0],tex2,
             ]
 def bump_model_3(
             diagonal_length=12,
