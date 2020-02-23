@@ -22,6 +22,8 @@ x = {
     "no_ice_zone" : math.pi/3,
     "crash_speed" : .15,
     
+    "air_resistance" : .009,#.0068,
+    
     "ice_color" : Color(.84,.87,.9),
     "ice_radius" : 27,#scaled value
     
@@ -38,6 +40,8 @@ x = {
     "scenery key" : "tab",
     
     "scaled_distance_to_meters" : 1.4,
+    
+    
     
     
     

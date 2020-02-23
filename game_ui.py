@@ -848,7 +848,7 @@ class UI(LooiObject):
                 
                 
                 #friction
-                self.world.properties["momentum"] -= .0068 * self.world.properties["momentum"]**2
+                self.world.properties["momentum"] -= constants["air_resistance"] * self.world.properties["momentum"]**2
                 
                 
                 self.world.properties["momentum_direction"] = self.world.properties["ski_direction"]
