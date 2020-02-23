@@ -117,7 +117,7 @@ def settings(menu):
         
     
 def save(menu):
-    world_save.write(menu.ui.world, writepath="./saves/")
+    world_save.write(menu.ui.world, writepath="../saves/")
 def exit(menu):
     
     layout = [[sg.Text("Save or not?")],

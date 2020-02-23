@@ -111,11 +111,12 @@ def new_ski_world():
                 break
         else:
             break
-    
-    the_world = world_save.read("../worlds/"+event)
-    the_world.properties["name"] = values[0]
-    world_save.write(the_world, writepath="../saves/")
-    init_ski_room(the_world)
+    def job():
+        the_world = world_save.read("../worlds/"+event)
+        the_world.properties["name"] = values[0]
+        world_save.write(the_world, writepath="../saves/")
+        init_ski_room(the_world)
+    LoadingScreen(job)
 def load_existing_ski_world():
     col = []
     for d in os.listdir("../saves"):
@@ -133,10 +134,11 @@ def load_existing_ski_world():
     
     
     
+    def job():
+        the_world = world_save.read("../saves/"+event)
+        init_ski_room(the_world)
     
-    the_world = world_save.read("../saves/"+event)
-    init_ski_room(the_world)
-
+    LoadingScreen(job)
 
 def load_room():
     layout = [[sg.Text('Enter a Number')],
