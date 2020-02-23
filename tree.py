@@ -31,6 +31,11 @@ class Tree(WorldObject):
         default(args, "model_type", "tex")
         default(args, "do_lighting", False)
         default(args, "rotation", random()*math.pi)
+        
+        for obj in args["world"].quads[int(args["z"])][int(args["x"])].containedObjects:
+            if isinstance(obj, WorldObject):
+                return
+        
         super().__init__(**args)
     def touching(self, x, y, z): return ((x-self.args["model_x"])**2 + (z-self.args["model_z"])**2) ** .5 < 1.4
     def touching_player_consequence(self): 

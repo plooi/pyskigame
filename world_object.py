@@ -40,9 +40,7 @@ class WorldObject(LooiObject):
         
         if not self.world.valid_floor(int(self.args["z"]), int(self.args["x"])):
             raise Exception("Invalid z and x position " + str(self.args["x"]) + " " + str(self.args["z"]) + ". World dimensions are h%d w%d" % (self.world.get_height_floors(), self.world.get_width_floors()))
-        for obj in self.world.quads[int(self.args["z"])][int(self.args["x"])].containedObjects:
-            if isinstance(obj, WorldObject):
-                return
+        
         
         #z and x are the non scaled coordinates of the world object. Quad z x is where this object is pinned
         self.set_anchor(args["z"], args["x"], relocate_model=False)
