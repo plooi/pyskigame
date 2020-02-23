@@ -24,8 +24,8 @@ def main():
 
 
 def rope_model_1(elevation, horizontal_dist, 
-                rope_thickness=.1, 
-                color = [.3,.3,.3]):
+                rope_thickness=.06, 
+                color = [.2,.2,.2]):
     r_2 = rope_thickness/2
     return [
     [0, -r_2, 0],[0, r_2, 0],[horizontal_dist, r_2+elevation, 0],[horizontal_dist, -r_2+elevation, 0], color,
