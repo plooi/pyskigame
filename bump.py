@@ -26,17 +26,7 @@ class Bump(WorldObject):
         super().__init__(**args)
 
     def touching(self, x, y, z):
-        ang = get_angle(z, x, self.args["model_z"], self.args["model_x"]) - self.args["rotation"]
-        dist = ((x-self.args["model_x"])**2 + (z-self.args["model_z"])**2) ** .5
-        if (
-            normal.angle_distance(ang, 0) < collision_angle or
-            normal.angle_distance(ang, math.pi/2) < collision_angle or
-            normal.angle_distance(ang, math.pi) < collision_angle or
-            normal.angle_distance(ang, 3*math.pi/2) < collision_angle):#only check for collision at full distance if player is at a right angle with the bump's model, where the bump is longest
-            
-            if dist < 2.4:
-                return True
-        elif dist < 1.9:
+        if dist < 1.8:
             return True
         return False
     def touching_player_consequence(self):
@@ -57,17 +47,7 @@ class NaturalBump(WorldObject):
         
         super().__init__(**args)
     def touching(self, x, y, z):
-        ang = get_angle(z, x, self.args["model_z"], self.args["model_x"]) - self.args["rotation"]
-        dist = ((x-self.args["model_x"])**2 + (z-self.args["model_z"])**2) ** .5
-        if (
-            normal.angle_distance(ang, 0) < collision_angle or
-            normal.angle_distance(ang, math.pi/2) < collision_angle or
-            normal.angle_distance(ang, math.pi) < collision_angle or
-            normal.angle_distance(ang, 3*math.pi/2) < collision_angle):#only check for collision at full distance if player is at a right angle with the bump's model, where the bump is longest
-            
-            if dist < 2.4:
-                return True
-        elif dist < 1.9:
+        if dist < 1.8:
             return True
         return False
     def touching_player_consequence(self):
