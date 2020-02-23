@@ -1011,7 +1011,8 @@ class UI(LooiObject):
                 
                 
                 
-                if self.slope/constants["fall_slope"] < .88:
+                #if self.slope/constants["fall_slope"] < .88:
+                if self.slope/constants["fall_slope"] < 1:
                     self.draw_circle(
                             self.get_my_window().get_internal_size()[0]/2 - pointer_radius,
                             self.get_my_window().get_internal_size()[1] - 2*pointer_radius,
