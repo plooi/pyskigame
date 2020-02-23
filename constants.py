@@ -41,6 +41,10 @@ x = {
     
     "scaled_distance_to_meters" : 1.4,
     
+    "full_chair_model_distance" : 75,
+    "blurry_chair_model_distance" : 180,
+    "super_blurry_chair_model_distance" : 410
+    
     
     
     

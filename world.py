@@ -784,6 +784,10 @@ class World(LooiObject):
             z *= self.properties["horizontal_stretch"]
             x *= self.properties["horizontal_stretch"]
         return ( (z - self.view.z)**2 + (x - self.view.x)**2 ) ** .5 <= los*self.properties["chunk_size"]*self.properties["horizontal_stretch"]
+    
+    #input real/scaled distance
+    def is_close(self, z, x, dist):
+        return ( (z - self.view.z)**2 + (x - self.view.x)**2 ) ** .5 <= dist
 ###################################
 #END checks
 ###################################

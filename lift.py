@@ -398,19 +398,19 @@ class Lift(LooiObject, Selectable):
                             move_model(model, chair_i_position[0], chair_i_position[1], chair_i_position[2])
                             
                             add_model_to_world_mobile(model, self.world)
-                        elif self.world.in_los(chair_i_position[2], chair_i_position[0], scaled=True, los=self.world.view.line_of_sight/6):
+                        elif self.world.is_close(chair_i_position[2], chair_i_position[0], constants["full_chair_model_distance"]):
                             model = self.chair_model()
                             horizontal_rotate_model_around_origin(model, chair_i_angle)
                             move_model(model, chair_i_position[0], chair_i_position[1], chair_i_position[2])
                         
                             add_model_to_world_mobile(model, self.world)
-                        elif self.world.in_los(chair_i_position[2], chair_i_position[0], scaled=True, los=self.world.view.line_of_sight/2.5):
+                        elif self.world.is_close(chair_i_position[2], chair_i_position[0], constants["blurry_chair_model_distance"]):
                             model = self.blurry_chair_model()
                             horizontal_rotate_model_around_origin(model, chair_i_angle)
                             move_model(model, chair_i_position[0], chair_i_position[1], chair_i_position[2])
                         
                             add_model_to_world_mobile(model, self.world)
-                        else:
+                        elif self.world.is_close(chair_i_position[2], chair_i_position[0], constants["super_blurry_chair_model_distance"]):
                             model = self.super_blurry_chair_model()
                             horizontal_rotate_model_around_origin(model, chair_i_angle)
                             move_model(model, chair_i_position[0], chair_i_position[1], chair_i_position[2])
