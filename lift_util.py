@@ -1,4 +1,5 @@
 import util
+import math
 #from 
 class Track:
     def __init__(self):
@@ -24,7 +25,15 @@ class Segment:
     def __init__(self, p1, p2):
         self.p1 = p1
         self.p2 = p2
+        
         self.hr = util.get_angle(p1.z, p1.x, p2.z, p2.x)
+        if p1.x-p2.x==0:
+            if p2.y > p1.y:
+                self.vr = math.pi/2
+            else:
+                self.vr = -math.pi/2
+        else:
+            self.vr = math.atan((p2.y - p1.y)/((p1.z-p2.z)**2 + (p1.x-p2.x)**2)**.5)
         self.speed = p1.speed
         self.time_duration = self._calc_time_duration()
     def _calc_time_duration(self):

@@ -128,9 +128,11 @@ class Window():
     
     def start(self):
         keysdown = [False]*len(pygame.key.get_pressed())
+        
         while True:
             start_time = time()
-            
+            self.scroll_up = False
+            self.scroll_down = False
             for event in pygame.event.get():
                 #if event.type == pygame.QUIT:
                 #    pygame.quit()
@@ -142,6 +144,12 @@ class Window():
                     keysdown[event.key] = True
                 if event.type == pygame.KEYUP:
                     keysdown[event.key] = False
+                
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 4:
+                        self.scroll_up = True
+                    elif event.button == 5:
+                        self.scroll_down = True
                     
                     
             #mouse

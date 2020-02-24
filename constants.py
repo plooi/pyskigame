@@ -24,8 +24,12 @@ x = {
     "ice_slope" : (math.pi/5.5,math.pi/7.5),#(math.pi/5.5,math.pi/10),#(math.pi/5.5,math.pi/8.5),
     "no_ice_zone" : math.pi/3,
     "crash_speed" : .15,
+    "wheel_mode_speed" : .55,
+    "scroll_speed": math.pi/40,
+    
     
     "air_resistance" : .009,#.0068,
+    "wheel_mode_air_resistance" : .009,
     
     "ice_color" : Color(.84,.87,.9),
     "ice_radius" : 27,#scaled value

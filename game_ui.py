@@ -103,6 +103,13 @@ class UI(LooiObject):
         self.fast_lifts = False
         
         self.last_hr = None
+        
+        
+        #all these for wheel mode
+        self.wheel_mode = False
+        self.wheel_mode_go = False
+        self.hr_target = 0
+        self.vr_target = 0
     def stop_sounds(self):
         self.wind_sound.stop()
         self.lift_sound.stop()
@@ -129,11 +136,12 @@ class UI(LooiObject):
                 if dist <= 10:#if close to a terminal
                     if self.my_lift != None and self.my_chair != None:#if currently riding
                         self.can_unload = True
-                        if self.key(constants["interact_key"], "pressed"):
+                        if self.key(constants["interact_key"], "pressed") or (self.wheel_mode and (self.mouse("middle", "pressed") or self.mouse("left", "pressed"))):
                             self.my_lift.player_riding = None
                             self.my_lift = None
                             self.my_chair = None
                             action_made = True
+                            self.wheel_mode_go = False
                             break
                     for i in range(len(cp)):
                         i = len(cp)-1-i
@@ -141,7 +149,7 @@ class UI(LooiObject):
                         if dist < chair_ride_distance:#if a chair is close
                             if self.my_lift == None and self.my_chair == None:#if not currently riding
                                 self.can_load = True
-                                if self.key(constants["interact_key"], "pressed"):
+                                if self.key(constants["interact_key"], "pressed") or (self.wheel_mode and (self.mouse("middle", "pressed") or self.mouse("left", "pressed"))):
                                     
                                     self.my_lift = chairlift
                                     self.my_chair = i
@@ -149,6 +157,7 @@ class UI(LooiObject):
                                     self.world.properties["momentum"] = 0
                                     action_made = True
                                     self.can_hop = False
+                                    self.wheel_mode_go = False
                                     break
                         elif dist < constants["midpoint_hop_distance"]:
                             #if the other chair's y poisition is EXACTLY the same as my chair's y position,
@@ -171,7 +180,7 @@ class UI(LooiObject):
         
         
         if self.my_lift != None and self.my_chair != None:
-            if self.key(constants["unweight_key"], "down"):
+            if self.key(constants["unweight_key"], "down") or (self.wheel_mode and (self.mouse("middle", "down") or self.mouse("left", "down"))):
                 self.fast_lifts = True
             self.world.view.x = self.my_lift.chair_positions[self.my_chair][0] + math.cos(self.my_lift.chair_angles[self.my_chair]) * self.chair_sit_forward_distance
             self.world.view.y = self.my_lift.chair_positions[self.my_chair][1] - constants["chair_sit_under_distance"]
@@ -211,23 +220,27 @@ class UI(LooiObject):
                 pygame.mouse.get_rel()
             self.ski_put_on_timer += 1
             
-        if self.mouse("right", "down") and self.world.properties["momentum"]==0 and self.game_mode.startswith("ski") and self.skis_changing==False:
+        if (self.wheel_mode == False) and self.mouse("right", "down") and self.world.properties["momentum"]==0 and self.game_mode.startswith("ski") and self.skis_changing==False:
             self.skis_changing = True
             self.ski_put_on_timer = 0
     def do_health_step(self):
-        self.health_timer -= 1
-        
-        if self.key(constants["interact_key"], "down"): self.health(0)
-        if self.game_mode.startswith("ski"):
-            if self.my_lift == None:
-                self.health(-.00185,False)
-            health_bar_speed = 2
-            if self.world.properties["health"] < self.health_target - health_bar_speed:
-                self.world.properties["health"] += health_bar_speed
-            elif self.world.properties["health"] > self.health_target + health_bar_speed:
-                self.world.properties["health"] -= health_bar_speed
-            else:
-                self.world.properties["health"] = self.health_target
+        if not self.wheel_mode:
+            self.health_timer -= 1
+            
+            if self.key(constants["interact_key"], "down"): self.health(0)
+            if self.game_mode.startswith("ski"):
+                if self.my_lift == None:
+                    self.health(-.00185,False)
+                health_bar_speed = 2
+                if self.world.properties["health"] < self.health_target - health_bar_speed:
+                    self.world.properties["health"] += health_bar_speed
+                elif self.world.properties["health"] > self.health_target + health_bar_speed:
+                    self.world.properties["health"] -= health_bar_speed
+                else:
+                    self.world.properties["health"] = self.health_target
+        else:
+            self.world.properties["health"] = 100
+            self.health_target = 100
     def pole_sound(self, x, y, z):
         dist = ( (x-self.world.view.x)**2 + (y-self.world.view.y)**2 + (z-self.world.view.z)**2 )**.5
         if dist < 20:
@@ -301,8 +314,11 @@ class UI(LooiObject):
             self.frames = 0
         self.frames += 1
     def step(self):
-        #if self.key("p", "pressed"):
-        #    print(self.world.properties["active_missions"])
+        if self.key("l", "pressed"):
+            self.wheel_mode = not self.wheel_mode
+            self.wheel_mode_go = False
+            self.skis = "on"
+            
         self.fps_calc()
         if self.key(constants["scenery key"], "pressed"):self.scenery = not self.scenery
         
@@ -344,7 +360,8 @@ class UI(LooiObject):
             elif self.game_mode == "ski test": 
                 self.game_mode = "map editor"
                 self.scenery = True
-        
+        if self.my_lift != None and self.wheel_mode:
+            self.wheel_mode_lift_ride()
         
         #draw sun
         self.draw_sun()
@@ -353,6 +370,40 @@ class UI(LooiObject):
         if self.world.properties["health"] <= 0:
             self.falling = True
             self.skis = "on"
+    def wheel_mode_lift_ride(self):
+        seg = self.my_lift.track.segments[self.my_lift.chair_segments[self.my_chair]]
+        self.vr_target = seg.vr * ((angle_distance(self.hr_target, seg.hr)/math.pi)*-2+1)
+        if self.get_my_window().scroll_up:
+            self.hr_target -= constants["scroll_speed"]
+        if self.get_my_window().scroll_down:
+            self.hr_target += constants["scroll_speed"]
+            
+        
+        #deal with hr target
+        angle_d = angle_distance(self.hr_target, self.world.view.hor_rot)
+        angle_inc = math.pi/10 *angle_d/(math.pi/2)
+        if angle_inc < math.pi/550:
+            angle_inc = math.pi/550
+        if angle_d > angle_inc:
+            if (angle_distance(self.world.view.hor_rot+angle_inc, self.hr_target) 
+                <
+                angle_distance(self.world.view.hor_rot-angle_inc, self.hr_target) 
+                ): self.world.view.hor_rot += angle_inc
+            else: self.world.view.hor_rot -= angle_inc
+        else: self.world.view.hor_rot = self.hr_target
+        
+        #deal with vr target
+        angle_d = angle_distance(self.vr_target, self.world.view.vert_rot)
+        angle_inc = math.pi/10 *angle_d/(math.pi/2)
+        if angle_inc < math.pi/550:
+            angle_inc = math.pi/550
+        if angle_d > angle_inc:
+            if (angle_distance(self.world.view.vert_rot+angle_inc, self.vr_target) 
+                <
+                angle_distance(self.world.view.vert_rot-angle_inc, self.vr_target) 
+                ): self.world.view.vert_rot += angle_inc
+            else: self.world.view.vert_rot -= angle_inc
+        else: self.world.view.vert_rot = self.vr_target
     def draw_sun(self):
         model = models.sun_model_1()
         
@@ -734,70 +785,205 @@ class UI(LooiObject):
             v = self.world.view
             v.y = self.get_elevation_continuous(v.z, v.x)*self.world.properties["vertical_stretch"] + self.world.properties["player_height"]
     def health(self, value, timer = True, animate=False, relative=True):
-        
-        if relative:
-            self.health_target = self.health_target + value
-        else:
-            self.health_target = value
-        if self.health_target > 100: self.health_target = 100
-        if self.health_target < 0: self.health_target = 0
-        if timer:
-            self.health_timer = 85
-    def ski_mode_move(self):
-        
-        
-        
-        
-        #swish
-        if self.last_hr != None and self.world.properties["momentum"] > .1 and self.swish_timer == 0 and angle_distance(self.world.view.hor_rot+self.no_look, self.last_hr) > math.pi/13:
-            self.swish_sound.stop()
-            self.swish_sound.play(maxtime=2000, fade_ms = 1000)
-            self.swish_timer = 25
-        
-        self.last_hr = self.world.view.hor_rot+self.no_look
-        
-        v = self.world.view
-        if self.interface_mode == "game" or self.interface_mode == "can_move_temporarily":
-            
-                
-            g = .1
-            if self.world.properties["momentum"] > 0:
-                ski_g = .030
+        if not self.wheel_mode:
+            if relative:
+                self.health_target = self.health_target + value
             else:
-                ski_g = 0
+                self.health_target = value
+            if self.health_target > 100: self.health_target = 100
+            if self.health_target < 0: self.health_target = 0
+            if timer:
+                self.health_timer = 85
+    def ski_mode_move(self):
+        v = self.world.view
+        g = .1
+        ski_g = .030
+        if not self.wheel_mode:
+            #swish
+            if self.last_hr != None and self.world.properties["momentum"] > .1 and self.swish_timer == 0 and angle_distance(self.world.view.hor_rot+self.no_look, self.last_hr) > math.pi/13:
+                self.swish_sound.stop()
+                self.swish_sound.play(maxtime=2000, fade_ms = 1000)
+                self.swish_timer = 25
             
-            fall_speed = constants["fall_speed"]
+            self.last_hr = self.world.view.hor_rot+self.no_look
             
             
-            #if self.mouse(constants["move_key"], "down"):
-            if 1==1:
+            
+            if self.interface_mode == "game" or self.interface_mode == "can_move_temporarily":
+                
+                    
+                
+                if self.world.properties["momentum"] > 0:
+                    ski_g = .030
+                else:
+                    ski_g = 0
+                
+                fall_speed = constants["fall_speed"]
+                
+                
+                #if self.mouse(constants["move_key"], "down"):
+                if 1==1:
+                    if not self.world.valid_floor(int(v.z/self.world.properties["horizontal_stretch"]), int(v.x/self.world.properties["horizontal_stretch"])):
+                        return;
+                    
+                    
+    
+     
+                    
+                    
+                    #ski turns toward view, but lags behind view
+                    
+                    #angle_d = angle_distance(self.world.properties["ski_direction"], self.world.view.hor_rot+self.no_look)
+                    #angle_inc = math.pi/6.5 *angle_d/(math.pi/2)
+    
+    
+                    #if angle_inc < math.pi/550:
+                    #    angle_inc = math.pi/550
+                    #if angle_d > angle_inc and self.world.properties["momentum"] > .05:
+                    #    if (angle_distance(self.world.properties["ski_direction"]+angle_inc, self.world.view.hor_rot+self.no_look) 
+                    #        <
+                    #        angle_distance(self.world.properties["ski_direction"]-angle_inc, self.world.view.hor_rot+self.no_look) 
+                    #        ):
+                    #        self.world.properties["ski_direction"] += angle_inc
+                    #    else:
+                    #        self.world.properties["ski_direction"] -= angle_inc
+                    #else:
+                    self.world.properties["ski_direction"] = self.world.view.hor_rot+self.no_look
+                    
+                    
+                    #calculate floor slope
+                    p1,p2,p3 = self.xyz_of_current_triangle(v.z, v.x)
+                    floor_hr, floor_vr = get_plane_rotation(p1[0],p1[1],p1[2],p2[0],p2[1],p2[2],p3[0],p3[1],p3[2])
+                    
+                    if floor_vr < 0:
+                        floor_vr = -floor_vr
+                        floor_hr += math.pi
+                    
+                    floor_slope = math.pi/2 - floor_vr
+                    self.slope = floor_slope
+                    
+                    
+                    #calculate force pulling down
+                    resistance = angle_distance(self.world.properties["ski_direction"], floor_hr)   
+                    
+                    equivalent_floor_slope = math.cos(resistance) * floor_slope
+                    
+                    f_parallel = ski_g * math.sin(equivalent_floor_slope)
+                    
+                    fhorizontal = f_parallel * math.cos(equivalent_floor_slope)
+                    
+                    self.world.properties["momentum"] += fhorizontal
+                    
+                    
+                    #slow down when pressing x
+                    if (self.key(constants["unweight_key"], "down")):
+                        if equivalent_floor_slope < math.pi/12:
+                            self.world.properties["momentum"] -= .021
+                        else:
+                            self.world.properties["momentum"] -= .021*(resistance/(math.pi/2))**.5
+                    
+                    
+                    #fall when it's steep
+                    if self.world.properties["momentum"] > fall_speed and floor_slope >= constants["fall_slope"]:
+                        if random() < .04:
+                            self.falling = 2
+                            
+                    
+                    
+                    
+                    
+                    
+                    #friction
+                    self.world.properties["momentum"] -= constants["air_resistance"] * self.world.properties["momentum"]**2
+                    
+                    #momentum direction = ski direction
+                    self.world.properties["momentum_direction"] = self.world.properties["ski_direction"]
+                    
+                    #make the skier still move a little bit even if on flat ground
+                    #if floor_slope < math.pi/8 and self.world.properties["momentum"]<.025 and self.key(constants["unweight_key"], "down"):
+                    if self.world.properties["momentum"]<.025 and self.key(constants["unweight_key"], "down"):
+                        self.world.properties["momentum"]=.025
+                    
+                    #stop the skier if they press the stop button if they're going slow enough
+                    if self.world.properties["momentum"]<.15 and self.key(constants["low_speed_stop_key"], "down"):
+                        self.world.properties["momentum"]=0
+                    
+                    
+                    #no going backwards
+                    if self.world.properties["momentum"] < 0: self.world.properties["momentum"] = 0
+                    
+                    
+                    
+                    #increment view x,y,z
+                    v.x += self.world.properties["momentum"] * math.cos(self.world.properties["momentum_direction"])
+                    v.z += self.world.properties["momentum"] * -math.sin(self.world.properties["momentum_direction"])
+                    v.y = self.get_elevation_continuous(v.z, v.x)*self.world.properties["vertical_stretch"] + self.world.properties["player_height"]
+                    
+                    
+                        
+                else:
+                    if self.world.properties["momentum"] > .1:
+                        self.falling = True
+                    self.world.properties["momentum"] = 0
+                    
+                    elev = self.get_elevation_continuous(v.z, v.x)
+                    if v.y - self.world.properties["player_height"] < elev*self.world.properties["vertical_stretch"]:
+                        v.y = elev*self.world.properties["vertical_stretch"] + self.world.properties["player_height"]
+                        self.world.properties["y_momentum"] = 0
+                    elif v.y - self.world.properties["player_height"] > elev*self.world.properties["vertical_stretch"]:
+                        self.world.properties["y_momentum"] -= g
+                    
+                    
+                    
+                    if self.my_lift != None:
+                        self.world.properties["y_momentum"] = 0
+                    v.y += self.world.properties["y_momentum"]    
+                    
+                    #repeat again
+                    elev = self.get_elevation_continuous(v.z, v.x)
+                    if v.y - self.world.properties["player_height"] < elev*self.world.properties["vertical_stretch"]:
+                        v.y = elev*self.world.properties["vertical_stretch"] + self.world.properties["player_height"]
+                        self.world.properties["y_momentum"] = 0
+        else:#wheel mode
+            if self.interface_mode == "game" or self.interface_mode == "can_move_temporarily":
                 if not self.world.valid_floor(int(v.z/self.world.properties["horizontal_stretch"]), int(v.x/self.world.properties["horizontal_stretch"])):
                     return;
                 
+                if self.get_my_window().scroll_up:
+                    self.hr_target -= constants["scroll_speed"]
+                if self.get_my_window().scroll_down:
+                    self.hr_target += constants["scroll_speed"]
+                    
                 
-
- 
+                #deal with hr target
+                angle_d = angle_distance(self.hr_target, self.world.view.hor_rot)
+                angle_inc = math.pi/10 *angle_d/(math.pi/2)
+                if angle_inc < math.pi/550:
+                    angle_inc = math.pi/550
+                if angle_d > angle_inc:
+                    if (angle_distance(self.world.view.hor_rot+angle_inc, self.hr_target) 
+                        <
+                        angle_distance(self.world.view.hor_rot-angle_inc, self.hr_target) 
+                        ): self.world.view.hor_rot += angle_inc
+                    else: self.world.view.hor_rot -= angle_inc
+                else: self.world.view.hor_rot = self.hr_target
+                
+                #deal with vr target
+                angle_d = angle_distance(self.vr_target, self.world.view.vert_rot)
+                angle_inc = math.pi/15 *angle_d/(math.pi/2)
+                if angle_inc < math.pi/550:
+                    angle_inc = math.pi/550
+                if angle_d > angle_inc:
+                    if (angle_distance(self.world.view.vert_rot+angle_inc, self.vr_target) 
+                        <
+                        angle_distance(self.world.view.vert_rot-angle_inc, self.vr_target) 
+                        ): self.world.view.vert_rot += angle_inc
+                    else: self.world.view.vert_rot -= angle_inc
+                else: self.world.view.vert_rot = self.vr_target
                 
                 
-                #ski turns toward view, but lags behind view
-                
-                #angle_d = angle_distance(self.world.properties["ski_direction"], self.world.view.hor_rot+self.no_look)
-                #angle_inc = math.pi/6.5 *angle_d/(math.pi/2)
-
-
-                #if angle_inc < math.pi/550:
-                #    angle_inc = math.pi/550
-                #if angle_d > angle_inc and self.world.properties["momentum"] > .05:
-                #    if (angle_distance(self.world.properties["ski_direction"]+angle_inc, self.world.view.hor_rot+self.no_look) 
-                #        <
-                #        angle_distance(self.world.properties["ski_direction"]-angle_inc, self.world.view.hor_rot+self.no_look) 
-                #        ):
-                #        self.world.properties["ski_direction"] += angle_inc
-                #    else:
-                #        self.world.properties["ski_direction"] -= angle_inc
-                #else:
-                self.world.properties["ski_direction"] = self.world.view.hor_rot+self.no_look
-                
+                if self.mouse("right","pressed"):
+                    self.wheel_mode_go = not self.wheel_mode_go
                 
                 #calculate floor slope
                 p1,p2,p3 = self.xyz_of_current_triangle(v.z, v.x)
@@ -818,43 +1004,39 @@ class UI(LooiObject):
                 
                 f_parallel = ski_g * math.sin(equivalent_floor_slope)
                 
+                brake = .05
+                
                 fhorizontal = f_parallel * math.cos(equivalent_floor_slope)
-                
-                self.world.properties["momentum"] += fhorizontal
-                
-                
-                #slow down when pressing x
-                if (self.key(constants["unweight_key"], "down")):
-                    if equivalent_floor_slope < math.pi/12:
-                        self.world.properties["momentum"] -= .021
+                if self.wheel_mode_go:
+                    if equivalent_floor_slope > math.pi/30:
+                        if (self.mouse("middle", "down") or self.mouse("left", "down")):
+                            self.world.properties["momentum"] += fhorizontal
+                        else:
+                            #max speed
+                            if self.world.properties["momentum"] < constants["wheel_mode_speed"] - fhorizontal:
+                                self.world.properties["momentum"] += fhorizontal
+                            elif self.world.properties["momentum"] > constants["wheel_mode_speed"] + brake:
+                                self.world.properties["momentum"] -= brake
+                            else:
+                                self.world.properties["momentum"] = constants["wheel_mode_speed"]
                     else:
-                        self.world.properties["momentum"] -= .021*(resistance/(math.pi/2))**.5
+                        #friction
+                        self.world.properties["momentum"] -= constants["wheel_mode_air_resistance"] * self.world.properties["momentum"]**2
+                        if self.world.properties["momentum"] < .15:
+                            self.world.properties["momentum"] = .15
+                        
+                else:
+                    self.world.properties["momentum"] -= brake
                 
+                self.vr_target = -equivalent_floor_slope
                 
-                #fall when it's steep
                 if self.world.properties["momentum"] > fall_speed and floor_slope >= constants["fall_slope"]:
                     if random() < .04:
                         self.falling = 2
-                        
                 
-                
-                
-                
-                
-                #friction
-                self.world.properties["momentum"] -= constants["air_resistance"] * self.world.properties["momentum"]**2
-                
-                #momentum direction = ski direction
+                self.world.properties["ski_direction"] = self.hr_target
                 self.world.properties["momentum_direction"] = self.world.properties["ski_direction"]
                 
-                #make the skier still move a little bit even if on flat ground
-                #if floor_slope < math.pi/8 and self.world.properties["momentum"]<.025 and self.key(constants["unweight_key"], "down"):
-                if self.world.properties["momentum"]<.025 and self.key(constants["unweight_key"], "down"):
-                    self.world.properties["momentum"]=.025
-                
-                #stop the skier if they press the stop button if they're going slow enough
-                if self.world.properties["momentum"]<.15 and self.key(constants["low_speed_stop_key"], "down"):
-                    self.world.properties["momentum"]=0
                 
                 
                 #no going backwards
@@ -868,50 +1050,23 @@ class UI(LooiObject):
                 v.y = self.get_elevation_continuous(v.z, v.x)*self.world.properties["vertical_stretch"] + self.world.properties["player_height"]
                 
                 
-                    
-            else:
-                if self.world.properties["momentum"] > .1:
-                    self.falling = True
-                self.world.properties["momentum"] = 0
-                
-                elev = self.get_elevation_continuous(v.z, v.x)
-                if v.y - self.world.properties["player_height"] < elev*self.world.properties["vertical_stretch"]:
-                    v.y = elev*self.world.properties["vertical_stretch"] + self.world.properties["player_height"]
-                    self.world.properties["y_momentum"] = 0
-                elif v.y - self.world.properties["player_height"] > elev*self.world.properties["vertical_stretch"]:
-                    self.world.properties["y_momentum"] -= g
-                
-                
-                
-                if self.my_lift != None:
-                    self.world.properties["y_momentum"] = 0
-                v.y += self.world.properties["y_momentum"]    
-                
-                #repeat again
-                elev = self.get_elevation_continuous(v.z, v.x)
-                if v.y - self.world.properties["player_height"] < elev*self.world.properties["vertical_stretch"]:
-                    v.y = elev*self.world.properties["vertical_stretch"] + self.world.properties["player_height"]
-                    self.world.properties["y_momentum"] = 0
-                
-                
-                
-                
             
                 
                 
                          
             
     def look_around(self):
-        if self.interface_mode == "game" or self.interface_mode == "can_move_temporarily":
-            rel = pygame.mouse.get_rel()
-            if self.mouse(constants["no_look_key"], "down"):
-                self.no_look += -(rel[0])*self.world.view.rot_spd*.4
-                self.world.view.hor_rot += -(rel[0])*self.world.view.rot_spd*.6
-                self.world.view.vert_rot += -(rel[1])*self.world.view.rot_spd
-            else:
-                self.world.view.hor_rot += -(rel[0])*self.world.view.rot_spd
-                self.world.view.vert_rot += -(rel[1])*self.world.view.rot_spd
-                self.no_look = 0
+        if not self.wheel_mode:
+            if self.interface_mode == "game" or self.interface_mode == "can_move_temporarily":
+                rel = pygame.mouse.get_rel()
+                if self.mouse(constants["no_look_key"], "down"):
+                    self.no_look += -(rel[0])*self.world.view.rot_spd*.4
+                    self.world.view.hor_rot += -(rel[0])*self.world.view.rot_spd*.6
+                    self.world.view.vert_rot += -(rel[1])*self.world.view.rot_spd
+                else:
+                    self.world.view.hor_rot += -(rel[0])*self.world.view.rot_spd
+                    self.world.view.vert_rot += -(rel[1])*self.world.view.rot_spd
+                    self.no_look = 0
                 
             
                 
