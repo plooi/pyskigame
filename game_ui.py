@@ -1011,6 +1011,7 @@ class UI(LooiObject):
                     if equivalent_floor_slope > math.pi/30:
                         if (self.mouse("middle", "down") or self.mouse("left", "down")):
                             self.world.properties["momentum"] += fhorizontal
+                            self.world.properties["momentum"] -= constants["wheel_mode_air_resistance"] * self.world.properties["momentum"]**2
                         else:
                             #max speed
                             if self.world.properties["momentum"] < constants["wheel_mode_speed"] - fhorizontal:

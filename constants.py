@@ -29,7 +29,7 @@ x = {
     
     
     "air_resistance" : .009,#.0068,
-    "wheel_mode_air_resistance" : .009,
+    "wheel_mode_air_resistance" : .008,
     
     "ice_color" : Color(.84,.87,.9),
     "ice_radius" : 27,#scaled value
