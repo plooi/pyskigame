@@ -418,7 +418,10 @@ class Lift(LooiObject, Selectable):
                             add_model_to_world_mobile(model, self.world)
                     
                     if not self.broken:
-                        self.chairs[i] += 1#increment the time
+                        if self.world.game_ui.fast_lifts:
+                            self.chairs[i] += constants["faster_lift_speed"]
+                        else:
+                            self.chairs[i] += 1#increment the time
                     
                     
                     break#move on to next chair

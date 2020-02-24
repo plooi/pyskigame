@@ -100,7 +100,7 @@ class UI(LooiObject):
         self.seconds = 0
         self.fps = 0
         
-        
+        self.fast_lifts = False
         
         
     def stop_sounds(self):
@@ -114,6 +114,7 @@ class UI(LooiObject):
         x = self.world.view.x
         y = self.world.view.y
         z = self.world.view.z
+        self.fast_lifts = False
         
         
         action_made = False
@@ -170,6 +171,8 @@ class UI(LooiObject):
         
         
         if self.my_lift != None and self.my_chair != None:
+            if self.key(constants["unweight_key"], "down"):
+                self.fast_lifts = True
             self.world.view.x = self.my_lift.chair_positions[self.my_chair][0] + math.cos(self.my_lift.chair_angles[self.my_chair]) * self.chair_sit_forward_distance
             self.world.view.y = self.my_lift.chair_positions[self.my_chair][1] - constants["chair_sit_under_distance"]
             self.world.view.z = self.my_lift.chair_positions[self.my_chair][2] - math.sin(self.my_lift.chair_angles[self.my_chair]) * self.chair_sit_forward_distance
@@ -870,8 +873,12 @@ class UI(LooiObject):
                     angle_inc = math.pi/50
                     #angle_inc = math.pi/120
                 else:
-                    angle_inc = math.pi/250
-                    slow = .005
+                    if resistance < math.pi/2:
+                        angle_inc = math.pi/330
+                        slow = .0065
+                    else:
+                        angle_inc = 0
+                        slow = 0
                 if angle_d > angle_inc and self.world.properties["momentum"] > .05:
                     if (angle_distance(self.world.properties["momentum_direction"]+angle_inc, self.world.properties["ski_direction"]) 
                         <
