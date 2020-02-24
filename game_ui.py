@@ -102,7 +102,7 @@ class UI(LooiObject):
         
         self.fast_lifts = False
         
-        
+        self.last_hr = None
     def stop_sounds(self):
         self.wind_sound.stop()
         self.lift_sound.stop()
@@ -284,11 +284,6 @@ class UI(LooiObject):
         if vol < 0: vol = 0
         self.set_lift_vol(vol)
         
-        #swish
-        if self.world.properties["momentum"] > .1 and self.swish_timer == 0 and angle_distance(self.world.view.hor_rot+self.no_look, self.world.properties["ski_direction"]) > math.pi/13:
-            self.swish_sound.stop()
-            self.swish_sound.play(maxtime=2000, fade_ms = 1000)
-            self.swish_timer = 25
         if self.swish_timer == 15:
             self.swish_sound.fadeout(1000)
                 
@@ -748,6 +743,13 @@ class UI(LooiObject):
             self.health_timer = 85
     def ski_mode_move(self):
         
+        #swish
+        if self.last_hr != None and self.world.properties["momentum"] > .1 and self.swish_timer == 0 and angle_distance(self.world.view.hor_rot+self.no_look, self.last_hr) > math.pi/13:
+            self.swish_sound.stop()
+            self.swish_sound.play(maxtime=2000, fade_ms = 1000)
+            self.swish_timer = 25
+        
+        self.last_hr = self.world.view.hor_rot+self.no_look
         
         v = self.world.view
         if self.interface_mode == "game" or self.interface_mode == "can_move_temporarily":
