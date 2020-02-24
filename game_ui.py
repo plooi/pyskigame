@@ -1030,7 +1030,7 @@ class UI(LooiObject):
                 
                 self.vr_target = -equivalent_floor_slope
                 
-                if self.world.properties["momentum"] > fall_speed and floor_slope >= constants["fall_slope"]:
+                if self.world.properties["momentum"] > constants["fall_speed"] and floor_slope >= constants["fall_slope"]:
                     if random() < .04:
                         self.falling = 2
                 
