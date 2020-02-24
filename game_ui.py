@@ -1023,8 +1023,9 @@ class UI(LooiObject):
                     else:
                         #friction
                         self.world.properties["momentum"] -= constants["wheel_mode_air_resistance"] * self.world.properties["momentum"]**2
-                        if self.world.properties["momentum"] < .15:
-                            self.world.properties["momentum"] = .15
+                        self.world.properties["momentum"] += fhorizontal
+                        if self.world.properties["momentum"] < .1:
+                            self.world.properties["momentum"] = .1
                         
                 else:
                     self.world.properties["momentum"] -= brake
