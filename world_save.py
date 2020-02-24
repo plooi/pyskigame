@@ -189,9 +189,12 @@ def read(path, new_version = True):
                                 
                         elif isinstance(obj, LooiObject):
                             if obj.active:
-                                set_active_variable_false(obj)
-                                obj.activate()
-            
+                                if not isinstance(obj, Landmark):
+                                    set_active_variable_false(obj)
+                                    obj.activate()
+            for landmark in the_world.landmarks:
+                set_active_variable_false(landmark)
+                landmark.activate()
             set_active_variable_false(the_world)
             
             the_world.setup_3d = the_world.get_setup_3d()

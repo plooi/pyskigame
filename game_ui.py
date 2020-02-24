@@ -301,6 +301,8 @@ class UI(LooiObject):
             self.frames = 0
         self.frames += 1
     def step(self):
+        #if self.key("p", "pressed"):
+        #    print(self.world.properties["active_missions"])
         self.fps_calc()
         if self.key(constants["scenery key"], "pressed"):self.scenery = not self.scenery
         
@@ -743,6 +745,9 @@ class UI(LooiObject):
             self.health_timer = 85
     def ski_mode_move(self):
         
+        
+        
+        
         #swish
         if self.last_hr != None and self.world.properties["momentum"] > .1 and self.swish_timer == 0 and angle_distance(self.world.view.hor_rot+self.no_look, self.last_hr) > math.pi/13:
             self.swish_sound.stop()
@@ -775,32 +780,23 @@ class UI(LooiObject):
                 
                 
                 #ski turns toward view, but lags behind view
-                if self.key(constants["unweight_key"], "down"):
-                    target_angle = self.world.view.hor_rot+self.no_look#int((self.world.view.hor_rot+self.no_look)*6+.5)/6
-                    angle_d = angle_distance(self.world.properties["ski_direction"], target_angle)
-                    angle_inc = math.pi/6.5 *angle_d/(math.pi/2)
-                    
-                    #if angle_inc > math.pi/50:
-                        #angle_inc = math.pi/50
-                    if angle_inc > math.pi/75:
-                        angle_inc = math.pi/75
-                    if angle_inc < math.pi/550:
-                        angle_inc = math.pi/550
-                        
-                    
-                    if angle_d > angle_inc and self.world.properties["momentum"] > .05:
-                        if (angle_distance(self.world.properties["ski_direction"]+angle_inc, target_angle) 
-                            <
-                            angle_distance(self.world.properties["ski_direction"]-angle_inc, target_angle) 
-                            ):
-                            self.world.properties["ski_direction"] += angle_inc
-                        else:
-                            self.world.properties["ski_direction"] -= angle_inc
-                        
-                    else:
-                        self.world.properties["ski_direction"] = target_angle
-                else:
-                    self.world.properties["ski_direction"] = self.world.view.hor_rot+self.no_look
+                
+                #angle_d = angle_distance(self.world.properties["ski_direction"], self.world.view.hor_rot+self.no_look)
+                #angle_inc = math.pi/6.5 *angle_d/(math.pi/2)
+
+
+                #if angle_inc < math.pi/550:
+                #    angle_inc = math.pi/550
+                #if angle_d > angle_inc and self.world.properties["momentum"] > .05:
+                #    if (angle_distance(self.world.properties["ski_direction"]+angle_inc, self.world.view.hor_rot+self.no_look) 
+                #        <
+                #        angle_distance(self.world.properties["ski_direction"]-angle_inc, self.world.view.hor_rot+self.no_look) 
+                #        ):
+                #        self.world.properties["ski_direction"] += angle_inc
+                #    else:
+                #        self.world.properties["ski_direction"] -= angle_inc
+                #else:
+                self.world.properties["ski_direction"] = self.world.view.hor_rot+self.no_look
                 
                 
                 #calculate floor slope
@@ -828,11 +824,11 @@ class UI(LooiObject):
                 
                 
                 #slow down when pressing x
-                #if (self.key(constants["unweight_key"], "down")):
-                #    if equivalent_floor_slope < math.pi/12:
-                #        self.world.properties["momentum"] -= .021
-                #    else:
-                #        self.world.properties["momentum"] -= .021*(resistance/(math.pi/2))**.5
+                if (self.key(constants["unweight_key"], "down")):
+                    if equivalent_floor_slope < math.pi/12:
+                        self.world.properties["momentum"] -= .021
+                    else:
+                        self.world.properties["momentum"] -= .021*(resistance/(math.pi/2))**.5
                 
                 
                 #fall when it's steep
@@ -848,53 +844,8 @@ class UI(LooiObject):
                 #friction
                 self.world.properties["momentum"] -= constants["air_resistance"] * self.world.properties["momentum"]**2
                 
-                #momentum direction and edges
-                hockey_stop_angle = math.pi/5
-                """
-                edges = self.world.view.vert_rot + equivalent_floor_slope#floor_slope
-                if edges > math.pi/20: edges = math.pi/20
-                if edges < -math.pi/20: edges = -math.pi/20
-                edges *= -1
-                edges += math.pi/20
-                edges /= math.pi/10
-                
-                
-                slow = angle_distance(self.world.properties["momentum_direction"], self.world.properties["ski_direction"])
-                if slow > math.pi/4:slow = math.pi/4
-                slow /= math.pi/4
-                slow *= edges**2.5 * .03
-                """
-                angle_d = angle_distance(self.world.properties["ski_direction"], self.world.properties["momentum_direction"])
-                
-                if self.key(constants["unweight_key"], "down"):
-                    slow = angle_distance(self.world.properties["momentum_direction"], self.world.properties["ski_direction"])
-                    if slow > math.pi/2.5:slow = math.pi/2.5
-                    slow /= math.pi/2.5
-                    slow = slow
-                    slow *= .025
-                    angle_inc = math.pi/50
-                    #angle_inc = math.pi/120
-                else:
-                    if resistance < math.pi/2:
-                        angle_inc = math.pi/330
-                        slow = .0065
-                    else:
-                        angle_inc = 0
-                        slow = 0
-                if angle_d > angle_inc and self.world.properties["momentum"] > .05:
-                    if (angle_distance(self.world.properties["momentum_direction"]+angle_inc, self.world.properties["ski_direction"]) 
-                        <
-                        angle_distance(self.world.properties["momentum_direction"]-angle_inc, self.world.properties["ski_direction"]) 
-                        ):
-                        self.world.properties["momentum"] -= slow
-                        self.world.properties["momentum_direction"] += angle_inc
-                    else:
-                        self.world.properties["momentum"] -= slow
-                        self.world.properties["momentum_direction"] -= angle_inc
-                    
-                else:
-                    self.world.properties["momentum_direction"] = self.world.properties["ski_direction"]
-                
+                #momentum direction = ski direction
+                self.world.properties["momentum_direction"] = self.world.properties["ski_direction"]
                 
                 #make the skier still move a little bit even if on flat ground
                 #if floor_slope < math.pi/8 and self.world.properties["momentum"]<.025 and self.key(constants["unweight_key"], "down"):
