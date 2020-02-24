@@ -750,56 +750,52 @@ class UI(LooiObject):
         if self.interface_mode == "game" or self.interface_mode == "can_move_temporarily":
             
                 
-            
-            
             g = .1
-            ski_g = .030
+            if self.world.properties["momentum"] > 0:
+                ski_g = .030
+            else:
+                ski_g = 0
             
             fall_speed = constants["fall_speed"]
             
             
-            if self.key(constants["move_key"], "down"):
+            #if self.mouse(constants["move_key"], "down"):
+            if 1==1:
                 if not self.world.valid_floor(int(v.z/self.world.properties["horizontal_stretch"]), int(v.x/self.world.properties["horizontal_stretch"])):
                     return;
-                is_ice = self.world.is_ice(int(v.z/self.world.properties["horizontal_stretch"]), int(v.x/self.world.properties["horizontal_stretch"]))
                 
                 
-                #after you finish going through ice
-                recovering_from_ice = False
-                if not is_ice:
-                        angle_inc = math.pi/50
-                        if angle_distance(self.world.properties["ski_direction"], self.world.properties["momentum_direction"])>0 and self.world.properties["momentum"]>.01:
-                            recovering_from_ice = True
-                            if (angle_distance(self.world.properties["momentum_direction"]+angle_inc, self.world.properties["ski_direction"]) 
-                                <
-                                angle_distance(self.world.properties["momentum_direction"]-angle_inc, self.world.properties["ski_direction"]) 
-                                ):
-                                self.world.properties["momentum_direction"] += angle_inc
-                            else:
-                                self.world.properties["momentum_direction"] -= angle_inc
-                
+
+ 
                 
                 
                 #ski turns toward view, but lags behind view
-                angle_d = angle_distance(self.world.properties["ski_direction"], self.world.view.hor_rot+self.no_look)
-                angle_inc = math.pi/6.5 *angle_d/(math.pi/2)
-                
-                
-                if angle_inc < math.pi/550:
-                    angle_inc = math.pi/550
-                if angle_d > angle_inc and self.world.properties["momentum"] > .05:
-                    if (angle_distance(self.world.properties["ski_direction"]+angle_inc, self.world.view.hor_rot+self.no_look) 
-                        <
-                        angle_distance(self.world.properties["ski_direction"]-angle_inc, self.world.view.hor_rot+self.no_look) 
-                        ):
-                        self.world.properties["ski_direction"] += angle_inc
-                    else:
-                        self.world.properties["ski_direction"] -= angle_inc
+                if self.key(constants["unweight_key"], "down"):
+                    target_angle = self.world.view.hor_rot+self.no_look#int((self.world.view.hor_rot+self.no_look)*6+.5)/6
+                    angle_d = angle_distance(self.world.properties["ski_direction"], target_angle)
+                    angle_inc = math.pi/6.5 *angle_d/(math.pi/2)
                     
+                    #if angle_inc > math.pi/50:
+                        #angle_inc = math.pi/50
+                    if angle_inc > math.pi/75:
+                        angle_inc = math.pi/75
+                    if angle_inc < math.pi/550:
+                        angle_inc = math.pi/550
+                        
+                    
+                    if angle_d > angle_inc and self.world.properties["momentum"] > .05:
+                        if (angle_distance(self.world.properties["ski_direction"]+angle_inc, target_angle) 
+                            <
+                            angle_distance(self.world.properties["ski_direction"]-angle_inc, target_angle) 
+                            ):
+                            self.world.properties["ski_direction"] += angle_inc
+                        else:
+                            self.world.properties["ski_direction"] -= angle_inc
+                        
+                    else:
+                        self.world.properties["ski_direction"] = target_angle
                 else:
                     self.world.properties["ski_direction"] = self.world.view.hor_rot+self.no_look
-                
-                
                 
                 
                 #calculate floor slope
@@ -817,10 +813,7 @@ class UI(LooiObject):
                 #calculate force pulling down
                 resistance = angle_distance(self.world.properties["ski_direction"], floor_hr)   
                 
-                if is_ice:
-                    equivalent_floor_slope = floor_slope
-                else:
-                    equivalent_floor_slope = math.cos(resistance) * floor_slope
+                equivalent_floor_slope = math.cos(resistance) * floor_slope
                 
                 f_parallel = ski_g * math.sin(equivalent_floor_slope)
                 
@@ -830,11 +823,11 @@ class UI(LooiObject):
                 
                 
                 #slow down when pressing x
-                if (self.mouse("left", "down")) and (not is_ice):
-                    if equivalent_floor_slope < math.pi/12:
-                        self.world.properties["momentum"] -= .021
-                    else:
-                        self.world.properties["momentum"] -= .021*(resistance/(math.pi/2))**.5
+                #if (self.key(constants["unweight_key"], "down")):
+                #    if equivalent_floor_slope < math.pi/12:
+                #        self.world.properties["momentum"] -= .021
+                #    else:
+                #        self.world.properties["momentum"] -= .021*(resistance/(math.pi/2))**.5
                 
                 
                 #fall when it's steep
@@ -850,26 +843,58 @@ class UI(LooiObject):
                 #friction
                 self.world.properties["momentum"] -= constants["air_resistance"] * self.world.properties["momentum"]**2
                 
+                #momentum direction and edges
+                hockey_stop_angle = math.pi/5
+                """
+                edges = self.world.view.vert_rot + equivalent_floor_slope#floor_slope
+                if edges > math.pi/20: edges = math.pi/20
+                if edges < -math.pi/20: edges = -math.pi/20
+                edges *= -1
+                edges += math.pi/20
+                edges /= math.pi/10
                 
-                self.world.properties["momentum_direction"] = self.world.properties["ski_direction"]
-                    
-                    
                 
-                #ice slowing down if skis perpendicular
-                if is_ice:
-                    
-                    slow = (resistance/(math.pi/3))**2
-                    if slow > 1:
-                        slow = 1
+                slow = angle_distance(self.world.properties["momentum_direction"], self.world.properties["ski_direction"])
+                if slow > math.pi/4:slow = math.pi/4
+                slow /= math.pi/4
+                slow *= edges**2.5 * .03
+                """
+                angle_d = angle_distance(self.world.properties["ski_direction"], self.world.properties["momentum_direction"])
+                
+                if self.key(constants["unweight_key"], "down"):
+                    slow = angle_distance(self.world.properties["momentum_direction"], self.world.properties["ski_direction"])
+                    if slow > math.pi/2.5:slow = math.pi/2.5
+                    slow /= math.pi/2.5
+                    slow = slow
                     slow *= .025
-                    self.world.properties["momentum"] -= slow
-                    if self.world.properties["momentum"] < .2:
-                        self.world.properties["momentum"] = .2
+                    angle_inc = math.pi/50
+                    #angle_inc = math.pi/120
+                else:
+                    angle_inc = math.pi/250
+                    slow = .005
+                if angle_d > angle_inc and self.world.properties["momentum"] > .05:
+                    if (angle_distance(self.world.properties["momentum_direction"]+angle_inc, self.world.properties["ski_direction"]) 
+                        <
+                        angle_distance(self.world.properties["momentum_direction"]-angle_inc, self.world.properties["ski_direction"]) 
+                        ):
+                        self.world.properties["momentum"] -= slow
+                        self.world.properties["momentum_direction"] += angle_inc
+                    else:
+                        self.world.properties["momentum"] -= slow
+                        self.world.properties["momentum_direction"] -= angle_inc
+                    
+                else:
+                    self.world.properties["momentum_direction"] = self.world.properties["ski_direction"]
                 
                 
-                
-                if floor_slope < math.pi/8 and self.world.properties["momentum"]<.025 and self.key(constants["move_key"],"down") and not self.mouse("left","down"):
+                #make the skier still move a little bit even if on flat ground
+                #if floor_slope < math.pi/8 and self.world.properties["momentum"]<.025 and self.key(constants["unweight_key"], "down"):
+                if self.world.properties["momentum"]<.025 and self.key(constants["unweight_key"], "down"):
                     self.world.properties["momentum"]=.025
+                
+                #stop the skier if they press the stop button if they're going slow enough
+                if self.world.properties["momentum"]<.15 and self.key(constants["low_speed_stop_key"], "down"):
+                    self.world.properties["momentum"]=0
                 
                 
                 #no going backwards
@@ -919,7 +944,7 @@ class UI(LooiObject):
     def look_around(self):
         if self.interface_mode == "game" or self.interface_mode == "can_move_temporarily":
             rel = pygame.mouse.get_rel()
-            if self.key(constants["no_look_key"], "down"):
+            if self.mouse(constants["no_look_key"], "down"):
                 self.no_look += -(rel[0])*self.world.view.rot_spd*.4
                 self.world.view.hor_rot += -(rel[0])*self.world.view.rot_spd*.6
                 self.world.view.vert_rot += -(rel[1])*self.world.view.rot_spd
@@ -1012,7 +1037,7 @@ class UI(LooiObject):
             
         
             #if self.world.properties["momentum"] > .02:
-            if self.key(constants["move_key"], "down") and self.skis=="on":
+            if self.world.properties["momentum"] > 0 and self.skis=="on":
                 pointer_radius = 15
                 angle_d = angle_distance(self.world.properties["ski_direction"],self.world.view.hor_rot)/(math.pi/2)
                 if angle_d > 1: angle_d = 1

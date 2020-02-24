@@ -31,13 +31,15 @@ x = {
     "bump_slope" : (math.pi/4.6,math.pi/10),
     "bump_density" : .36,#.3,
     "bump_group_density" : .2,
+    "bump_collision_radius" : 1.6,
     
-    "move_key" : "w",
     "menu_key" : "c",
     "interact_key" : "e",
     "find_key" : "x",
-    "no_look_key" : "q",
+    "no_look_key" : "left",
     "scenery key" : "tab",
+    "unweight_key" : "space",
+    "low_speed_stop_key" : "b",
     
     "scaled_distance_to_meters" : 1.4,
     
