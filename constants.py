@@ -25,7 +25,9 @@ x = {
     "no_ice_zone" : math.pi/3,
     "crash_speed" : .15,
     "wheel_mode_speed" : .55,
-    "scroll_speed": math.pi/40,
+    "scroll_speed": math.pi/300,#math.pi/40,
+    "scroll_speed_lift" : math.pi/40,
+    "turn_limit" : math.pi/20,
     
     
     "air_resistance" : .009,#.0068,

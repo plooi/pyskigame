@@ -110,6 +110,8 @@ class UI(LooiObject):
         self.wheel_mode_go = False
         self.hr_target = 0
         self.vr_target = 0
+        self.turning = 0
+        self.press_timer = 0
     def stop_sounds(self):
         self.wind_sound.stop()
         self.lift_sound.stop()
@@ -136,7 +138,7 @@ class UI(LooiObject):
                 if dist <= 10:#if close to a terminal
                     if self.my_lift != None and self.my_chair != None:#if currently riding
                         self.can_unload = True
-                        if self.key(constants["interact_key"], "pressed") or (self.wheel_mode and (self.mouse("middle", "pressed") or self.mouse("left", "pressed"))):
+                        if self.key(constants["interact_key"], "pressed") or (self.wheel_mode and (self.mouse("middle", "pressed"))):
                             self.my_lift.player_riding = None
                             self.my_lift = None
                             self.my_chair = None
@@ -149,7 +151,7 @@ class UI(LooiObject):
                         if dist < chair_ride_distance:#if a chair is close
                             if self.my_lift == None and self.my_chair == None:#if not currently riding
                                 self.can_load = True
-                                if self.key(constants["interact_key"], "pressed") or (self.wheel_mode and (self.mouse("middle", "pressed") or self.mouse("left", "pressed"))):
+                                if self.key(constants["interact_key"], "pressed") or (self.wheel_mode and (self.mouse("middle", "pressed"))):
                                     
                                     self.my_lift = chairlift
                                     self.my_chair = i
@@ -157,7 +159,7 @@ class UI(LooiObject):
                                     self.world.properties["momentum"] = 0
                                     action_made = True
                                     self.can_hop = False
-                                    self.wheel_mode_go = False
+                                    self.wheel_mode_go = True#then gets set to false very shortly
                                     break
                         elif dist < constants["midpoint_hop_distance"]:
                             #if the other chair's y poisition is EXACTLY the same as my chair's y position,
@@ -180,7 +182,7 @@ class UI(LooiObject):
         
         
         if self.my_lift != None and self.my_chair != None:
-            if self.key(constants["unweight_key"], "down") or (self.wheel_mode and (self.mouse("middle", "down") or self.mouse("left", "down"))):
+            if self.key(constants["unweight_key"], "down") or (self.wheel_mode and (self.mouse("middle", "down"))):
                 self.fast_lifts = True
             self.world.view.x = self.my_lift.chair_positions[self.my_chair][0] + math.cos(self.my_lift.chair_angles[self.my_chair]) * self.chair_sit_forward_distance
             self.world.view.y = self.my_lift.chair_positions[self.my_chair][1] - constants["chair_sit_under_distance"]
@@ -374,9 +376,9 @@ class UI(LooiObject):
         seg = self.my_lift.track.segments[self.my_lift.chair_segments[self.my_chair]]
         self.vr_target = seg.vr * ((angle_distance(self.hr_target, seg.hr)/math.pi)*-2+1)
         if self.get_my_window().scroll_up:
-            self.hr_target -= constants["scroll_speed"]
+            self.hr_target -= constants["scroll_speed_lift"]
         if self.get_my_window().scroll_down:
-            self.hr_target += constants["scroll_speed"]
+            self.hr_target += constants["scroll_speed_lift"]
             
         
         #deal with hr target
@@ -591,6 +593,8 @@ class UI(LooiObject):
                 elif self.fall_clock == 180:
                     self.falling=False
                     self.fall_clock = 0
+                    self.wheel_mode_go = False
+                    self.turning = 0
                     return
                 else:
                     raise Exception("No")
@@ -946,14 +950,25 @@ class UI(LooiObject):
                         self.world.properties["y_momentum"] = 0
         else:#wheel mode
             if self.interface_mode == "game" or self.interface_mode == "can_move_temporarily":
+                self.press_timer -= 1
                 if not self.world.valid_floor(int(v.z/self.world.properties["horizontal_stretch"]), int(v.x/self.world.properties["horizontal_stretch"])):
                     return;
                 
-                if self.get_my_window().scroll_up:
-                    self.hr_target -= constants["scroll_speed"]
-                if self.get_my_window().scroll_down:
-                    self.hr_target += constants["scroll_speed"]
-                    
+                if self.world.properties["momentum"] > 0:
+                    if self.get_my_window().scroll_up:
+                        self.turning -= constants["scroll_speed"]
+                    if self.get_my_window().scroll_down:
+                        self.turning += constants["scroll_speed"]
+                    if self.turning > constants["turn_limit"]:
+                        self.turning = constants["turn_limit"]
+                    elif self.turning < -constants["turn_limit"]:
+                        self.turning = -constants["turn_limit"]
+                    self.hr_target += self.turning
+                else:
+                    if self.get_my_window().scroll_up:
+                        self.hr_target -= constants["scroll_speed_lift"]
+                    if self.get_my_window().scroll_down:
+                        self.hr_target += constants["scroll_speed_lift"]
                 
                 #deal with hr target
                 angle_d = angle_distance(self.hr_target, self.world.view.hor_rot)
@@ -981,9 +996,12 @@ class UI(LooiObject):
                     else: self.world.view.vert_rot -= angle_inc
                 else: self.world.view.vert_rot = self.vr_target
                 
-                
-                if self.mouse("right","pressed"):
-                    self.wheel_mode_go = not self.wheel_mode_go
+                if self.mouse("middle", "pressed"):
+                    self.press_timer = 10
+                if self.mouse("middle","released"):
+                    if self.press_timer > 0:
+                        self.wheel_mode_go = not self.wheel_mode_go
+                        self.turning = 0
                 
                 #calculate floor slope
                 p1,p2,p3 = self.xyz_of_current_triangle(v.z, v.x)
@@ -1009,7 +1027,7 @@ class UI(LooiObject):
                 fhorizontal = f_parallel * math.cos(equivalent_floor_slope)
                 if self.wheel_mode_go:
                     if equivalent_floor_slope > math.pi/30:
-                        if (self.mouse("middle", "down") or self.mouse("left", "down")):
+                        if (self.mouse("middle", "down")):
                             self.world.properties["momentum"] += fhorizontal
                             self.world.properties["momentum"] -= constants["wheel_mode_air_resistance"] * self.world.properties["momentum"]**2
                         else:
