@@ -349,6 +349,8 @@ class Chunk:
                     self.pan_chunk_squares["trees"].add_vertex(ur,color2365)
                     self.pan_chunk_squares["trees"].add_vertex(lr,color5689)
                     self.pan_chunk_squares["trees"].add_vertex(ll,color4587)
+                    
+                    """
                     #add the sky coverup squares (X pattern)
                     #first one is the cut the diagonal one
                     diagonal_y = (ur[1] + ll[1])/2
@@ -376,6 +378,7 @@ class Chunk:
                     self.pan_chunk_squares["trees"].add_vertex(ll,color4587)
                     self.pan_chunk_squares["trees"].add_vertex(p4,color4587)
                     self.pan_chunk_squares["trees"].add_vertex(p3,color2365)
+                    """
                     
                     #without trees
                     self.pan_chunk_squares["without"].add_vertex(ul,color1254)
@@ -1247,9 +1250,23 @@ class World(LooiObject):
         pass
         
     def paint(self):
+    
+        
         #draw sky
         self.draw_rect(0,0,self.get_my_window().get_internal_size()[0],self.get_my_window().get_internal_size()[1], self.properties["background_color"])
         glClear(GL_DEPTH_BUFFER_BIT)
+        
+        def setup_3d_infinite_ground():
+            gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 5, 6000 )
+            try:
+                glRotate(rad_to_deg(-(self.view.hor_rot-math.pi/2)), 0, 1, 0)
+                glRotate(rad_to_deg(-self.view.vert_rot), math.cos(self.view.hor_rot - math.pi/2), 0, -math.sin(self.view.hor_rot - math.pi/2))
+            except Exception as e:
+                pass
+        self.draw_quad_3d(-9999999, -100, -9999999, 9999999, -100, -9999999, 9999999, -100, 9999999, -9999999, -100, 9999999, Color(.8,.8,.8), setup_3d=setup_3d_infinite_ground)
+        glClear(GL_DEPTH_BUFFER_BIT)
+        
+        
         
         self.draw(self.get_chunk_load_grid())
         self.draw_mobile()

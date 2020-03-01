@@ -314,7 +314,11 @@ class UI(LooiObject):
             self.frames = 0
         self.frames += 1
     def step(self):
-            
+        
+        
+        
+        
+        
         self.fps_calc()
         if self.key(constants["scenery key"], "pressed"):self.scenery = not self.scenery
         
