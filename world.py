@@ -28,6 +28,7 @@ import texture
 import world_operations
 from PIL import Image
 from time import time
+from lift import Pole
 
 
 #improves performance. 
@@ -179,6 +180,9 @@ class Chunk:
         s = self.world.properties["horizontal_stretch"]
         
         if self.colors_changed or not isinstance(self.pan_chunk_squares, dict):
+            
+        
+        
             self.colors_changed=False
             side_length_in_sub_chunks = int(sub_chunks**.5)#how many sub chunks does this chunk have in each row?
             sub_chunk_side_length = int(cs/side_length_in_sub_chunks)#how many floors does each sub chunk have on each row?
@@ -188,41 +192,83 @@ class Chunk:
             #print("making",side_length_in_sub_chunks**2,"sub chunk squares")
             for scr in range(side_length_in_sub_chunks):
                 for scc in range(side_length_in_sub_chunks):
+                    start_z = int(ul_z + scr*sub_chunk_side_length - sub_chunk_side_length/2)
+                    start_x = int(ul_x + scc*sub_chunk_side_length - sub_chunk_side_length/2)
+                    
+                    
+                    
+                    
+                    #doing the gradient
+                    #we start with a shifted start_z and x  (- sub_chunk_side_length/2) so that we can 
+                    #calculate the gradients of the squares perfectly around each of the four corners
+                    #here, we are calculating each of the surrounding points' elevations
+                    """
+                    1 2 3
+                    4 5 6
+                    7 8 9
+                    
+                    """
+                    
+                    _1 = [start_x*s, self.world.get_elevation(start_z, start_x, scaled=True), start_z*s]
+                    _2 = [(start_x+sub_chunk_side_length)*s, self.world.get_elevation(start_z, start_x+sub_chunk_side_length, scaled=True), start_z*s]
+                    _4 = [(start_x)*s, self.world.get_elevation(start_z+sub_chunk_side_length, start_x, scaled=True), (start_z+sub_chunk_side_length)*s]
+                    _5 = [(start_x+sub_chunk_side_length)*s, self.world.get_elevation(start_z+sub_chunk_side_length, start_x+sub_chunk_side_length, scaled=True), (start_z+sub_chunk_side_length)*s]
+                    
+                    
+                    try:
+                        _3 = [(start_x+2*sub_chunk_side_length)*s, self.world.get_elevation(start_z, start_x+2*sub_chunk_side_length, scaled=True), start_z*s]
+                    except:
+                        _3 = [(start_x+2*sub_chunk_side_length)*s, self.world.get_elevation(start_z, start_x+sub_chunk_side_length, scaled=True), start_z*s]
+                    try:
+                        _6 = [(start_x+2*sub_chunk_side_length)*s, self.world.get_elevation(start_z+sub_chunk_side_length, start_x+2*sub_chunk_side_length, scaled=True), (start_z+sub_chunk_side_length)*s]
+                    except:
+                        _6 = [(start_x+2*sub_chunk_side_length)*s, self.world.get_elevation(start_z+sub_chunk_side_length, start_x+sub_chunk_side_length, scaled=True), (start_z+sub_chunk_side_length)*s]
+                    try:
+                        _7 = [(start_x)*s, self.world.get_elevation(start_z+2*sub_chunk_side_length, start_x, scaled=True), (start_z+2*sub_chunk_side_length)*s]
+                    except:
+                        _7 = [(start_x)*s, self.world.get_elevation(start_z+sub_chunk_side_length, start_x, scaled=True), (start_z+2*sub_chunk_side_length)*s]
+                    try:
+                        _8 = [(start_x+sub_chunk_side_length)*s, self.world.get_elevation(start_z+2*sub_chunk_side_length, start_x+sub_chunk_side_length, scaled=True), (start_z+2*sub_chunk_side_length)*s]
+                    except:
+                        _8 = [(start_x+sub_chunk_side_length)*s, self.world.get_elevation(start_z+sub_chunk_side_length, start_x+sub_chunk_side_length, scaled=True), (start_z+2*sub_chunk_side_length)*s]
+                    try:
+                        _9 = [(start_x+2*sub_chunk_side_length)*s, self.world.get_elevation(start_z+2*sub_chunk_side_length, start_x+2*sub_chunk_side_length, scaled=True), (start_z+2*sub_chunk_side_length)*s]
+                    except:
+                        _9 = [(start_x+2*sub_chunk_side_length)*s, self.world.get_elevation(start_z+sub_chunk_side_length, start_x+sub_chunk_side_length, scaled=True), (start_z+2*sub_chunk_side_length)*s]
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    def find_color(ul, ur, lr):
+                        #find hr and vr or the floor so we can use that to calculate the color
+                        hr, vr = normal.get_plane_rotation(ul[0],ul[1],ul[2],ur[0],ur[1],ur[2],lr[0],lr[1],lr[2])
+                        if vr < 0:
+                            vr = -vr
+                            hr = hr + math.pi
+                            
+                        return self.world.calculate_floor_color_single(hr, vr)
+                    
+                    
+                    
+                    #here, we are finding the colors of the four corners
+                    color1254 = find_color(_1, _2, _4)
+                    color2365 = find_color(_2, _3, _5)
+                    color4587 = find_color(_4, _5, _7)
+                    color5689 = find_color(_5, _6, _8)
+                    
+                    
+                    
                     start_z = ul_z + scr*sub_chunk_side_length
                     start_x = ul_x + scc*sub_chunk_side_length
+                    #we want start z and x to be at the top left of the chunk now
                     
                     
-                    
-                    #calculate this sub chunk's position
-                    ul = [start_x*s, self.world.get_elevation(start_z, start_x, scaled=True), start_z*s]
-                    ur = [(start_x+sub_chunk_side_length)*s, self.world.get_elevation(start_z, start_x+sub_chunk_side_length, scaled=True), start_z*s]
-                    lr = [(start_x+sub_chunk_side_length)*s, self.world.get_elevation(start_z+sub_chunk_side_length, start_x+sub_chunk_side_length, scaled=True), (start_z+sub_chunk_side_length)*s]
-                    ll = [(start_x)*s, self.world.get_elevation(start_z+sub_chunk_side_length, start_x, scaled=True), (start_z+sub_chunk_side_length)*s]
-                    
-                    #print(ul,ur,lr,ll)
-                    
-                    #for each floor in this sub chunk, use its shade to calculate the average color
-                    total_quads = 0
-                    color = [0,0,0]
-                    
-                    without_trees_total_quads = 0
-                    without_trees_color = [0,0,0]
+                    #here, we are adding objects to the pan chunk square
                     for r in range(start_z, start_z + sub_chunk_side_length):
                         for c in range(start_x, start_x + sub_chunk_side_length):
-                            floor_shade = self.world.get_proper_floor_color(r, c)[0]
-                            
-                            #with trees pcs
-                            color[0] += floor_shade
-                            color[1] += floor_shade
-                            color[2] += floor_shade
-                            total_quads += 1
-                            
-                            
-                            #without trees pcs
-                            without_trees_color[0] += floor_shade
-                            without_trees_color[1] += floor_shade
-                            without_trees_color[2] += floor_shade
-                            without_trees_total_quads += 1
                             
                             for obj in self.world.quads[r][c].containedObjects:
                                 if obj.__class__ == Tree:
@@ -244,46 +290,99 @@ class Chunk:
                                     self.pan_chunk_squares["trees"].add_vertex([real_x+wid*.7,real_y+base,real_z+wid*.7], tree_color)
                                     self.pan_chunk_squares["trees"].add_vertex([real_x+wid*.7,real_y+base,real_z-wid*.7], tree_color)
                                     self.pan_chunk_squares["trees"].add_vertex([real_x,real_y+hei,real_z], tree_color)
+                                if obj.__class__ == Pole:
                                     
-                                    #...
+                                    real_x = obj.real_x
+                                    real_z = obj.real_z
+                                    real_y = obj.real_y
                                     
-                                    #without trees pan chunk squares
-                                    #without_trees_color[0] += .3*8
-                                    #without_trees_color[1] += .5*8
-                                    #without_trees_color[2] += .19*8
+                                    base = -999999
+                                    wid = .3
                                     
-                                    #without_trees_total_quads+=8
+                                    hei = 10
+                                    brightness = self.world.get_proper_floor_color(r, c)[0]
+                                    pole_color = [.15,.15,.15]
+                                    
+                                    t_color = [.7,.7,.7]
+                                    t_wid = 1.3
+                                    t_h = .8
                                     
                                     
-                    #with trees
-                    color[0]/=total_quads
-                    color[1]/=total_quads
-                    color[2]/=total_quads
+                                    self.pan_chunk_squares["trees"].add_vertex([real_x-wid,real_y+hei,real_z], pole_color)
+                                    self.pan_chunk_squares["trees"].add_vertex([real_x+wid*.7,real_y+hei,real_z+wid*.7], pole_color)
+                                    self.pan_chunk_squares["trees"].add_vertex([real_x+wid*.7,real_y+hei,real_z-wid*.7], pole_color)
+                                    self.pan_chunk_squares["trees"].add_vertex([real_x,real_y+base,real_z], pole_color)
+                                    
+                                    
+                                    self.pan_chunk_squares["trees"].add_vertex([real_x+t_wid*math.cos(obj.angle+math.pi/2),real_y+hei,real_z-t_wid*math.sin(obj.angle+math.pi/2)], t_color)
+                                    self.pan_chunk_squares["trees"].add_vertex([real_x+t_wid*math.cos(obj.angle+math.pi/2),real_y+hei+t_h,real_z-t_wid*math.sin(obj.angle+math.pi/2)], t_color)
+                                    self.pan_chunk_squares["trees"].add_vertex([real_x+t_wid*math.cos(obj.angle-math.pi/2),real_y+hei+t_h,real_z-t_wid*math.sin(obj.angle-math.pi/2)], t_color)
+                                    self.pan_chunk_squares["trees"].add_vertex([real_x+t_wid*math.cos(obj.angle-math.pi/2),real_y+hei,real_z-t_wid*math.sin(obj.angle-math.pi/2)], t_color)
+                                    
+                                    
                     
+                    
+                    #now, we want the actual locations of the four corners
+                    _1 = [start_x*s, self.world.get_elevation(start_z, start_x, scaled=True), start_z*s]
+                    _2 = [(start_x+sub_chunk_side_length)*s, self.world.get_elevation(start_z, start_x+sub_chunk_side_length, scaled=True), start_z*s]
+                    _4 = [(start_x)*s, self.world.get_elevation(start_z+sub_chunk_side_length, start_x, scaled=True), (start_z+sub_chunk_side_length)*s]
+                    _5 = [(start_x+sub_chunk_side_length)*s, self.world.get_elevation(start_z+sub_chunk_side_length, start_x+sub_chunk_side_length, scaled=True), (start_z+sub_chunk_side_length)*s]
+                    
+                    
+                    
+                    
+                    
+                    
+                    ul = _1
+                    ur = _2
+                    lr = _5
+                    ll = _4
+                    
+                    
+                    
+                    
+                    #now, we add everything to the vertex handler
+                    
+                    
+                    #with trees
+                    self.pan_chunk_squares["trees"].add_vertex(ul,color1254)
+                    self.pan_chunk_squares["trees"].add_vertex(ur,color2365)
+                    self.pan_chunk_squares["trees"].add_vertex(lr,color5689)
+                    self.pan_chunk_squares["trees"].add_vertex(ll,color4587)
+                    #add the sky coverup squares (X pattern)
+                    #first one is the cut the diagonal one
+                    diagonal_y = (ur[1] + ll[1])/2
+                    our_y = (ul[1] + lr[1])/2
+                    if diagonal_y < our_y:
+                        p1=[ul[0],ul[1]-(our_y-diagonal_y),ul[2]]
+                        p2=[lr[0],lr[1]-(our_y-diagonal_y),lr[2]]
+                    else:
+                        p1=[ul[0],ul[1],ul[2]]
+                        p2=[lr[0],lr[1],lr[2]]
+                    p3=list(ul)
+                    p3[1] -= 100
+                    p4=list(lr)
+                    p4[1] -= 100
+                    self.pan_chunk_squares["trees"].add_vertex(p1,color1254)
+                    self.pan_chunk_squares["trees"].add_vertex(p2,color5689)
+                    self.pan_chunk_squares["trees"].add_vertex(p4,color5689)
+                    self.pan_chunk_squares["trees"].add_vertex(p3,color1254)
+                    #second one is the along the diagonal one
+                    p3=list(ur)
+                    p3[1] -= 100
+                    p4=list(ll)
+                    p4[1] -= 100
+                    self.pan_chunk_squares["trees"].add_vertex(ur,color2365)
+                    self.pan_chunk_squares["trees"].add_vertex(ll,color4587)
+                    self.pan_chunk_squares["trees"].add_vertex(p4,color4587)
+                    self.pan_chunk_squares["trees"].add_vertex(p3,color2365)
                     
                     #without trees
-                    without_trees_color[0]/=without_trees_total_quads
-                    without_trees_color[1]/=without_trees_total_quads
-                    without_trees_color[2]/=without_trees_total_quads
-                    
-                    
-                    
-                    
-                    
-                    #now we know the corner positions and the color. we can add the sub chunk to the array
-                    
-                    #with trees
-                    self.pan_chunk_squares["trees"].add_vertex(ul,color)
-                    self.pan_chunk_squares["trees"].add_vertex(ur,color)
-                    self.pan_chunk_squares["trees"].add_vertex(lr,color)
-                    self.pan_chunk_squares["trees"].add_vertex(ll,color)
-                    
-                    #without trees
-                    self.pan_chunk_squares["without"].add_vertex(ul,without_trees_color)
-                    self.pan_chunk_squares["without"].add_vertex(ur,without_trees_color)
-                    self.pan_chunk_squares["without"].add_vertex(lr,without_trees_color)
-                    self.pan_chunk_squares["without"].add_vertex(ll,without_trees_color)
-                            
+                    self.pan_chunk_squares["without"].add_vertex(ul,color1254)
+                    self.pan_chunk_squares["without"].add_vertex(ur,color2365)
+                    self.pan_chunk_squares["without"].add_vertex(lr,color5689)
+                    self.pan_chunk_squares["without"].add_vertex(ll,color4587)
+        
         #print("pcs",self.pan_chunk_squares.vertices,"colors",self.pan_chunk_squares.vertex_colors)
         if trees:
             return self.pan_chunk_squares["trees"]
@@ -801,7 +900,7 @@ class World(LooiObject):
             hr = hr + math.pi
             
         return hr,vr
-        
+    
             
             
     
