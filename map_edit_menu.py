@@ -212,6 +212,7 @@ def settings(menu):
     setting["Sub Chunk Squares"] = menu.ui.world.properties["sub_chunk_squares"]
     setting["Sun Angle"] = menu.ui.world.properties["sun_angle"]
     setting["Line of Sight"] = menu.ui.world.view.line_of_sight
+    setting["Line of Sight 2"] = menu.ui.world.properties["line_of_sight2"]
     setting["Movement Speed"] = menu.ui.world.view.speed
     setting["Rotation Speed"] = menu.ui.world.view.rot_spd
     setting["Chair Time Interval Detachable"] = menu.ui.world.properties["chair_time_distance_detachable"]
@@ -284,6 +285,7 @@ def settings(menu):
             menu.ui.world.properties["terrain_mod_step_size(map_editor)"] = float(new_settings["Map Editor: Terrain Mod Step Size"])
             menu.ui.world.properties["build_chair_pole_distance(map_editor)"] = float(new_settings["Map Editor: Lift Build Pole Distance"])
             menu.ui.world.properties["bump_placement_chance(map_editor)"] = float(new_settings["Map Editor: Bump Placement Chance"])
+            menu.ui.world.properties["line_of_sight2"] = float(new_settings["Line of Sight 2"])
             
             
             

@@ -52,6 +52,7 @@ def settings(menu):
 
     setting = OrderedDict()
     setting["Line of Sight"] = menu.ui.world.view.line_of_sight
+    setting["Line of Sight 2"] = menu.ui.world.properties["line_of_sight2"]
     setting["Rotation Speed"] = menu.ui.world.view.rot_spd
     setting["Chair Time Interval Detachable"] = menu.ui.world.properties["chair_time_distance_detachable"]
     setting["Chair Time Interval Gondola"] = menu.ui.world.properties["chair_time_distance_gondola"]
@@ -95,7 +96,7 @@ def settings(menu):
             menu.ui.world.properties["chair_time_distance_detachable"] = float(new_settings["Chair Time Interval Detachable"])
             menu.ui.world.properties["chair_time_distance_gondola"] = float(new_settings["Chair Time Interval Gondola"])
             menu.ui.world.properties["chair_time_distance_fixed"] = float(new_settings["Chair Time Interval Fixed Grip"])
-    
+            menu.ui.world.properties["line_of_sight2"] = float(new_settings["Line of Sight 2"])
             
             
             #then do the settings that require lifts to redo chairs

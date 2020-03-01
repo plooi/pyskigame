@@ -291,4 +291,9 @@ def read(path, new_version = True):
         loading.update(i/len(executables)*100)
     print("loading 3/3 took",time() - t)
     loading.update(100)
+    
+    #for backward compatibility
+    if "line_of_sight2" not in the_world.properties:
+        the_world.properties["line_of_sight2"] = 8
+    
     return the_world

@@ -24,14 +24,14 @@ x = {
     "ice_slope" : (math.pi/5.5,math.pi/7.5),#(math.pi/5.5,math.pi/10),#(math.pi/5.5,math.pi/8.5),
     "no_ice_zone" : math.pi/3,
     "crash_speed" : .15,
-    "wheel_mode_speed" : .55,
-    "scroll_speed": math.pi/300,#math.pi/40,
+    "ski_speed" : 1.1,#.55,
+    "scroll_speed": math.pi/20000,#math.pi/40,
     "scroll_speed_lift" : math.pi/40,
     "turn_limit" : math.pi/20,
     
     
-    "air_resistance" : .009,#.0068,
-    "wheel_mode_air_resistance" : .008,
+    "friction" : .018,#.0068,]
+    "g_force" : .019,
     
     "ice_color" : Color(.84,.87,.9),
     "ice_radius" : 27,#scaled value
@@ -48,6 +48,7 @@ x = {
     "no_look_key" : "left",
     "scenery key" : "tab",
     "unweight_key" : "space",
+    "action_key" : "space",
     "low_speed_stop_key" : "b",
     
     "scaled_distance_to_meters" : 1.4,

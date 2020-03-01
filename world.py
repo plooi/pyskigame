@@ -170,7 +170,7 @@ class Chunk:
     
     
     """
-    def get_pan_chunk_squares(self, chunk_z, chunk_x):
+    def get_pan_chunk_squares(self, chunk_z, chunk_x, trees=True):
         sub_chunks=self.world.properties["sub_chunk_squares"]
         
         cs = self.world.properties["chunk_size"]
@@ -178,11 +178,11 @@ class Chunk:
         ul_x = chunk_x * cs
         s = self.world.properties["horizontal_stretch"]
         
-        if self.colors_changed:
+        if self.colors_changed or not isinstance(self.pan_chunk_squares, dict):
             self.colors_changed=False
             side_length_in_sub_chunks = int(sub_chunks**.5)#how many sub chunks does this chunk have in each row?
             sub_chunk_side_length = int(cs/side_length_in_sub_chunks)#how many floors does each sub chunk have on each row?
-            self.pan_chunk_squares = []
+            self.pan_chunk_squares = {"trees":VertexHandler(3,initial_capacity=50), "without" : VertexHandler(3,initial_capacity=25)}
             
             #for each sub chunk within this chunk
             #print("making",side_length_in_sub_chunks**2,"sub chunk squares")
@@ -204,36 +204,93 @@ class Chunk:
                     #for each floor in this sub chunk, use its shade to calculate the average color
                     total_quads = 0
                     color = [0,0,0]
+                    
+                    without_trees_total_quads = 0
+                    without_trees_color = [0,0,0]
                     for r in range(start_z, start_z + sub_chunk_side_length):
                         for c in range(start_x, start_x + sub_chunk_side_length):
                             floor_shade = self.world.get_proper_floor_color(r, c)[0]
+                            
+                            #with trees pcs
                             color[0] += floor_shade
                             color[1] += floor_shade
                             color[2] += floor_shade
                             total_quads += 1
+                            
+                            
+                            #without trees pcs
+                            without_trees_color[0] += floor_shade
+                            without_trees_color[1] += floor_shade
+                            without_trees_color[2] += floor_shade
+                            without_trees_total_quads += 1
+                            
                             for obj in self.world.quads[r][c].containedObjects:
                                 if obj.__class__ == Tree:
-                                    color[0] += .3*8
-                                    color[1] += .5*8
-                                    color[2] += .19*8
                                     
-                                    total_quads+=8
+                                    #with trees pan chunk squares
+                                    real_x = (c+.5)*self.world.properties["horizontal_stretch"]
+                                    real_z = (r+.5)*self.world.properties["horizontal_stretch"]
+                                    real_y = self.world.get_elevation_continuous(r+.5, c+.5)*self.world.properties["vertical_stretch"]
+                                    
+                                    base = -5
+                                    wid = 1.7
+                                    
+                                    hei = 10
+                                    brightness = self.world.get_proper_floor_color(r, c)[0]
+                                    tree_color = [brightness*.45,brightness*.7,brightness*.3]
+                                    
+                                    
+                                    self.pan_chunk_squares["trees"].add_vertex([real_x-wid,real_y+base,real_z], tree_color)
+                                    self.pan_chunk_squares["trees"].add_vertex([real_x+wid*.7,real_y+base,real_z+wid*.7], tree_color)
+                                    self.pan_chunk_squares["trees"].add_vertex([real_x+wid*.7,real_y+base,real_z-wid*.7], tree_color)
+                                    self.pan_chunk_squares["trees"].add_vertex([real_x,real_y+hei,real_z], tree_color)
+                                    
+                                    #...
+                                    
+                                    #without trees pan chunk squares
+                                    #without_trees_color[0] += .3*8
+                                    #without_trees_color[1] += .5*8
+                                    #without_trees_color[2] += .19*8
+                                    
+                                    #without_trees_total_quads+=8
+                                    
+                                    
+                    #with trees
                     color[0]/=total_quads
                     color[1]/=total_quads
                     color[2]/=total_quads
                     
+                    
+                    #without trees
+                    without_trees_color[0]/=without_trees_total_quads
+                    without_trees_color[1]/=without_trees_total_quads
+                    without_trees_color[2]/=without_trees_total_quads
+                    
+                    
+                    
+                    
+                    
                     #now we know the corner positions and the color. we can add the sub chunk to the array
-                    self.pan_chunk_squares.append(ul)
-                    self.pan_chunk_squares.append(ur)
-                    self.pan_chunk_squares.append(lr)
-                    self.pan_chunk_squares.append(ll)
-                    self.pan_chunk_squares.append(color)
+                    
+                    #with trees
+                    self.pan_chunk_squares["trees"].add_vertex(ul,color)
+                    self.pan_chunk_squares["trees"].add_vertex(ur,color)
+                    self.pan_chunk_squares["trees"].add_vertex(lr,color)
+                    self.pan_chunk_squares["trees"].add_vertex(ll,color)
+                    
+                    #without trees
+                    self.pan_chunk_squares["without"].add_vertex(ul,without_trees_color)
+                    self.pan_chunk_squares["without"].add_vertex(ur,without_trees_color)
+                    self.pan_chunk_squares["without"].add_vertex(lr,without_trees_color)
+                    self.pan_chunk_squares["without"].add_vertex(ll,without_trees_color)
                             
-        #print(self.pan_chunk_squares)
-        return self.pan_chunk_squares
+        #print("pcs",self.pan_chunk_squares.vertices,"colors",self.pan_chunk_squares.vertex_colors)
+        if trees:
+            return self.pan_chunk_squares["trees"]
+        else:
+            return self.pan_chunk_squares["without"]
         
-    def get_pan_chunk_square(self, chunk_z, chunk_x):#This is for backward compatibility
-        return self.get_pan_chunk_squares(chunk_z, chunk_x)[0:5]
+        
 class World(LooiObject):
     
 ###################################
@@ -259,6 +316,7 @@ class World(LooiObject):
             "height" : -1,
             "width_chunks" : -1,
             "height_chunks" : -1,
+            "line_of_sight2" : 8,#how many chunks away before the trees start to disappear
             "horizontal_stretch" : 4,
             "vertical_stretch" : .15,
             "sun_angle" : 0,
@@ -1108,7 +1166,7 @@ class World(LooiObject):
     def get_chunk_load_grid(self):
         chunk_load_grid =[]
         for r in range(self.get_height_chunks()):
-            chunk_load_grid.append([0]*self.get_width_chunks())
+            chunk_load_grid.append([-1]*self.get_width_chunks())
         
         unscaled_view_z = self.view.z/self.properties["horizontal_stretch"]
         unscaled_view_x = self.view.x/self.properties["horizontal_stretch"]
@@ -1118,20 +1176,43 @@ class World(LooiObject):
         
         cs = self.properties["chunk_size"]
         los =self.view.line_of_sight
+        los2 =self.properties["line_of_sight2"]
         
         def nearest_multiple(x, m):
             return int(x/m + .5)*m
         
-        for z in range(nearest_multiple(unscaled_view_z - los*cs, cs), nearest_multiple(unscaled_view_z + los*cs, cs)+1, cs):
-            for x in range(nearest_multiple(unscaled_view_x - los*cs, cs), nearest_multiple(unscaled_view_x + los*cs, cs)+1, cs):
+        view_angle = math.pi*.35
+        
+        
+        for z in range(nearest_multiple(unscaled_view_z - los2*cs, cs), nearest_multiple(unscaled_view_z + los2*cs, cs)+1, cs):
+            for x in range(nearest_multiple(unscaled_view_x - los2*cs, cs), nearest_multiple(unscaled_view_x + los2*cs, cs)+1, cs):
                 
+                
+                #here we are testing whether the chunk at least has trees or not
+                if ( (z-unscaled_view_z)**2 + (x-unscaled_view_x)**2 )**.5 <= self.properties["line_of_sight2"]*cs:
+                    if view_angle > normal.angle_distance(self.view.hor_rot, util.get_angle(unscaled_view_z, unscaled_view_x, z, x)):
+                        #then all four neighboring chunks have trees
+                        cz = int(z/cs)
+                        cx = int(x/cs)
+                        
+                        if self.valid_chunk(cz, cx): chunk_load_grid[cz][cx] = 0
+                        if self.valid_chunk(cz-1, cx-1): chunk_load_grid[cz-1][cx-1] = 0
+                        if self.valid_chunk(cz, cx-1): chunk_load_grid[cz][cx-1] = 0
+                        if self.valid_chunk(cz-1, cx): chunk_load_grid[cz-1][cx] = 0
+                       
+                
+                
+                
+                
+                #here we are testing whether the chunk is active or not 
+                #this has precedence over chunks with trees, so it is executed last
                 if ( (z-unscaled_view_z)**2 + (x-unscaled_view_x)**2 )**.5 <= los*cs:#check if this chunk intersection point is within the los of player
+                    
                     
                     if (  
                             ((z-unscaled_view_z)**2 + (x-unscaled_view_x)**2)**.5 <= .6*cs#1.2*cs #!!!the chunk must either be super close to the player...
                             or 
-                            #math.pi/2 > normal.angle_distance(self.view.hor_rot, util.get_angle(unscaled_view_z, unscaled_view_x, z, x))  ):#!!!or the player must be looking at the chunk
-                            math.pi*.35 > normal.angle_distance(self.view.hor_rot, util.get_angle(unscaled_view_z, unscaled_view_x, z, x))  ):#!!!or the player must be looking at the chunk
+                            view_angle > normal.angle_distance(self.view.hor_rot, util.get_angle(unscaled_view_z, unscaled_view_x, z, x))  ):#!!!or the player must be looking at the chunk
                         #then all four neighboring chunks are active
                         cz = int(z/cs)
                         cx = int(x/cs)
@@ -1140,8 +1221,10 @@ class World(LooiObject):
                         if self.valid_chunk(cz-1, cx-1): chunk_load_grid[cz-1][cx-1] = 1
                         if self.valid_chunk(cz, cx-1): chunk_load_grid[cz][cx-1] = 1
                         if self.valid_chunk(cz-1, cx): chunk_load_grid[cz-1][cx] = 1
-                            
-                       
+                        
+                        
+                #otherwise, the chunk is -1, which is no trees.
+                
         return chunk_load_grid
     def draw_mobile(self):
         mobile_vertices = numpy.array(self.mobile_vertices)
@@ -1196,7 +1279,8 @@ class World(LooiObject):
         
         
         #iterate through every single chunk
-        
+        pan_chunk_quads = 0
+        chunk_quads = 0
         
         
         for z in range(height):
@@ -1211,59 +1295,28 @@ class World(LooiObject):
                     tex_vertices_draw.append(self.chunks[z][x].tvh.vertices)
                     tex_coords_draw.append(self.chunks[z][x].tvh.vertex_colors)
                     
-                    #if the pan chunk square is showing, get rid of it
-                    if self.chunks[z][x].pan_chunk_square_pointers != None:
-                        for pcs in self.chunks[z][x].pan_chunk_square_pointers:
-                            self.pan_chunk_squares.rm_vertex(pcs)
-                            self.pan_chunk_squares.rm_vertex(pcs+1)
-                            self.pan_chunk_squares.rm_vertex(pcs+2)
-                            self.pan_chunk_squares.rm_vertex(pcs+3)
-                        self.chunks[z][x].pan_chunk_square_pointers = None
-                else:#if the chunk load grid says to not load that chunk
                     
-                    #if the pan chunk square is not added then add it
-                    if self.chunks[z][x].pan_chunk_square_pointers == None:
-                        pan_chunk_squares = self.chunks[z][x].get_pan_chunk_squares(z, x)
-                        self.chunks[z][x].pan_chunk_square_pointers = []
-                        for i in range(0, len(pan_chunk_squares), 5):
-                            p1 = pan_chunk_squares[i]
-                            p2 = pan_chunk_squares[i+1]
-                            p3 = pan_chunk_squares[i+2]
-                            p4 = pan_chunk_squares[i+3]
-                            color = pan_chunk_squares[i+4]
-                            
-                            self.chunks[z][x].pan_chunk_square_pointers.append(self.pan_chunk_squares.add_vertex(p1, color))
-                            self.pan_chunk_squares.add_vertex(p2, color)
-                            self.pan_chunk_squares.add_vertex(p3, color)
-                            self.pan_chunk_squares.add_vertex(p4, color)
-                        
-                    elif self.chunks[z][x].colors_changed:
-                        for pcs in self.chunks[z][x].pan_chunk_square_pointers:
-                            self.pan_chunk_squares.rm_vertex(pcs)
-                            self.pan_chunk_squares.rm_vertex(pcs+1)
-                            self.pan_chunk_squares.rm_vertex(pcs+2)
-                            self.pan_chunk_squares.rm_vertex(pcs+3)
-                            
-                        pan_chunk_squares = self.chunks[z][x].get_pan_chunk_squares(z, x)
-                        self.chunks[z][x].pan_chunk_square_pointers = []
-                        for i in range(0, len(pan_chunk_squares), 5):
-                            p1 = pan_chunk_squares[i]
-                            p2 = pan_chunk_squares[i+1]
-                            p3 = pan_chunk_squares[i+2]
-                            p4 = pan_chunk_squares[i+3]
-                            color = pan_chunk_squares[i+4]
-                            
-                            self.chunks[z][x].pan_chunk_square_pointers.append(self.pan_chunk_squares.add_vertex(p1, color))
-                            self.pan_chunk_squares.add_vertex(p2, color)
-                            self.pan_chunk_squares.add_vertex(p3, color)
-                            self.pan_chunk_squares.add_vertex(p4, color)
-                        
+                    chunk_quads += len(self.chunks[z][x].tvh.vertices) + len(self.chunks[z][x].tvh.vertices)
+                
+                elif chunk_load_grid[z][x] == 0:
+                    pcsquares = self.chunks[z][x].get_pan_chunk_squares(z, x)
+                    vertices_draw.append(pcsquares.vertices)
+                    colors_draw.append(pcsquares.vertex_colors)
                     
+                    pan_chunk_quads += len(pcsquares.vertices)
+                elif chunk_load_grid[z][x] == -1:
+                    pcsquares = self.chunks[z][x].get_pan_chunk_squares(z, x, trees=False)
+                    vertices_draw.append(pcsquares.vertices)
+                    colors_draw.append(pcsquares.vertex_colors)
+                    
+                    pan_chunk_quads += len(pcsquares.vertices)
+                
+                
         
         
         #add the pan_chunk_squares to all the stuff that's gonna be drawn
-        vertices_draw.append(self.pan_chunk_squares.vertices)
-        colors_draw.append(self.pan_chunk_squares.vertex_colors)
+        #vertices_draw.append(self.pan_chunk_squares.vertices)
+        #colors_draw.append(self.pan_chunk_squares.vertex_colors)
         
         ###NOW vertices draw and colors draw contain all the static objects we want to draw
         
