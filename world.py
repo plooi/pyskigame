@@ -251,7 +251,10 @@ class Chunk:
                             vr = -vr
                             hr = hr + math.pi
                             
-                        return self.world.calculate_floor_color_single(hr, vr)
+                        ret = self.world.calculate_floor_color(hr, vr)
+                        ret[2]*=1.065
+                        if ret[2] > 1: ret[2] = 1#make it blue
+                        return ret
                     
                     
                     
