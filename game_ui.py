@@ -269,7 +269,7 @@ class UI(LooiObject):
             if self.falling == True:
                 vol = 1
         else:
-            vol = self.world.properties["momentum"] / 1
+            vol = self.world.properties["momentum"] / .85
         if vol>1:vol=1
         if vol < .17: vol=.17
         self.wind_sound.set_volume(vol)
