@@ -1278,10 +1278,7 @@ class World(LooiObject):
         self.draw_rect(0,0,self.get_my_window().get_internal_size()[0],self.get_my_window().get_internal_size()[1], constants["tree_background_color"])
         glClear(GL_DEPTH_BUFFER_BIT)
         
-        def setup_3d_no_trans_no_rot():
-            gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 5, 6000 )
-        #self.draw_quad_3d(-9999999, -100, -9999999, 9999999, -100, -9999999, 9999999, -100, 9999999, -9999999, -100, 9999999, Color(.8,.8,.8), setup_3d=setup_3d_infinite_ground)
-        #glClear(GL_DEPTH_BUFFER_BIT)
+        
         
         
         
@@ -1289,11 +1286,24 @@ class World(LooiObject):
         self.draw_mobile()
         
         
+        #draw sky, and infinite ground (sun is drawn by game ui)
+        #def setup_3d_no_trans_no_rot(): gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 5, 6000 )
+        def setup_3d_no_trans(): 
+            gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 5, 6000 )
+            try:
+                glRotate(rad_to_deg(-(math.pi/2-math.pi/2)), 0, 1, 0)
+                glRotate(rad_to_deg(-self.view.vert_rot), math.cos(math.pi/2 - math.pi/2), 0, -math.sin(math.pi/2 - math.pi/2))
+            except Exception as e:
+                pass
         
-        self.draw_quad_3d(-9999999, -9999999, -5800, 9999999, -9999999, -5800,9999999, 9999999, -5800, -9999999, 9999999, -5800, constants["background_color"], setup_3d=setup_3d_no_trans_no_rot)
         
         
-        #self.draw_image_3d(-5,-5,-5,-5,5,-5,5,5,-5,5,-5,-5, image("../Transparent.png"), setup_3d=self.setup_3d)
+        
+        self.draw_quad_3d(-9999999, 0, -5800, 9999999, 0, -5800,9999999, -4000, 1000, -9999999, -4000, 1000, Color(.85,.85,.85*1.065), setup_3d=setup_3d_no_trans)#draw infinite ground
+        #glClear(GL_DEPTH_BUFFER_BIT)
+        self.draw_quad_3d(-9999999, 0, -5800, 9999999, 0, -5800,9999999, 5000, 300, -9999999, 5000, 300, constants["background_color"], setup_3d=setup_3d_no_trans)#draw Sky
+        
+        
         
         
         
