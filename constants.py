@@ -58,7 +58,7 @@ x = {
     "super_blurry_chair_model_distance" :330,
     
     "background_color" : Color(.7,.7,1),
-    "tree_background_color" : Color(0,.4,.0),
+    "tree_background_color" : Color(.9,.93,.9),#Color(0,.4,.0),
     
     
     
