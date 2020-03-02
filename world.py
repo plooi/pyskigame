@@ -1287,7 +1287,7 @@ class World(LooiObject):
         
         
         #draw sky, and infinite ground (sun is drawn by game ui)
-        #def setup_3d_no_trans_no_rot(): gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 5, 6000 )
+        def setup_3d_no_trans_no_rot(): gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 5, 6000 )
         def setup_3d_no_trans(): 
             gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 5, 6000 )
             try:
@@ -1299,9 +1299,9 @@ class World(LooiObject):
         
         
         
-        self.draw_quad_3d(-9999999, 0, -5800, 9999999, 0, -5800,9999999, -4000, 1000, -9999999, -4000, 1000, Color(.85,.85,.85*1.065), setup_3d=setup_3d_no_trans)#draw infinite ground
+        #self.draw_quad_3d(-9999999, 0, -5800, 9999999, 0, -5800,9999999, -4000, 1000, -9999999, -4000, 1000, Color(.85,.85,.85*1.065), setup_3d=setup_3d_no_trans_no_rot)#draw infinite ground
         #glClear(GL_DEPTH_BUFFER_BIT)
-        self.draw_quad_3d(-9999999, 0, -5800, 9999999, 0, -5800,9999999, 5000, 300, -9999999, 5000, 300, constants["background_color"], setup_3d=setup_3d_no_trans)#draw Sky
+        self.draw_quad_3d(-9999999, -9999999, -5800, 9999999, -9999999, -5800, 9999999, 9999999, -5800, -9999999, 9999999, -5800,constants["background_color"], setup_3d=setup_3d_no_trans_no_rot)#draw Sky
         
         
         
