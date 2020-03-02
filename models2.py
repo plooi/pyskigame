@@ -41,7 +41,7 @@ def tree_design_1(shade=.8,scale=1.4):
     #leaf_width = 1*scale#.7
     
     #with alpha
-    leaf_length = 7*scale
+    leaf_length = 6.5*scale#7*scale
     leaf_width = 2*scale#.7
     
     
@@ -112,7 +112,7 @@ def tree_design_1(shade=.8,scale=1.4):
         #ret += leaf(i*2.333*math.pi/3,-math.pi/3 - ( (i/n)**2*.6+.4 )*math.pi/8,leaf_length - ( (i/n)*.6+.4 )*2, leaf_width - ( (i/n)*.6+.4 )*.6,( ((i/n)**2)*.5+.5 ) * (tree_height+1.5))
         
         #with alpha texture
-        ret += leaf(random()*1000,-math.pi/3.6 - ( (i/n)**2*.6+.4 )*math.pi/8,leaf_length - ( (i/n)*.6+.4 )*2, leaf_width - ( (i/n)*.6+.4 )*.6,( ((i/n)**1.4)*.5+.5 ) * (tree_height+2.5))
+        ret += leaf(random()*math.pi*2,-math.pi/3.2 - ( (i/n)**2*.6+.4 )*math.pi/8,leaf_length - ( (i/n)*.6+.4 )*2, leaf_width - ( (i/n)*.6+.4 )*.6,( ((i/n)**1.4)*.5+.5 ) * (tree_height+2.5))
         ret.append(leaf_color)
     return ret
         
