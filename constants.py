@@ -55,9 +55,10 @@ x = {
     
     "full_chair_model_distance" : 75,
     "blurry_chair_model_distance" : 180,
-    "super_blurry_chair_model_distance" :330
+    "super_blurry_chair_model_distance" :330,
     
-    
+    "background_color" : Color(.7,.7,1),
+    "tree_background_color" : Color(0,.4,.0),
     
     
     

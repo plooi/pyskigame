@@ -151,8 +151,10 @@ class Chunk:
         self.vh = VertexHandler(3)#vertex handler to store all non-moving drawables in this chunk
         self.tvh = texture.new_texture_handler(initial_capacity=world.properties["chunk_size"]**2+1)
         
+        
         #is this even used???
         self.pan_chunk_square_pointers = None #list of pointers to the locations of the pan chunk squares in the "vertex buffer" (None if not added)
+        
         
         self.world = world
         
@@ -279,11 +281,14 @@ class Chunk:
                                     real_y = self.world.get_elevation_continuous(r+.5, c+.5)*self.world.properties["vertical_stretch"]
                                     
                                     base = -5
-                                    wid = 1.7
+                                    wid = 3
                                     
-                                    hei = 10
+                                    hei = 14
                                     brightness = self.world.get_proper_floor_color(r, c)[0]
-                                    tree_color = [brightness*.45,brightness*.7,brightness*.3]
+                                    B = brightness**2
+                                    if B < .35:B = .35
+                                    #tree_color = [brightness*.45,brightness*.7,brightness*.3]
+                                    tree_color = [B*.3,B*.6,B*.08]
                                     
                                     
                                     self.pan_chunk_squares["trees"].add_vertex([real_x-wid,real_y+base,real_z], tree_color)
@@ -344,47 +349,61 @@ class Chunk:
                     #now, we add everything to the vertex handler
                     
                     
+                    #without trees
+                    self.pan_chunk_squares["without"].add_vertex(ul,color1254)
+                    self.pan_chunk_squares["without"].add_vertex(ur,color2365)
+                    self.pan_chunk_squares["without"].add_vertex(lr,color5689)
+                    self.pan_chunk_squares["without"].add_vertex(ll,color4587)
+                    
                     #with trees
                     self.pan_chunk_squares["trees"].add_vertex(ul,color1254)
                     self.pan_chunk_squares["trees"].add_vertex(ur,color2365)
                     self.pan_chunk_squares["trees"].add_vertex(lr,color5689)
                     self.pan_chunk_squares["trees"].add_vertex(ll,color4587)
                     
-                    """
-                    #add the sky coverup squares (X pattern)
-                    #first one is the cut the diagonal one
-                    diagonal_y = (ur[1] + ll[1])/2
-                    our_y = (ul[1] + lr[1])/2
-                    if diagonal_y < our_y:
-                        p1=[ul[0],ul[1]-(our_y-diagonal_y),ul[2]]
-                        p2=[lr[0],lr[1]-(our_y-diagonal_y),lr[2]]
-                    else:
-                        p1=[ul[0],ul[1],ul[2]]
-                        p2=[lr[0],lr[1],lr[2]]
-                    p3=list(ul)
-                    p3[1] -= 100
-                    p4=list(lr)
-                    p4[1] -= 100
-                    self.pan_chunk_squares["trees"].add_vertex(p1,color1254)
-                    self.pan_chunk_squares["trees"].add_vertex(p2,color5689)
-                    self.pan_chunk_squares["trees"].add_vertex(p4,color5689)
-                    self.pan_chunk_squares["trees"].add_vertex(p3,color1254)
-                    #second one is the along the diagonal one
-                    p3=list(ur)
-                    p3[1] -= 100
-                    p4=list(ll)
-                    p4[1] -= 100
-                    self.pan_chunk_squares["trees"].add_vertex(ur,color2365)
-                    self.pan_chunk_squares["trees"].add_vertex(ll,color4587)
-                    self.pan_chunk_squares["trees"].add_vertex(p4,color4587)
-                    self.pan_chunk_squares["trees"].add_vertex(p3,color2365)
-                    """
                     
-                    #without trees
-                    self.pan_chunk_squares["without"].add_vertex(ul,color1254)
-                    self.pan_chunk_squares["without"].add_vertex(ur,color2365)
-                    self.pan_chunk_squares["without"].add_vertex(lr,color5689)
-                    self.pan_chunk_squares["without"].add_vertex(ll,color4587)
+                    #add the sky coverup squares
+                    def cmd(point):#short for copy move down. Takes a point (list x,y,z) and copies it and moves it down the y axis a specific amount
+                        ret = list(point)
+                        ret[1] -= 100
+                        return ret
+                    p = self.pan_chunk_squares["trees"]
+                    def sky_cover_square(point1, point2):#points 3 and 4 are same as point 1,2 but moved down
+                        if point1 is ul:color1 = color1254
+                        if point1 is ur:color1 = color2365
+                        if point1 is lr:color1 = color5689
+                        if point1 is ll:color1 = color4587
+                        if point2 is ul:color2 = color1254
+                        if point2 is ur:color2 = color2365
+                        if point2 is lr:color2 = color5689
+                        if point2 is ll:color2 = color4587
+                        p.add_vertex(point1, color1)
+                        p.add_vertex(point2, color2)
+                        p.add_vertex(cmd(point2), color2)
+                        p.add_vertex(cmd(point1), color1)
+                    if scr == 0 and scc == 0:#we are at the upper left of the chunk
+                        sky_cover_square(ul,ll)
+                        sky_cover_square(ul,ur)
+                    elif scr == side_length_in_sub_chunks-1 and scc == side_length_in_sub_chunks-1:#we are at the lower right of chunk
+                        sky_cover_square(lr,ur)
+                        sky_cover_square(lr,ll)
+                    elif scr == 0 and scc == side_length_in_sub_chunks-1:#upper right of chunk
+                        sky_cover_square(ur,ul)
+                        sky_cover_square(ur,lr)
+                    elif scr == side_length_in_sub_chunks-1 and scc == 0:#lower left
+                        sky_cover_square(ll,ul)
+                        sky_cover_square(ll,lr)
+                    elif scr == 0:#top side
+                        sky_cover_square(ur, ul)
+                    elif scr == side_length_in_sub_chunks-1:#bottom side
+                        sky_cover_square(lr, ll)
+                    elif scc == 0:#left side
+                        sky_cover_square(ul, ll)
+                    elif scc == side_length_in_sub_chunks-1:#right side
+                        sky_cover_square(ur, lr)
+                    
+                    
+                    
         
         #print("pcs",self.pan_chunk_squares.vertices,"colors",self.pan_chunk_squares.vertex_colors)
         if trees:
@@ -422,7 +441,7 @@ class World(LooiObject):
             "horizontal_stretch" : 4,
             "vertical_stretch" : .15,
             "sun_angle" : 0,
-            "background_color" : Color(.7,.7,1),
+            
             "texture_distance" : 4, #distance at which we start drawing the snow texture in quads not chunks
             "texture_radius" : 3, #distance at which floors are guaranteed to be textured, regardless of whether you're looking or not
             "active_missions" : [],#missions are lists of two values [(landmark_z,landmark_x), type]
@@ -1250,26 +1269,29 @@ class World(LooiObject):
         pass
         
     def paint(self):
-    
+        self.setup_3d = self.get_setup_3d()#so if you change it and then load in an old world, it will still get updated
         
         #draw sky
-        self.draw_rect(0,0,self.get_my_window().get_internal_size()[0],self.get_my_window().get_internal_size()[1], self.properties["background_color"])
+        self.draw_rect(0,0,self.get_my_window().get_internal_size()[0],self.get_my_window().get_internal_size()[1], constants["tree_background_color"])
         glClear(GL_DEPTH_BUFFER_BIT)
         
-        def setup_3d_infinite_ground():
+        def setup_3d_no_trans_no_rot():
             gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 5, 6000 )
-            try:
-                glRotate(rad_to_deg(-(self.view.hor_rot-math.pi/2)), 0, 1, 0)
-                glRotate(rad_to_deg(-self.view.vert_rot), math.cos(self.view.hor_rot - math.pi/2), 0, -math.sin(self.view.hor_rot - math.pi/2))
-            except Exception as e:
-                pass
-        self.draw_quad_3d(-9999999, -100, -9999999, 9999999, -100, -9999999, 9999999, -100, 9999999, -9999999, -100, 9999999, Color(.8,.8,.8), setup_3d=setup_3d_infinite_ground)
-        glClear(GL_DEPTH_BUFFER_BIT)
+        #self.draw_quad_3d(-9999999, -100, -9999999, 9999999, -100, -9999999, 9999999, -100, 9999999, -9999999, -100, 9999999, Color(.8,.8,.8), setup_3d=setup_3d_infinite_ground)
+        #glClear(GL_DEPTH_BUFFER_BIT)
         
         
         
         self.draw(self.get_chunk_load_grid())
         self.draw_mobile()
+        
+        
+        
+        self.draw_quad_3d(-9999999, -9999999, -5800, 9999999, -9999999, -5800,9999999, 9999999, -5800, -9999999, 9999999, -5800, constants["background_color"], setup_3d=setup_3d_no_trans_no_rot)
+        
+        
+        #self.draw_image_3d(-5,-5,-5,-5,5,-5,5,5,-5,5,-5,-5, image("../Transparent.png"), setup_3d=self.setup_3d)
+        
         
         
         glClear(GL_DEPTH_BUFFER_BIT)#clear the depth buffer bit so that the 2d stuff renders on top

@@ -61,12 +61,15 @@ names = n
 
 images = [Image.open("3d_textures/"+x) for x in names]
 
+
+
+
 widths, heights = zip(*(i.size for i in images))
 
 total_width = sum(widths)
 max_height = max(heights)
 
-new_im = Image.new('RGB', (total_width, max_height))
+new_im = Image.new('RGBA', (total_width, max_height))
 
 key = str(total_width)+"_"+str(max_height)
 x_offset = 0

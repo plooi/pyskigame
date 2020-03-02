@@ -96,6 +96,8 @@ class Window():
         self.view_width = None
         self.view_height = None
         
+        self.mipmap_max_level = 7
+        
         self.fps = fps
         self.seconds_per_frame = 1/self.fps
         
@@ -105,6 +107,7 @@ class Window():
         self.transfer_to_unlayered_looi_objects = []
         self.transfer_to_layered_looi_objects = []
         self.to_remove = []
+        
         
         global main_window
         main_window = self
@@ -211,6 +214,13 @@ class Window():
             glDepthFunc(GL_LESS)
             glEnable(GL_DEPTH_TEST)
             glMatrixMode(GL_MODELVIEW)
+            
+            
+            glAlphaFunc(GL_GREATER, 0.1);
+            glEnable(GL_ALPHA_TEST);
+            glBlendEquation(GL_FUNC_ADD)
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+            glEnable(GL_BLEND);
             
             self.draw_borders()
             
@@ -690,23 +700,21 @@ class LooiObject:
         
         
         glTexImage2D(
-            GL_TEXTURE_2D, 0, 3, ix, iy, 0,
+            GL_TEXTURE_2D, 0, 4, ix, iy, 0,
             GL_RGBA, GL_UNSIGNED_BYTE, image
         )
         
         
         glEnable(GL_TEXTURE_2D)
         
-        
-        #glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-        #glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-        glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL)
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)#USED TO BE GL_NEAREST
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST)#USED TO BE GL_NEAREST
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, self.get_my_window().mipmap_max_level)
+        glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE)
         
         glBindTexture(GL_TEXTURE_2D, ID)
         
-        setup_3d()
+        glGenerateMipmap(GL_TEXTURE_2D)
         
         glBegin(GL_QUADS)
         glTexCoord2f(0.0, 0.0)
@@ -739,7 +747,6 @@ class LooiObject:
         glVertex3fv((x4,y4,z4))
         glEnd()
         glPopMatrix()
-
     def draw_quad_array_3d(self, vertices, colors, setup_3d=default_3d_view_setup):
         glPushMatrix()
         setup_3d()
@@ -770,21 +777,25 @@ class LooiObject:
         glBindTexture(GL_TEXTURE_2D, ID)
         glPixelStorei(GL_UNPACK_ALIGNMENT,1)
         
-        
         glTexImage2D(
-            GL_TEXTURE_2D, 0, 3, ix, iy, 0,
+            GL_TEXTURE_2D, 0, 4, ix, iy, 0,
             GL_RGBA, GL_UNSIGNED_BYTE, image
         )
+        
         
         
         glEnable(GL_TEXTURE_2D)
         
         
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-        glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL)
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)#USED TO BE GL_NEAREST
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST)#USED TO BE GL_NEAREST
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, self.get_my_window().mipmap_max_level)
+        
+        glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE)
         
         glBindTexture(GL_TEXTURE_2D, ID)
+        
+        glGenerateMipmap(GL_TEXTURE_2D)
         
         setup_3d()
         
@@ -893,7 +904,10 @@ def abs(x):
 
 def image(file_name):
     i = Image.open(file_name)
-    i.putalpha(255)
+    pixels = i.load()
+    #print(type(pixels[0][0]))
+    if len(pixels[0,0]) == 3:
+        i.putalpha(255)
     return i
 
 

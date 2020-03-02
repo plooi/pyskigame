@@ -906,7 +906,7 @@ def rock_design_2(
 def sun_model_1(
         angle_segments = 30,
         radius = 300,
-        dist_from_player = 5000,
+        dist_from_player = 4800,
         color = [1,1,.95]):
     
     
