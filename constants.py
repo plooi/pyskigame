@@ -59,6 +59,9 @@ x = {
     
     "background_color" : Color(.7,.7,1),
     "tree_background_color" : Color(.9,.93,.9),#Color(0,.4,.0),
+    "front_row_chunk_distance" : .8,#unit: chunks #these will be rendered separately after the depth buffer is cleared
+    "max_los" : 6000,
+    "min_los" : .5,
     
     
     

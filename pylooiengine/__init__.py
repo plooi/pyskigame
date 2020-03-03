@@ -96,7 +96,7 @@ class Window():
         self.view_width = None
         self.view_height = None
         
-        self.mipmap_max_level = 15
+        self.mipmap_max_level = 3
         
         self.fps = fps
         self.seconds_per_frame = 1/self.fps
@@ -714,6 +714,8 @@ class LooiObject:
         
         glBindTexture(GL_TEXTURE_2D, ID)
         
+        setup_3d()
+        
         glGenerateMipmap(GL_TEXTURE_2D)
         
         glBegin(GL_QUADS)
@@ -795,9 +797,11 @@ class LooiObject:
         
         glBindTexture(GL_TEXTURE_2D, ID)
         
+        setup_3d()
+        
         glGenerateMipmap(GL_TEXTURE_2D)
         
-        setup_3d()
+        
         
         
         
@@ -908,6 +912,7 @@ def image(file_name):
     #print(type(pixels[0][0]))
     if len(pixels[0,0]) == 3:
         i.putalpha(255)
+                    
     return i
 
 

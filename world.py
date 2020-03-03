@@ -501,9 +501,6 @@ class World(LooiObject):
         self.view = View()
         
         
-        #used to tell opengl to draw our objects from the proper angles
-        self.setup_3d = None
-        
     
         self.mobile_vertices = None
         self.mobile_colors = None
@@ -659,13 +656,6 @@ class World(LooiObject):
         
         
         
-        """
-        setup_3d
-        
-        used to tell opengl to draw our objects from the proper angles
-        """
-        
-        self.setup_3d = self.get_setup_3d()
         
         #initialize the natural bumps
         if prog_bar: loading.update(100)
@@ -674,49 +664,16 @@ class World(LooiObject):
         
         return self
         #END INIT
-    def get_setup_3d(self):
+        
+    #setup for front row things
+    def get_setup_3d_close(self):
+        
         def setup_3d():
-            #gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), .5, 6000 )
-            hs = self.properties["horizontal_stretch"]
-            
-            #near = self.view.line_of_sight/14
-            #near = 1.5
-            
-            if self.game_ui.game_mode.startswith("ski"):
-                if self.game_ui.scenery:
-                    near = 3.5
-                    
-                    #in scenery mode, if youre looking down at the ground, we should forget about showing the scenery
-                    if self.game_ui.my_lift == None:
-                        if self.valid_floor(self.view.z/hs, self.view.x/hs):
-                            floorhr, floorvr = self.get_rotation(int(self.view.z/hs), int(self.view.x/hs))
-                            if floorvr < 0:
-                                floorvr *= -1
-                                floorhr += math.pi
-                            
-                            
-                            floorhr += math.pi# these two lines are to turn the floor around
-                            floorvr *= -1#so taht the floorhr and floor vr are facing into the ground
-                            #so if the player is facing similar direction, they are also facing into the ground
-                            
-                            floorRvector = math.cos(floorhr)*math.cos(floorvr),math.sin(floorvr),math.sin(floorhr)*math.cos(floorvr)
-                            viewRvector = math.cos(self.view.hor_rot)*math.cos(self.view.vert_rot),math.sin(self.view.vert_rot),math.sin(self.view.hor_rot)*math.cos(self.view.vert_rot)
-                                
-                                
-                            if ((floorRvector[0]-viewRvector[0])**2+(floorRvector[1]-viewRvector[1])**2+(floorRvector[2]-viewRvector[2])**2) ** .5 < 1.5:
-                                near = .5
-                else:
-                    near = .5
+            if self.game_ui.game_mode == "map editor":
+                gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 5, 2000 )
             else:
-                near = 10
+                gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), constants["min_los"], 2000 )
             
-            
-            
-            
-            
-            
-            
-            gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), near, 6000 )
             try:
                 glRotate(rad_to_deg(-(self.view.hor_rot-math.pi/2)), 0, 1, 0)
                 glRotate(rad_to_deg(-self.view.vert_rot), math.cos(self.view.hor_rot - math.pi/2), 0, -math.sin(self.view.hor_rot - math.pi/2))
@@ -724,6 +681,17 @@ class World(LooiObject):
             except Exception as e:
                 pass
         return setup_3d
+    def get_setup_3d_far(self):
+        def setup_3d():
+            gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), (constants["front_row_chunk_distance"]-.5)*self.properties["chunk_size"]*self.properties["horizontal_stretch"], constants["max_los"] )
+            try:
+                glRotate(rad_to_deg(-(self.view.hor_rot-math.pi/2)), 0, 1, 0)
+                glRotate(rad_to_deg(-self.view.vert_rot), math.cos(self.view.hor_rot - math.pi/2), 0, -math.sin(self.view.hor_rot - math.pi/2))
+                glTranslate(-self.view.x, -self.view.y, -self.view.z)
+            except Exception as e:
+                pass
+        return setup_3d
+    
         
 ###################################
 #END init stuff
@@ -1272,38 +1240,13 @@ class World(LooiObject):
         pass
         
     def paint(self):
-        self.setup_3d = self.get_setup_3d()#so if you change it and then load in an old world, it will still get updated
-        
-        #draw sky
-        self.draw_rect(0,0,self.get_my_window().get_internal_size()[0],self.get_my_window().get_internal_size()[1], constants["tree_background_color"])
-        glClear(GL_DEPTH_BUFFER_BIT)
-        
-        
-        
+        #draw sky(sun is drawn by game ui)
+        def setup_3d_no_trans_no_rot(): gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 5, 6000 )
+        self.draw_quad_3d(-9999999, -9999999, -5800, 9999999, -9999999, -5800, 9999999, 9999999, -5800, -9999999, 9999999, -5800,constants["background_color"], setup_3d=setup_3d_no_trans_no_rot)#draw Sky
         
         
         self.draw(self.get_chunk_load_grid())
         self.draw_mobile()
-        
-        
-        #draw sky, and infinite ground (sun is drawn by game ui)
-        def setup_3d_no_trans_no_rot(): gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 5, 6000 )
-        def setup_3d_no_trans(): 
-            gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 5, 6000 )
-            try:
-                glRotate(rad_to_deg(-(math.pi/2-math.pi/2)), 0, 1, 0)
-                glRotate(rad_to_deg(-self.view.vert_rot), math.cos(math.pi/2 - math.pi/2), 0, -math.sin(math.pi/2 - math.pi/2))
-            except Exception as e:
-                pass
-        
-        
-        
-        
-        #self.draw_quad_3d(-9999999, 0, -5800, 9999999, 0, -5800,9999999, -4000, 1000, -9999999, -4000, 1000, Color(.85,.85,.85*1.065), setup_3d=setup_3d_no_trans_no_rot)#draw infinite ground
-        #glClear(GL_DEPTH_BUFFER_BIT)
-        self.draw_quad_3d(-9999999, -9999999, -5800, 9999999, -9999999, -5800, 9999999, 9999999, -5800, -9999999, 9999999, -5800,constants["background_color"], setup_3d=setup_3d_no_trans_no_rot)#draw Sky
-        
-        
         
         
         
@@ -1353,7 +1296,8 @@ class World(LooiObject):
                        
                 
                 
-                
+        for z in range(nearest_multiple(unscaled_view_z - los2*cs, cs), nearest_multiple(unscaled_view_z + los2*cs, cs)+1, cs):
+            for x in range(nearest_multiple(unscaled_view_x - los2*cs, cs), nearest_multiple(unscaled_view_x + los2*cs, cs)+1, cs):
                 
                 #here we are testing whether the chunk is active or not 
                 #this has precedence over chunks with trees, so it is executed last
@@ -1372,9 +1316,37 @@ class World(LooiObject):
                         if self.valid_chunk(cz-1, cx-1): chunk_load_grid[cz-1][cx-1] = 1
                         if self.valid_chunk(cz, cx-1): chunk_load_grid[cz][cx-1] = 1
                         if self.valid_chunk(cz-1, cx): chunk_load_grid[cz-1][cx] = 1
+        
+        #here we are testing to see whether the chunk is "Front row" or not
+        
+        if self.valid_chunk(player_z_chunk, player_x_chunk):
+            chunk_load_grid[player_z_chunk][player_x_chunk] = 2 #so the chunk you're standing in is always front row
+        
+        for z in range(nearest_multiple(unscaled_view_z - los2*cs, cs), nearest_multiple(unscaled_view_z + los2*cs, cs)+1, cs):
+            for x in range(nearest_multiple(unscaled_view_x - los2*cs, cs), nearest_multiple(unscaled_view_x + los2*cs, cs)+1, cs):
+                #checking if near a corner
+                
+                def abs(x):return x if x >= 0 else -x
+                if (abs(z-unscaled_view_z) < .43*cs and abs(x-unscaled_view_x) < .55*cs) or (abs(z-unscaled_view_z) < .55*cs and abs(x-unscaled_view_x) < .43*cs):
+                    cz = int(z/cs)
+                    cx = int(x/cs)
+                    if self.valid_chunk(cz, cx): chunk_load_grid[cz][cx] = 2
+                    if self.valid_chunk(cz-1, cx-1): chunk_load_grid[cz-1][cx-1] = 2
+                    if self.valid_chunk(cz, cx-1): chunk_load_grid[cz][cx-1] = 2
+                    if self.valid_chunk(cz-1, cx): chunk_load_grid[cz-1][cx] = 2
+                """
+                #shift the point right and down, now we're checking if close to chunk centers
+                z += cs/2
+                x += cs/2
+                if ( (z-unscaled_view_z)**2 + (x-unscaled_view_x)**2 )**.5 <= .9*cs:
+                    z -= cs/2
+                    x -= cs/2
+                    cz = int(z/cs)
+                    cx = int(x/cs)
+                    if self.valid_chunk(cz, cx): chunk_load_grid[cz][cx] = 2
+                """
                         
-                        
-                #otherwise, the chunk is -1, which is no trees.
+        #otherwise, the chunk is -1, which is no trees.
                 
         return chunk_load_grid
     def draw_mobile(self):
@@ -1382,7 +1354,7 @@ class World(LooiObject):
         mobile_colors = numpy.array(self.mobile_colors)
         
         
-        self.draw_quad_array_3d(mobile_vertices, mobile_colors, setup_3d=self.setup_3d)
+        self.draw_quad_array_3d(mobile_vertices, mobile_colors, setup_3d=self.get_setup_3d_close())
         self.mobile_vertices = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
         self.mobile_colors = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     
@@ -1419,25 +1391,29 @@ class World(LooiObject):
         check(height == self.properties["height_chunks"] and width == self.properties["width_chunks"], "Dimensions of chunk_load_grid were %d %d but should have been %d %d" % (width, height, self.properties["width_chunks"], self.properties["height_chunks"]))
         
         #add all the chunks' vertexes and colors here (if the chunk load grid is a 1)
+        
         vertices_draw = []
         colors_draw = []
-        
         tex_vertices_draw = []
         tex_coords_draw = []
+        
+        vertices_draw_far = []
+        colors_draw_far = []
+        tex_vertices_draw_far = []
+        tex_coords_draw_far = []
+        
+        
         
         #if the chunk load grid is not 1, make sure the pan chunk square is added to self.pan_chunk_squares
         
         
         
         #iterate through every single chunk
-        pan_chunk_quads = 0
-        chunk_quads = 0
-        
-        
+        #and collect the drawable objects
         for z in range(height):
             for x in range(width):
                 #if the chunk load grid says that the chunk should be loaded
-                if chunk_load_grid[z][x] == 1:
+                if chunk_load_grid[z][x] == 2:
                     
                     #add this chunk's vertices and colors to the stuff that's gonna be drawn
                     vertices_draw.append(self.chunks[z][x].vh.vertices)
@@ -1445,124 +1421,69 @@ class World(LooiObject):
                     
                     tex_vertices_draw.append(self.chunks[z][x].tvh.vertices)
                     tex_coords_draw.append(self.chunks[z][x].tvh.vertex_colors)
+                if chunk_load_grid[z][x] == 1:
+                    #add this chunk's vertices and colors to the stuff that's gonna be drawn
+                    vertices_draw_far.append(self.chunks[z][x].vh.vertices)
+                    colors_draw_far.append(self.chunks[z][x].vh.vertex_colors)
                     
-                    
-                    chunk_quads += len(self.chunks[z][x].tvh.vertices) + len(self.chunks[z][x].tvh.vertices)
-                
+                    tex_vertices_draw_far.append(self.chunks[z][x].tvh.vertices)
+                    tex_coords_draw_far.append(self.chunks[z][x].tvh.vertex_colors)
                 elif chunk_load_grid[z][x] == 0:
                     pcsquares = self.chunks[z][x].get_pan_chunk_squares(z, x)
-                    vertices_draw.append(pcsquares.vertices)
-                    colors_draw.append(pcsquares.vertex_colors)
-                    
-                    pan_chunk_quads += len(pcsquares.vertices)
+                    vertices_draw_far.append(pcsquares.vertices)
+                    colors_draw_far.append(pcsquares.vertex_colors)
                 elif chunk_load_grid[z][x] == -1:
                     pcsquares = self.chunks[z][x].get_pan_chunk_squares(z, x, trees=False)
-                    vertices_draw.append(pcsquares.vertices)
-                    colors_draw.append(pcsquares.vertex_colors)
+                    vertices_draw_far.append(pcsquares.vertices)
+                    colors_draw_far.append(pcsquares.vertex_colors)
                     
-                    pan_chunk_quads += len(pcsquares.vertices)
                 
                 
         
         
-        #add the pan_chunk_squares to all the stuff that's gonna be drawn
-        #vertices_draw.append(self.pan_chunk_squares.vertices)
-        #colors_draw.append(self.pan_chunk_squares.vertex_colors)
         
-        ###NOW vertices draw and colors draw contain all the static objects we want to draw
+       
         
-        vertices_draw = numpy.vstack(tuple(vertices_draw))
-        colors_draw = numpy.vstack(tuple(colors_draw))
-        self.draw_quad_array_3d(vertices_draw, colors_draw, setup_3d=self.setup_3d)
+        #now here's where we do all the drawing (and stacking)
+        if len(vertices_draw_far) > 0:
+            #first draw far stuff, then clear the depth buffer bit so close stuff can draw ontop of it
+            vertices_draw_far = numpy.vstack(vertices_draw_far)
+            colors_draw_far = numpy.vstack(colors_draw_far)
+            self.draw_quad_array_3d(vertices_draw_far, colors_draw_far, setup_3d=self.get_setup_3d_far())
+        if len(tex_vertices_draw_far) > 0:
+            glBlendFunc(GL_ONE, GL_ZERO)#textures have to be completely opaque to be drawn
+            glEnable(GL_BLEND);
+            tex_vertices_draw_far = numpy.vstack(tuple(tex_vertices_draw_far))
+            tex_coords_draw_far = numpy.vstack(tuple(tex_coords_draw_far))
+            self.draw_image_array_3d(tex_vertices_draw_far, tex_coords_draw_far, texture.tex, texture.tex_b, setup_3d=self.get_setup_3d_far())
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+            glEnable(GL_BLEND);
+        
+        glClear(GL_DEPTH_BUFFER_BIT)
+        
+        
+        if len(vertices_draw) > 0:
+            vertices_draw = numpy.vstack(tuple(vertices_draw))
+            colors_draw = numpy.vstack(tuple(colors_draw))
+            self.draw_quad_array_3d(vertices_draw, colors_draw, setup_3d=self.get_setup_3d_close())
         if len(tex_vertices_draw) > 0:
+            glBlendFunc(GL_ONE, GL_ZERO)#textures have to be completely opaque to be drawn
+            glEnable(GL_BLEND);
             tex_vertices_draw = numpy.vstack(tuple(tex_vertices_draw))
             tex_coords_draw = numpy.vstack(tuple(tex_coords_draw))
+            self.draw_image_array_3d(tex_vertices_draw, tex_coords_draw, texture.tex, texture.tex_b, setup_3d=self.get_setup_3d_close())
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+            glEnable(GL_BLEND);
             
-            #print(vertices_draw)
+            
+       
             
             
-            #draw the stuff using opengl
-            
-            self.draw_image_array_3d(tex_vertices_draw, tex_coords_draw, texture.tex, texture.tex_b, setup_3d=self.setup_3d)
+        
             
         
         return#######################
         
-        
-        
-        #draw textures
-        if self.properties["do_floor_textures"]:
-            hs = self.properties["horizontal_stretch"]
-            vs = self.properties["vertical_stretch"]
-            
-            offset = .08
-            
-            pz = self.view.z/hs
-            px = self.view.x/hs
-            
-            radius = max([self.properties["texture_distance"],constants["ice_radius"]/hs]) + 1
-            
-            
-            
-            def cap_1(x):return x if x < 1 else 1
-            for z in range(round(pz-radius), round(pz+radius)):
-                for x in range(round(px-radius), round(px+radius)):
-                    dist = ( (z+.5-pz)**2 + (x+.5-px)**2 ) ** .5
-                    in_front = normal.angle_distance(util.get_angle(pz, px, z, x), self.view.hor_rot) < math.pi/3
-                    if dist <= self.properties["texture_distance"] and self.valid_floor(z, x):#distance
-                        
-                        if dist < self.properties["texture_radius"] or in_front:#radius
-                        
-                            shade = self.get_proper_floor_color(z, x)[0]
-                            
-                            
-                            if self.is_ice(z, x):
-                                tex = get_ice_texture(shade)
-                                self.draw_image_3d(
-                                        x*hs, self.get_elevation(z,x,scaled=True) + offset, z*hs,
-                                        (x+1)*hs, self.get_elevation(z,x+1,scaled=True) + offset, z*hs,
-                                        (x+1)*hs, self.get_elevation(z+1,x+1,scaled=True) + offset, (z+1)*hs,
-                                        x*hs, self.get_elevation(z+1,x,scaled=True) + offset, (z+1)*hs,
-                                        tex,
-                                        setup_3d=self.setup_3d
-                                        )
-                            
-                            
-                        
-                            
-                    elif dist < constants["ice_radius"] and self.is_ice(z, x) and in_front:
-                        """
-                        quad = self.quads[z][x]
-                        chunk = self.chunks[quad.my_chunk_z][quad.my_chunk_x]
-                        colors = chunk.vh.vertex_colors
-                        shades = [    
-                                            colors[quad.floor_pointer][1],
-                                            colors[quad.floor_pointer+1][1],
-                                            colors[quad.floor_pointer+2][1],
-                                            colors[quad.floor_pointer+3][1]]
-                        
-                        
-                        color = constants["ice_color"]
-                        colors = ([color.r,color.g,color.b],[color.r,color.g,color.b],[color.r,color.g,color.b],[color.r,color.g,color.b])
-                        for i in range(4):
-                            factor = shades[i]/color.g
-                            colors[i][0] = cap_1(colors[i][0]*factor)
-                            colors[i][1] = cap_1(colors[i][1]*factor)
-                            colors[i][2] = cap_1(colors[i][2]*factor)
-                            
-                        """
-                        
-                        
-                        
-                        self.add_mobile_quad(
-                                    [x*hs, self.get_elevation(z,x,scaled=True) + offset*2, z*hs],
-                                    [(x+1)*hs, self.get_elevation(z,x+1,scaled=True) + offset*2, z*hs],
-                                    [(x+1)*hs, self.get_elevation(z+1,x+1,scaled=True) + offset*2, (z+1)*hs],
-                                    [x*hs, self.get_elevation(z+1,x,scaled=True) + offset*2, (z+1)*hs],
-                                    constants["ice_color"]
-                                    )
-                        
-            
         
 ###################################
 #END paint stuff

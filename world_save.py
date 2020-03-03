@@ -196,8 +196,6 @@ def read(path, new_version = True):
                 set_active_variable_false(landmark)
                 landmark.activate()
             set_active_variable_false(the_world)
-            
-            the_world.setup_3d = the_world.get_setup_3d()
 
             #ensure that this world has all the needed properties, for backward compatibility reasons
             example_world = world_module.World()
