@@ -37,7 +37,7 @@ class Tree(WorldObject):
                 return
         
         super().__init__(**args)
-    def touching(self, x, y, z): return ((x-self.args["model_x"])**2 + (z-self.args["model_z"])**2) ** .5 < 1.4
+    def touching(self, x, y, z): return (((x-self.args["model_x"])**2 + (z-self.args["model_z"])**2) ** .5 < 1.4) and y<self.args["model_y"]+6
     def touching_player_consequence(self): 
         if self.world.properties["momentum"] >= constants["crash_speed"]:
             self.world.game_ui.falling = True
