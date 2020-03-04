@@ -870,7 +870,10 @@ class UI(LooiObject):
                 #movement
                 if self.stop_go:
                     self.world.properties["momentum"] += fhorizontal
-                    self.world.properties["momentum"] -= constants["friction"] * self.world.properties["momentum"]**2 * math.cos(min([equivalent_floor_slope*1.8,math.pi/2.2]))
+                    if self.world.properties["momentum"] < .7:
+                        self.world.properties["momentum"] -= 1/3.5*constants["friction"] * self.world.properties["momentum"]**2
+                    else:
+                        self.world.properties["momentum"] -= constants["friction"] * self.world.properties["momentum"]**2 * math.cos(min([equivalent_floor_slope*1.8,math.pi/2.2]))
                     if self.world.properties["momentum"] < .1: self.world.properties["momentum"] = .1
                 else:
                     brake = .05
