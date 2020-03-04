@@ -483,6 +483,7 @@ class UI(LooiObject):
             return (scale(lr),scale(ur),scale(ll))
     def fall(self):
         if self.falling==1 or self.falling==2:
+            self.jumping = 0
             if self.world.properties["health"] > 0:
                 if self.fall_clock == 0:
                     self.fall_sound.play(maxtime=1800)

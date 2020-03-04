@@ -3,7 +3,7 @@ from random import random
 from model_3d import *
 import PySimpleGUI as sg
 from models import *
-from rock import Rock
+from rock import *
 from bump import Bump,NaturalBump
 from world_object import WorldObject
 from lodge import *
@@ -13,8 +13,18 @@ import traceback
 import loading
 from building import Building
 
-
-        
+def cliffs(world, z1, x1, z2, x2):
+    middle_z = int((z1+z2)/2)
+    middle_x = int((x1+x2)/2)
+    
+    radius = int(((z1-z2)**2 + (x1-x2)**2)**.5 / 2) + 1
+    
+    
+    for z in range(middle_z - radius, middle_z + radius):
+        for x in range(middle_x - radius, middle_x + radius):
+            if ((z-middle_z)**2 + (x-middle_x)**2)**.5 <= radius and world.valid_floor(z, x):
+                if random() < .35:
+                    BigRock(z=z, x=x, world=world)
 def natural_bumps(world, z1, x1, z2, x2, prog_bar=False):
     middle_z = int((z1+z2)/2)
     middle_x = int((x1+x2)/2)

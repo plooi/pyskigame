@@ -1028,11 +1028,11 @@ class PlaceWorldObject(OnePointEdit):
         super().__init__(menu)
     def execute(self, point):
         WorldObject(world=self.world(), z=point[0], x=point[1], model=rock_design_2, model_type="std")
-class PlaceRock2(OnePointEdit):
+class PlaceRock2(TwoPointEdit):
     def __init__(self, menu):
         super().__init__(menu)
-    def execute(self, point):
-        BigRock(z=point[0], x=point[1], world=self.world())
+    def execute(self, p1,p2):
+        cliffs(self.world(),p1[0], p1[1], p2[0], p2[1])
 class PlaceLandmark(OnePointEdit):
     def __init__(self, menu):
         super().__init__(menu)
