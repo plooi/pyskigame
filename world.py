@@ -670,9 +670,9 @@ class World(LooiObject):
         
         def setup_3d():
             if self.game_ui.game_mode == "map editor":
-                gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 5, 2000 )
+                gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 5, constants["max_los"])
             else:
-                gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), constants["min_los"], 2000 )
+                gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), constants["min_los"], constants["max_los"])
             
             try:
                 glRotate(rad_to_deg(-(self.view.hor_rot-math.pi/2)), 0, 1, 0)
@@ -1150,7 +1150,6 @@ class World(LooiObject):
         
         return color_value
     def is_ice(self, z, x, hr=None, vr=None):
-        return False#disabled
         if not self.valid_floor(z, x):
             return False
         hs = self.properties["horizontal_stretch"]
@@ -1159,7 +1158,7 @@ class World(LooiObject):
         seed = (  math.sin((10*int((z*hs)/35))**2) + math.sin((12*int((x*hs)/35))**2)  )/2
         seed2 = (  math.sin((12*int((z*hs)/35))**2) + math.sin((6*int((x*hs)/35))**2)  )/2
         seed3 = (  math.sin((20*int((z*hs)/35))**2) + math.sin((17*int((x*hs)/35))**2)  )/2
-        if not(seed < .28 and seed > -.28):return False
+        if not(seed < .1 and seed > -.1):return False
         
         xx = x*hs % 35
         zz = z*hs % 35

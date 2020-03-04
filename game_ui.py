@@ -79,7 +79,7 @@ class UI(LooiObject):
         self.lift_sound.play(loops = 9999999)#63 years about. We should be okay
         
         
-        self.swish_sound = self.new_sound("sounds/SkiSwish4.ogg", volume=1)
+        self.swish_sound = self.new_sound("sounds/SkiSwish4.ogg", volume=.5)
         
         
         self.fall_sound = self.new_sound("sounds/Fall.ogg",volume=.365)
@@ -104,6 +104,8 @@ class UI(LooiObject):
         
         self.stop_go = False
         self.turning = 0
+        
+        self.jumping = False
         
         
     def stop_sounds(self):
@@ -297,8 +299,8 @@ class UI(LooiObject):
         if vol < 0: vol = 0
         self.set_lift_vol(vol)
         
-        if self.swish_timer == 15:
-            self.swish_sound.fadeout(1000)
+        #if self.swish_timer == 15:
+        #    self.swish_sound.fadeout(1000)
                 
             
     def set_lift_vol(self, vol):
@@ -623,6 +625,7 @@ class UI(LooiObject):
 
                 elif self.fall_clock == 760:
                     self.falling=False
+                    self.stop_go = False
                     self.fall_clock = 0
                     self.world.properties["health"] = 1
                     self.health(10,animate=True,relative=False)
@@ -721,9 +724,13 @@ class UI(LooiObject):
                         self.health(-.00085,False)
                 
                 
-                
-                
             v = self.world.view
+            
+            if v.x >= self.world.get_width_floors()*self.world.properties["horizontal_stretch"]:v.x = self.world.get_width_floors()*self.world.properties["horizontal_stretch"]-.01
+            if v.z >= self.world.get_height_floors()*self.world.properties["horizontal_stretch"]:v.z = self.world.get_height_floors()*self.world.properties["horizontal_stretch"]-.01
+            if v.x < 0: v.x = 0
+            if v.z < 0: v.z = 0
+            
             v.y = self.get_elevation_continuous(v.z, v.x)*self.world.properties["vertical_stretch"] + self.world.properties["player_height"]
     def health(self, value, timer = True, animate=False, relative=True):
         if relative:
@@ -741,8 +748,10 @@ class UI(LooiObject):
         
         
         if self.interface_mode == "game" or self.interface_mode == "can_move_temporarily":
-            if not self.world.valid_floor(int(v.z/self.world.properties["horizontal_stretch"]), int(v.x/self.world.properties["horizontal_stretch"])):
-                return;#fix this
+            
+            
+            
+            
             
             
             #if stopped, look around normally
@@ -778,70 +787,127 @@ class UI(LooiObject):
                     else: self.world.view.hor_rot -= angle_inc
                 else: self.world.view.hor_rot = self.world.properties["ski_direction"]
                 
-            
-            #switch between stop and go modes
-            if self.key(constants["action_key"], "pressed"):
-                self.stop_go = not self.stop_go
-                self.turning = 0
-                self.world.properties["ski_direction"] = self.world.view.hor_rot
-            
-            
-        
-        
-            #max rotation
-            if self.world.view.vert_rot > self.world.view.max_vert_rot:
-                self.world.view.vert_rot = self.world.view.max_vert_rot
-            if self.world.view.vert_rot < -self.world.view.max_vert_rot:
-                self.world.view.vert_rot = -self.world.view.max_vert_rot
-            
-            
-            
-            
-            
-            
-            #calculate floor slope
-            p1,p2,p3 = self.xyz_of_current_triangle(v.z, v.x)
-            floor_hr, floor_vr = get_plane_rotation(p1[0],p1[1],p1[2],p2[0],p2[1],p2[2],p3[0],p3[1],p3[2])
-            
-            if floor_vr < 0:
-                floor_vr = -floor_vr
-                floor_hr += math.pi
-            
-            floor_slope = math.pi/2 - floor_vr
-            self.slope = floor_slope
-            
-            
-            #calculate force pulling down
-            resistance = angle_distance(self.world.properties["ski_direction"], floor_hr)
-            equivalent_floor_slope = math.cos(resistance) * floor_slope
-            f_parallel = ski_g * math.sin(equivalent_floor_slope)
-            fhorizontal = f_parallel * math.cos(equivalent_floor_slope)
-            
-            #movement
-            if self.stop_go:
-                self.world.properties["momentum"] += fhorizontal
-                self.world.properties["momentum"] -= constants["friction"] * self.world.properties["momentum"]**2 * math.cos(min([equivalent_floor_slope*1.8,math.pi/2.2]))
-                if self.world.properties["momentum"] < .1: self.world.properties["momentum"] = .1
-            else:
-                brake = .05
-                self.world.properties["momentum"] -= brake
-            
-            #momentum direction is ski direction
-            self.world.properties["momentum_direction"] = self.world.properties["ski_direction"]
-            
-            
-            
-            #no going backwards
-            if self.world.properties["momentum"] < 0: self.world.properties["momentum"] = 0
-            
-            
-            
-            #increment view x,y,z
-            v.x += self.world.properties["momentum"] * math.cos(self.world.properties["momentum_direction"])
-            v.z += self.world.properties["momentum"] * -math.sin(self.world.properties["momentum_direction"])
-            v.y = self.get_elevation_continuous(v.z, v.x)*self.world.properties["vertical_stretch"] + self.world.properties["player_height"]
-            
+            if self.jumping:
+                v.x += self.world.properties["momentum"] * math.cos(self.world.properties["momentum_direction"])
+                v.z += self.world.properties["momentum"] * -math.sin(self.world.properties["momentum_direction"])
                 
+                if v.x >= self.world.get_width_floors()*self.world.properties["horizontal_stretch"]:v.x = self.world.get_width_floors()*self.world.properties["horizontal_stretch"]-.01
+                if v.z >= self.world.get_height_floors()*self.world.properties["horizontal_stretch"]:v.z = self.world.get_height_floors()*self.world.properties["horizontal_stretch"]-.01
+                if v.x < 0: v.x = 0
+                if v.z < 0: v.z = 0
+                
+                v.y += self.world.properties["y_momentum"]
+                self.world.properties["y_momentum"] -= constants["jump_g"]
+                
+                
+                #if landing
+                if v.y < self.get_elevation_continuous(v.z, v.x)*self.world.properties["vertical_stretch"] + self.world.properties["player_height"]:
+                    self.fall_sound.play(maxtime=1800)
+                    self.jumping = 0
+                    damage = angle_distance(self.world.properties["ski_direction"], self.world.properties["momentum_direction"])/math.pi
+                    
+                    if damage > .25:
+                        self.falling = 1
+                    elif damage > .08:
+                        damage *= 70
+                        self.health(-damage)
+                    self.world.properties["y_momentum"] = 0
+            else:
+                        
+                
+                
+                        
+                #switch between stop and go modes
+                if self.key(constants["action_key"], "pressed"):
+                    self.stop_go = not self.stop_go
+                    self.turning = 0
+                    self.world.properties["ski_direction"] = self.world.view.hor_rot
+                    self.world.properties["momentum_direction"] = self.world.view.hor_rot
+                
+                
+            
+            
+                #max rotation
+                if self.world.view.vert_rot > self.world.view.max_vert_rot:
+                    self.world.view.vert_rot = self.world.view.max_vert_rot
+                if self.world.view.vert_rot < -self.world.view.max_vert_rot:
+                    self.world.view.vert_rot = -self.world.view.max_vert_rot
+                
+                
+                
+                
+                
+                
+                #calculate floor slope
+                p1,p2,p3 = self.xyz_of_current_triangle(v.z, v.x)
+                floor_hr, floor_vr = get_plane_rotation(p1[0],p1[1],p1[2],p2[0],p2[1],p2[2],p3[0],p3[1],p3[2])
+                
+                if floor_vr < 0:
+                    floor_vr = -floor_vr
+                    floor_hr += math.pi
+                
+                floor_slope = math.pi/2 - floor_vr
+                self.slope = floor_slope
+                
+                
+                #calculate force pulling down
+                resistance = angle_distance(self.world.properties["ski_direction"], floor_hr)
+                equivalent_floor_slope = math.cos(resistance) * floor_slope
+                f_parallel = ski_g * math.sin(equivalent_floor_slope)
+                fhorizontal = f_parallel * math.cos(equivalent_floor_slope)
+                
+                
+                
+                #jump
+                if self.mouse("left", "released"):
+                    self.jumping = 1
+                    self.world.properties["y_momentum"] = math.sin(-equivalent_floor_slope + constants["jump_angle"]) * self.world.properties["momentum"]
+                    self.world.properties["momentum"] = math.cos(-equivalent_floor_slope + constants["jump_angle"]) * self.world.properties["momentum"]
+                    return
+                
+                
+                #movement
+                if self.stop_go:
+                    self.world.properties["momentum"] += fhorizontal
+                    self.world.properties["momentum"] -= constants["friction"] * self.world.properties["momentum"]**2 * math.cos(min([equivalent_floor_slope*1.8,math.pi/2.2]))
+                    if self.world.properties["momentum"] < .1: self.world.properties["momentum"] = .1
+                else:
+                    brake = .05
+                    self.world.properties["momentum"] -= brake
+                
+                
+                
+                #momentum direction
+                if self.world.is_ice(int(v.z/self.world.properties["horizontal_stretch"]), int(v.x/self.world.properties["horizontal_stretch"])):
+                    #dont change direction on ice
+                    if self.swish_timer == 0:
+                        self.swish_sound.play(maxtime=800, fade_ms=150)
+                        self.swish_timer = 100
+                else:
+                    self.world.properties["momentum_direction"] = self.world.properties["ski_direction"]
+                
+                
+                
+                
+                
+                #no going backwards
+                if self.world.properties["momentum"] < 0: self.world.properties["momentum"] = 0
+                
+                
+                
+                #increment view x,y,z
+                last_vx = v.x
+                last_vz = v.z
+                v.x += self.world.properties["momentum"] * math.cos(self.world.properties["momentum_direction"])
+                v.z += self.world.properties["momentum"] * -math.sin(self.world.properties["momentum_direction"])
+                if v.x >= self.world.get_width_floors()*self.world.properties["horizontal_stretch"]:v.x = self.world.get_width_floors()*self.world.properties["horizontal_stretch"]-.01
+                if v.z >= self.world.get_height_floors()*self.world.properties["horizontal_stretch"]:v.z = self.world.get_height_floors()*self.world.properties["horizontal_stretch"]-.01
+                if v.x < 0: v.x = 0
+                if v.z < 0: v.z = 0
+                
+                v.y = self.get_elevation_continuous(v.z, v.x)*self.world.properties["vertical_stretch"] + self.world.properties["player_height"]
+                
+                    
             
                 
                 
@@ -905,6 +971,13 @@ class UI(LooiObject):
                 self.world.view.y += self.world.view.speed
             if self.key("lshift", "down"):
                 self.world.view.y -= self.world.view.speed
+        v = self.world.view
+        if v.x >= self.world.get_width_floors()*self.world.properties["horizontal_stretch"]:v.x = self.world.get_width_floors()*self.world.properties["horizontal_stretch"]-.01
+        if v.z >= self.world.get_height_floors()*self.world.properties["horizontal_stretch"]:v.z = self.world.get_height_floors()*self.world.properties["horizontal_stretch"]-.01
+        if v.x < 0: v.x = 0
+        if v.z < 0: v.z = 0
+        if v.y < self.get_elevation_continuous(v.z, v.x)*self.world.properties["vertical_stretch"] + 7:
+            v.y = self.get_elevation_continuous(v.z, v.x)*self.world.properties["vertical_stretch"] + 7
             
     def convert_to_x_z(self, hor_rot, magnitude):
         z = -math.sin(hor_rot)*magnitude
@@ -926,6 +999,7 @@ class UI(LooiObject):
             self.draw_rect(bar_x, bar_y, bar_x+bar_width, bar_y+bar_height, back)
             
             self.draw_text(0,13,str(self.fps), font_size=13)
+        #self.draw_text(0,13,str(self.world.view.y), font_size=13)
         if self.game_mode.startswith("ski"):
             
             

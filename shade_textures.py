@@ -82,6 +82,9 @@ for blend in range(blends):
         print(target,blend)
 
 '''
+
+#This is the NEW floor textures that are a bit blue
+'''
 name = "./3d_textures/MinecraftSnow"
 extension = "png"
 for blend in range(blends):
@@ -144,6 +147,25 @@ for blend in range(blends):
         #img.show()
         img.save(name + "-lighting-" + str(target) + "_"*blend + "." + extension)
         print(target,blend)
+'''
+#this is the ice texture
+
+name = "./3d_textures/MinecraftSnow"#just to get any 32x32 image (im lazy)
+extension = "png"
+for blend in range(blends):
+    for target in range(155, 256, 4):
+        img = image(name + "." + extension)
+        pixels = img.load()
+        for x in range(img.size[0]):
+            for z in range(img.size[1]):
+                pixels[x,z] = (target,target,int(target*1.075) if int(target*1.075)<= 255 else 255,255)
+        #img.show()
+        img.save("./3d_textures/IceTexture-lighting-" + str(target) + "_"*blend + "." + extension)
+        print(target,blend)
+
+
+
+
 """
 #for doing pine textures
 for i in [1,2,3,4]:

@@ -22,12 +22,16 @@ x = {
     "ice_fall_speed" : .67,
     "fall_slope" : math.pi/4.75,#math.pi/6.2,#math.pi/5.5,#math.pi/4.75,
     "ice_slope" : (math.pi/5.5,math.pi/7.5),#(math.pi/5.5,math.pi/10),#(math.pi/5.5,math.pi/8.5),
-    "no_ice_zone" : math.pi/3,
+    "no_ice_zone" : math.pi/1.3,
     "crash_speed" : .15,
     "ski_speed" : 1.1,#.55,
     "scroll_speed": math.pi/20000,#math.pi/40,
     "scroll_speed_lift" : math.pi/40,
     "turn_limit" : math.pi/20,
+    
+    #when you jump, how much angle does the skier get boosted off from the ground
+    "jump_angle" : math.pi/12,
+    "jump_g" : .019,
     
     
     "friction" : .018,#.0068,]
