@@ -578,8 +578,10 @@ class World(LooiObject):
         
         However, don't make everything a mobile vertex because mobile vertices are slower than static ones
         """
-        self.mobile_vertices = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
-        self.mobile_colors = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        self.mobile_vertices_close = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        self.mobile_colors_close = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        self.mobile_vertices_far = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        self.mobile_colors_far = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
         
         
         #initialize all chunks
@@ -1237,7 +1239,7 @@ class World(LooiObject):
     
         
     def step(self):
-        pass
+        self.chunk_load_grid = self.get_chunk_load_grid()
         
     def paint(self):
         #draw sky(sun is drawn by game ui)
@@ -1245,8 +1247,7 @@ class World(LooiObject):
         self.draw_quad_3d(-9999999, -9999999, -5800, 9999999, -9999999, -5800, 9999999, 9999999, -5800, -9999999, 9999999, -5800,constants["background_color"], setup_3d=setup_3d_no_trans_no_rot)#draw Sky
         
         
-        self.draw(self.get_chunk_load_grid())
-        self.draw_mobile()
+        self.draw(self.chunk_load_grid)
         
         
         
@@ -1349,14 +1350,6 @@ class World(LooiObject):
         #otherwise, the chunk is -1, which is no trees.
                 
         return chunk_load_grid
-    def draw_mobile(self):
-        mobile_vertices = numpy.array(self.mobile_vertices)
-        mobile_colors = numpy.array(self.mobile_colors)
-        
-        
-        self.draw_quad_array_3d(mobile_vertices, mobile_colors, setup_3d=self.get_setup_3d_close())
-        self.mobile_vertices = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
-        self.mobile_colors = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     
     
     """
@@ -1382,6 +1375,15 @@ class World(LooiObject):
             
     """
     def draw(self, chunk_load_grid):
+        mobile_vertices_close = numpy.array(self.mobile_vertices_close)
+        mobile_colors_close = numpy.array(self.mobile_colors_close)
+        mobile_vertices_far = numpy.array(self.mobile_vertices_far)
+        mobile_colors_far = numpy.array(self.mobile_colors_far)
+        
+        self.mobile_vertices_close = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        self.mobile_colors_close = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        self.mobile_vertices_far = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        self.mobile_colors_far = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
         
         
         height = len(chunk_load_grid)
@@ -1392,13 +1394,13 @@ class World(LooiObject):
         
         #add all the chunks' vertexes and colors here (if the chunk load grid is a 1)
         
-        vertices_draw = []
-        colors_draw = []
+        vertices_draw = [mobile_vertices_close]
+        colors_draw = [mobile_colors_close]
         tex_vertices_draw = []
         tex_coords_draw = []
         
-        vertices_draw_far = []
-        colors_draw_far = []
+        vertices_draw_far = [mobile_vertices_far]
+        colors_draw_far = [mobile_colors_far]
         tex_vertices_draw_far = []
         tex_coords_draw_far = []
         
@@ -1503,22 +1505,32 @@ class World(LooiObject):
     adds a mobile quad
     """
     def add_mobile_quad(self, vertex1, vertex2, vertex3, vertex4, color):
-        self.mobile_vertices.append(vertex1)
-        self.mobile_vertices.append(vertex2)
-        self.mobile_vertices.append(vertex3)
-        self.mobile_vertices.append(vertex4)
+        
+        
+        chunk_z = int( (vertex1[2]/self.properties["horizontal_stretch"])/self.properties["chunk_size"] )
+        chunk_x = int( (vertex1[0]/self.properties["horizontal_stretch"])/self.properties["chunk_size"] )
+        if self.valid_chunk(chunk_z, chunk_x) and self.chunk_load_grid[chunk_z][chunk_x] == 2:
+            v = self.mobile_vertices_close
+            c = self.mobile_colors_close
+        else:
+            v = self.mobile_vertices_far
+            c = self.mobile_colors_far
+        v.append(vertex1)
+        v.append(vertex2)
+        v.append(vertex3)
+        v.append(vertex4)
         if isinstance(color, Color):
             color = color.to_tuple()
-            self.mobile_colors.append(color)
-            self.mobile_colors.append(color)
-            self.mobile_colors.append(color)
-            self.mobile_colors.append(color)
+            c.append(color)
+            c.append(color)
+            c.append(color)
+            c.append(color)
         elif type(color) == type([]):
             for i in range(4):
-                self.mobile_colors.append(color)
+                c.append(color)
         elif type(color) == type(()):
             for i in range(4):
-                self.mobile_colors.append(color[i])
+                c.append(color[i])
     
     
     def add_fixed_quad(self, vertex1, vertex2, vertex3, vertex4, color, anchor_z, anchor_x, object=None):
@@ -1612,7 +1624,7 @@ def round(x):
     return int(x + .5)
 
 
-
+def abs(x):return x if x >= 0 else -x
 
 
 '''
