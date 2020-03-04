@@ -21,7 +21,7 @@ x = {
     "fall_speed" : .7,#how fast do you have to go on a "steep" slope to have a chance of falling
     "ice_fall_speed" : .67,
     "fall_slope" : math.pi/4.75,#math.pi/6.2,#math.pi/5.5,#math.pi/4.75,
-    "ice_slope" : (math.pi/5.5,math.pi/7.5),#(math.pi/5.5,math.pi/10),#(math.pi/5.5,math.pi/8.5),
+    "ice_slope" : (math.pi/3.6,math.pi/9),#(math.pi/5.5,math.pi/10),#(math.pi/5.5,math.pi/8.5),
     "no_ice_zone" : math.pi/1.3,
     "crash_speed" : .15,
     "ski_speed" : 1.1,#.55,

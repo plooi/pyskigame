@@ -1158,7 +1158,7 @@ class World(LooiObject):
         seed = (  math.sin((10*int((z*hs)/35))**2) + math.sin((12*int((x*hs)/35))**2)  )/2
         seed2 = (  math.sin((12*int((z*hs)/35))**2) + math.sin((6*int((x*hs)/35))**2)  )/2
         seed3 = (  math.sin((20*int((z*hs)/35))**2) + math.sin((17*int((x*hs)/35))**2)  )/2
-        if not(seed < .1 and seed > -.1):return False
+        if not(seed < .14 and seed > -.14):return False
         
         xx = x*hs % 35
         zz = z*hs % 35

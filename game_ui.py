@@ -79,7 +79,7 @@ class UI(LooiObject):
         self.lift_sound.play(loops = 9999999)#63 years about. We should be okay
         
         
-        self.swish_sound = self.new_sound("sounds/SkiSwish4.ogg", volume=.5)
+        self.swish_sound = self.new_sound("sounds/SkiSwish4.ogg", volume=.45)
         
         
         self.fall_sound = self.new_sound("sounds/Fall.ogg",volume=.365)
