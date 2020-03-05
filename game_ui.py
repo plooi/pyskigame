@@ -747,14 +747,7 @@ class UI(LooiObject):
         g = .1
         ski_g = constants["g_force"]
         
-        
         if self.interface_mode == "game" or self.interface_mode == "can_move_temporarily":
-            
-            
-            
-            
-            
-            
             #if stopped, look around normally
             if self.world.properties["momentum"] == 0:
                 rel = pygame.mouse.get_rel()

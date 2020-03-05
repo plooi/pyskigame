@@ -207,7 +207,9 @@ def read(path, new_version = True):
                 the_world.mobile_colors_close = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
                 the_world.mobile_vertices_far = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
                 the_world.mobile_colors_far = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
-                    
+            if not hasattr(the_world, "pan_background"):
+                the_world.pan_background = None
+                
             #end backward compatibility code
             return the_world
     

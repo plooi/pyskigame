@@ -818,7 +818,62 @@ class LooiObject:
         glDeleteTextures([ID])
         
         glPopMatrix()
+    def draw_image_array_2d(self, vertices, texutre_coords, image, bytes):
     
+        glPushMatrix()
+        
+        ix, iy = image.size[0], image.size[1]
+        
+        image = bytes
+        
+        ID = glGenTextures(1)
+        
+        glBindTexture(GL_TEXTURE_2D, ID)
+        glPixelStorei(GL_UNPACK_ALIGNMENT,1)
+        
+        glTexImage2D(
+            GL_TEXTURE_2D, 0, 4, ix, iy, 0,
+            GL_RGBA, GL_UNSIGNED_BYTE, image
+        )
+        
+        
+        
+        glEnable(GL_TEXTURE_2D)
+        
+        
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)#USED TO BE GL_NEAREST
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST)#USED TO BE GL_NEAREST
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, self.get_my_window().mipmap_max_level)
+        
+        glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE)
+        
+        glBindTexture(GL_TEXTURE_2D, ID)
+        
+        
+        glGenerateMipmap(GL_TEXTURE_2D)
+        
+        
+        
+        
+        
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        
+        glScale(2/self.get_my_window().internal_size[0]*self.get_my_window().view_width/self.get_my_window().window_size[0], 
+        -2/self.get_my_window().internal_size[1]*self.get_my_window().view_height/self.get_my_window().window_size[1],0 )
+        glTranslatef(-self.get_my_window().internal_size[0]/2,-self.get_my_window().internal_size[1]/2,0)
+        
+        glVertexPointerf(vertices);
+        glTexCoordPointerf(texutre_coords);
+        glDrawArrays(GL_QUADS, 0, len(vertices));
+        
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        
+        glDeleteTextures([ID])
+        
+        glPopMatrix()
+        
     def draw_quad_array_2d(self, vertices, colors, setup = lambda:0):
         glPushMatrix()
         setup()

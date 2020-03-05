@@ -211,6 +211,11 @@ def settings(menu):
     setting["Vertical Stretch"] = menu.ui.world.properties["vertical_stretch"]
     setting["Sub Chunk Squares"] = menu.ui.world.properties["sub_chunk_squares"]
     setting["Sun Angle"] = menu.ui.world.properties["sun_angle"]
+    setting["Scenery Angle"] = menu.ui.world.properties["scenery_angle"]
+    setting["Scenery Height"] = menu.ui.world.properties["scenery_height"]
+    setting["Scenery Radius"] = menu.ui.world.properties["scenery_radius"]
+    setting["Scenery Segments"] = menu.ui.world.properties["scenery_segments"]
+    setting["Scenery Lower Bound"] = menu.ui.world.properties["scenery_lower_stretch"]
     setting["Line of Sight"] = menu.ui.world.view.line_of_sight
     setting["Line of Sight 2"] = menu.ui.world.properties["line_of_sight2"]
     setting["Movement Speed"] = menu.ui.world.view.speed
@@ -222,6 +227,7 @@ def settings(menu):
     setting["Map Editor: Line Thickness"] = menu.ui.world.properties["line_thickness(map_editor)"]
     setting["Map Editor: Terrain Mod Step Size"] = menu.ui.world.properties["terrain_mod_step_size(map_editor)"]
     setting["Map Editor: Bump Placement Chance"] = menu.ui.world.properties["bump_placement_chance(map_editor)"]
+    
 
     
     """
@@ -238,6 +244,7 @@ def settings(menu):
     #FOR ADDING NEW TERMINALS, CHANGE HERE
     col.append([sg.Text("Map Editor: High Speed Terminal Model ("+find_name(build_hs_terminal_model)+")"), sg.Combo(values=["hs_terminal_design_gray", "hs_terminal_design_red","hs_terminal_design_green","hs_terminal_design_blue"], size=(35,10))])
     col.append([sg.Text("Map Editor: Fixed Grip Terminal Model ("+find_name(build_fg_terminal_model)+")"), sg.Combo(values=["terminal_design_2","fg_terminal_design_red","fg_terminal_design_green","fg_terminal_design_blue","fg_terminal_design_black"], size=(35,10))])
+    col.append([sg.Text("Change Background"), sg.Input(), sg.FilesBrowse()])
     
     
     
@@ -264,6 +271,8 @@ def settings(menu):
     hs_tm = values[i]
     i+=1
     fg_tm = values[i]
+    i+=1
+    background_file=values[i]
     
     window.close()
     
@@ -286,7 +295,11 @@ def settings(menu):
             menu.ui.world.properties["build_chair_pole_distance(map_editor)"] = float(new_settings["Map Editor: Lift Build Pole Distance"])
             menu.ui.world.properties["bump_placement_chance(map_editor)"] = float(new_settings["Map Editor: Bump Placement Chance"])
             menu.ui.world.properties["line_of_sight2"] = float(new_settings["Line of Sight 2"])
-            
+            menu.ui.world.properties["scenery_angle"] = float(new_settings["Scenery Angle"])
+            menu.ui.world.properties["scenery_height"] = float(new_settings["Scenery Height"])
+            menu.ui.world.properties["scenery_radius"] = float(new_settings["Scenery Radius"])
+            menu.ui.world.properties["scenery_segments"] = float(new_settings["Scenery Segments"])
+            menu.ui.world.properties["scenery_lower_stretch"] = float(new_settings["Scenery Lower Bound"])
             
             
             #hs terminal model
@@ -305,6 +318,12 @@ def settings(menu):
             if fg_tm == "fg_terminal_design_black": build_fg_terminal_model=fg_terminal_design_black
             
             
+            
+            try:
+                new_back = image(background_file)
+                menu.ui.world.pan_background = new_back,new_back.tobytes("raw", "RGBA", 0, -1)
+            except:
+                pass
             
             
             

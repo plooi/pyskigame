@@ -444,6 +444,11 @@ class World(LooiObject):
             "horizontal_stretch" : 4,
             "vertical_stretch" : .15,
             "sun_angle" : 0,
+            "scenery_angle" : 0,
+            "scenery_height" : 0,
+            "scenery_radius" : 7000,
+            "scenery_segments" : 8,
+            "scenery_lower_stretch" : 10000,
             
             "texture_distance" : 4, #distance at which we start drawing the snow texture in quads not chunks
             "texture_radius" : 3, #distance at which floors are guaranteed to be textured, regardless of whether you're looking or not
@@ -516,7 +521,8 @@ class World(LooiObject):
         
         self.game_ui = None
         
-        
+        self.pan_background = image("Pan.png")
+        self.pan_background = self.pan_background,self.pan_background.tobytes("raw", "RGBA", 0, -1)
         
         
     
@@ -1242,9 +1248,13 @@ class World(LooiObject):
         self.chunk_load_grid = self.get_chunk_load_grid()
         
     def paint(self):
+        
+        self.draw_scenery()
+        
+        
         #draw sky(sun is drawn by game ui)
         def setup_3d_no_trans_no_rot(): gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 5, 6000 )
-        self.draw_quad_3d(-9999999, -9999999, -5800, 9999999, -9999999, -5800, 9999999, 9999999, -5800, -9999999, 9999999, -5800,constants["background_color"], setup_3d=setup_3d_no_trans_no_rot)#draw Sky
+        #self.draw_quad_3d(-9999999, -9999999, -5800, 9999999, -9999999, -5800, 9999999, 9999999, -5800, -9999999, 9999999, -5800,constants["background_color"], setup_3d=setup_3d_no_trans_no_rot)#draw Sky
         
         
         self.draw(self.chunk_load_grid)
@@ -1255,9 +1265,81 @@ class World(LooiObject):
         pylooiengine.main_window.draw_borders()
         
         
-        
-        
-        
+    def draw_scenery(self):
+        glClearColor(.3,.42,.63, 1)
+        glClear(GL_COLOR_BUFFER_BIT)
+        if self.pan_background != None:
+            upper_stretch = 0#HOW MUCH OF THE IMAGE WILL BE STRETCHED
+            lower_stretch = .1#HOW MUCH OF THE IMAGE WILL BE STRETCHED
+            
+            segments = int(self.properties["scenery_segments"])
+            radius = self.properties["scenery_radius"]
+            angle = math.pi*2/segments
+            
+            circumference = segments * (2*radius**2 - 2*radius**2*math.cos(angle))**.5
+            
+            ratio = circumference/self.pan_background[0].size[0]
+            
+            drawn_height = ratio*self.pan_background[0].size[1]
+            lower_height = self.properties["scenery_lower_stretch"]
+            upper_height = 0
+            
+            vertices = []
+            tex_coords = []
+            
+            for i in range(segments):
+                a1 = -angle*(i) + self.properties["scenery_angle"]
+                a2 = -angle*(i+1) + self.properties["scenery_angle"]
+                x1 = math.cos(a1)*radius + self.get_width_floors()*self.properties["horizontal_stretch"]/2
+                z1 = -math.sin(a1)*radius + self.get_height_floors()*self.properties["horizontal_stretch"]/2
+                x2 = math.cos(a2)*radius + self.get_width_floors()*self.properties["horizontal_stretch"]/2
+                z2 = -math.sin(a2)*radius + self.get_height_floors()*self.properties["horizontal_stretch"]/2
+                
+                
+                vertices.append([x1,self.properties["scenery_height"] + drawn_height*(1-upper_stretch) - drawn_height/2,z1])
+                vertices.append([x2,self.properties["scenery_height"] + drawn_height*(1-upper_stretch) - drawn_height/2,z2])
+                vertices.append([x2,self.properties["scenery_height"] + -drawn_height*(1-lower_stretch) + drawn_height/2,z2])
+                vertices.append([x1,self.properties["scenery_height"] + -drawn_height*(1-lower_stretch) + drawn_height/2,z1])
+                
+                tex_coords.append([i/segments,1-upper_stretch])
+                tex_coords.append([(i+1)/segments,1-upper_stretch])
+                tex_coords.append([(i+1)/segments,lower_stretch])
+                tex_coords.append([i/segments,lower_stretch])
+                
+                
+                vertices.append([x1,self.properties["scenery_height"] + -drawn_height*(1-lower_stretch) + drawn_height/2,z1])
+                vertices.append([x2,self.properties["scenery_height"] + -drawn_height*(1-lower_stretch) + drawn_height/2,z2])
+                vertices.append([x2,self.properties["scenery_height"] + -lower_height,z2])
+                vertices.append([x1,self.properties["scenery_height"] + -lower_height,z1])
+            
+                tex_coords.append([i/segments,lower_stretch])
+                tex_coords.append([(i+1)/segments,lower_stretch])
+                tex_coords.append([(i+1)/segments,0])
+                tex_coords.append([i/segments,0])
+                """
+                vertices.append([x1,upper_height,z1])
+                vertices.append([x2,upper_height,z2])
+                vertices.append([x2,drawn_height*(1-upper_stretch) - drawn_height/2,z2])
+                vertices.append([x1,drawn_height*(1-upper_stretch) - drawn_height/2,z1])
+                
+                tex_coords.append([i/segments,1])
+                tex_coords.append([(i+1)/segments,1])
+                tex_coords.append([(i+1)/segments,1-upper_stretch])
+                tex_coords.append([i/segments,1-upper_stretch])
+                """
+            
+            def setup():
+                gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 50, 99999)
+                try:
+                    glRotate(rad_to_deg(-(self.view.hor_rot-math.pi/2)), 0, 1, 0)
+                    glRotate(rad_to_deg(-self.view.vert_rot), math.cos(self.view.hor_rot - math.pi/2), 0, -math.sin(self.view.hor_rot - math.pi/2))
+                    glTranslate(-self.view.x, -self.view.y, -self.view.z)
+                except Exception as e:
+                    pass
+            
+            
+            self.draw_image_array_3d(vertices, tex_coords, self.pan_background[0], self.pan_background[1],setup_3d=setup)
+            glClear(GL_DEPTH_BUFFER_BIT)
     def get_chunk_load_grid(self):
         chunk_load_grid =[]
         for r in range(self.get_height_chunks()):
