@@ -166,8 +166,10 @@ class UI(LooiObject):
                             #midpoint hop CANNOT happen when lifts cross because you must be close to a terminal in order for lift hopping to happen.
                             if self.my_lift != None and self.my_chair != None and not(self.my_lift is chairlift):
                                 if cp[i][1]-self.my_lift.chair_positions[self.my_chair][1] == 0 and self.can_hop:
+                                    self.my_lift.player_riding = None
                                     self.my_lift = chairlift
                                     self.my_chair = i
+                                    self.my_lift.player_riding = i
                                     self.can_hop = False
                                     action_made = True
                                     break
@@ -184,6 +186,11 @@ class UI(LooiObject):
             rel = pygame.mouse.get_rel()
             self.world.view.hor_rot += -(rel[0])*self.world.view.rot_spd
             self.world.view.vert_rot += -(rel[1])*self.world.view.rot_spd
+            
+            if self.world.view.vert_rot > self.world.view.max_vert_rot:
+                self.world.view.vert_rot = self.world.view.max_vert_rot
+            if self.world.view.vert_rot < -self.world.view.max_vert_rot:
+                self.world.view.vert_rot = -self.world.view.max_vert_rot
             
             
             if self.key(constants["action_key"], "down"):
@@ -641,6 +648,11 @@ class UI(LooiObject):
             rel = pygame.mouse.get_rel()
             self.world.view.hor_rot += -(rel[0])*self.world.view.rot_spd
             self.world.view.vert_rot += -(rel[1])*self.world.view.rot_spd
+            
+            if self.world.view.vert_rot > self.world.view.max_vert_rot:
+                self.world.view.vert_rot = self.world.view.max_vert_rot
+            if self.world.view.vert_rot < -self.world.view.max_vert_rot:
+                self.world.view.vert_rot = -self.world.view.max_vert_rot
                 
             p1,p2,p3 = self.xyz_of_current_triangle(self.world.view.z, self.world.view.x)
             floor_hr, floor_vr = get_plane_rotation(p1[0],p1[1],p1[2],p2[0],p2[1],p2[2],p3[0],p3[1],p3[2])
@@ -753,6 +765,10 @@ class UI(LooiObject):
                 rel = pygame.mouse.get_rel()
                 self.world.view.hor_rot += -(rel[0])*self.world.view.rot_spd
                 self.world.view.vert_rot += -(rel[1])*self.world.view.rot_spd
+                if self.world.view.vert_rot > self.world.view.max_vert_rot:
+                    self.world.view.vert_rot = self.world.view.max_vert_rot
+                if self.world.view.vert_rot < -self.world.view.max_vert_rot:
+                    self.world.view.vert_rot = -self.world.view.max_vert_rot
                 
             #if skiing, when you rotate the mouse make it change the ski turn
             else:
@@ -765,6 +781,10 @@ class UI(LooiObject):
                 elif self.turning < -constants["turn_limit"]:
                     self.turning = -constants["turn_limit"]
                 self.world.view.vert_rot += -(rel[1])*self.world.view.rot_spd
+                if self.world.view.vert_rot > self.world.view.max_vert_rot:
+                    self.world.view.vert_rot = self.world.view.max_vert_rot
+                if self.world.view.vert_rot < -self.world.view.max_vert_rot:
+                    self.world.view.vert_rot = -self.world.view.max_vert_rot
                 self.world.properties["ski_direction"] += self.turning
                 
             

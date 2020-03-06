@@ -534,7 +534,7 @@ class Measure(MapEdit):
         
         
         
-        self.draw_line_3d(self.x1, self.y1, self.z1, self.x2, self.y2, self.z2, green, 5, setup_3d=self.world().setup_3d)
+        self.draw_line_3d(self.x1, self.y1, self.z1, self.x2, self.y2, self.z2, green, 5, setup_3d=self.world().get_setup_3d_close())
         
         
         

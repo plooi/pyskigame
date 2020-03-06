@@ -57,8 +57,8 @@ def data_gen2():
     next(data_gen2_5)
     
 def data_gen2_5():
-    Text(text=split("Position the camera in a spot that where you can view the entire area you want to ski. \n\nThe catch is, you must be facing ***perfectly*** "+
-    "downwards otherwise this wont work. Use the view rotator (eye icon in the upper right) to rotate you view to be PERFECTLY facing down.\n\n\n\nDo NOOOTTT move the view at all from this point on. (cannot click and drag the world, cannot zoom in and out, cannot rotate the view, NOTHING)"))
+    Text(text=split("Position the camera in a spot where you can view the entire area you want to ski. \n\nThe catch is, you must be facing ***perfectly*** "+
+    "downwards otherwise this wont work. Use the view rotator (eye icon in the upper right) to rotate your view to be PERFECTLY facing down.\n\n\n\nDo NOOOTTT move the view at all from this point on. (cannot click and drag the world, cannot zoom in and out, cannot rotate the view, NOTHING)"))
     next(data_gen3)
 def data_gen3():
     Text(text=split("Press the 'Add Polygon' button.\n\nMake the polygon span the entire area of your ski location. \n\nDo this WITHOUT moving your view\n\nNEVER CLOSE THE POLYGON'S WINDOW until the whole process is complete."))
