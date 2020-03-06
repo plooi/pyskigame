@@ -184,13 +184,14 @@ class UI(LooiObject):
         
         if self.my_lift != None and self.my_chair != None:
             rel = pygame.mouse.get_rel()
-            self.world.view.hor_rot += -(rel[0])*self.world.view.rot_spd
-            self.world.view.vert_rot += -(rel[1])*self.world.view.rot_spd
+            if self.interface_mode == "game" or self.interface_mode == "can_move_temporarily":
+                self.world.view.hor_rot += -(rel[0])*self.world.view.rot_spd
+                self.world.view.vert_rot += -(rel[1])*self.world.view.rot_spd
             
-            if self.world.view.vert_rot > self.world.view.max_vert_rot:
-                self.world.view.vert_rot = self.world.view.max_vert_rot
-            if self.world.view.vert_rot < -self.world.view.max_vert_rot:
-                self.world.view.vert_rot = -self.world.view.max_vert_rot
+                if self.world.view.vert_rot > self.world.view.max_vert_rot:
+                    self.world.view.vert_rot = self.world.view.max_vert_rot
+                if self.world.view.vert_rot < -self.world.view.max_vert_rot:
+                    self.world.view.vert_rot = -self.world.view.max_vert_rot
             
             
             if self.key(constants["action_key"], "down"):
