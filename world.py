@@ -29,6 +29,7 @@ import world_operations
 from PIL import Image
 from time import time
 from lift import Pole
+import os
 
 
 #improves performance. 
@@ -447,7 +448,7 @@ class World(LooiObject):
             "scenery_angle" : 0,
             "scenery_height" : 0,
             "scenery_radius" : 7000,
-            "scenery_segments" : 8,
+            "scenery_segments" : 20,
             "scenery_lower_stretch" : 10000,
             
             "texture_distance" : 4, #distance at which we start drawing the snow texture in quads not chunks
@@ -530,7 +531,7 @@ class World(LooiObject):
     init_csv
     """
     
-    def init_csv(self, name, csv_name, more_properties={}, view=None):
+    def init_csv(self, name, csv_name, more_properties={}, view=None, tree_chance = .5):
         lines = []
         f = open(csv_name, "r")
         for line in f:
@@ -539,7 +540,37 @@ class World(LooiObject):
         
         height = len(lines)
         width = 0 if height==0 else len(lines[0])
-        return self.init(name, width-1, height-1, more_properties, lambda z,x: lines[z][x], view) 
+        ret = self.init(name, width-1, height-1, more_properties, lambda z,x: lines[z][x], view, natural_bumps=False) 
+        
+        #smooth yourself
+        world_operations.smooth(self, 0,0,height,width)
+        
+        
+        #do trees from csv file
+        if os.path.isfile(csv_name + "tree"):
+            loading.progress_bar("Creating trees...")
+            f = open(csv_name + "tree", "r")
+            trees = []
+            for line in f:
+                trees.append(line.split(","))
+            
+            for r in range(len(trees)):
+                for c in range(len(trees[0])):
+                    if trees[r][c] == "1" and self.valid_floor(r, c):
+                        if random() < tree_chance:
+                            Tree(z=r, x=c, world=self)
+                if r % 7 == 0:
+                    loading.update(r/len(trees)*100)
+            loading.update(100)
+            
+            f.close()
+        
+        
+        
+        #now do natural bumps
+        world_operations.natural_bumps(self, 0,0,self.get_height_points(), self.get_width_points(), prog_bar=True)
+        
+        return ret
     
     """
     init 
@@ -555,7 +586,7 @@ class World(LooiObject):
         tells each quadrilateral which chunk it's in
         allocates a spot in the current chunk's buffer for the floor square, and hands that pointer over to the quadrilateral
     """
-    def init(self, name, width, height, more_properties={}, elevation_function=lambda z,x:0, view=None, prog_bar=True):
+    def init(self, name, width, height, more_properties={}, elevation_function=lambda z,x:0, view=None, prog_bar=True, natural_bumps=True):
         self.quads = []
         self.chunks = []
         self.pan_chunk_squares = VertexHandler(3)
@@ -667,7 +698,8 @@ class World(LooiObject):
         
         #initialize the natural bumps
         if prog_bar: loading.update(100)
-        world_operations.natural_bumps(self, 0,0,self.get_width_points(), self.get_width_points(), prog_bar=True)
+        if natural_bumps:
+            world_operations.natural_bumps(self, 0,0,self.get_height_points(), self.get_width_points(), prog_bar=True)
         
         
         return self
@@ -1306,27 +1338,19 @@ class World(LooiObject):
                 tex_coords.append([(i+1)/segments,lower_stretch])
                 tex_coords.append([i/segments,lower_stretch])
                 
+                if lower_height > drawn_height/2:
+                    
+                    
+                    vertices.append([x1,self.properties["scenery_height"] + -drawn_height*(1-lower_stretch) + drawn_height/2,z1])
+                    vertices.append([x2,self.properties["scenery_height"] + -drawn_height*(1-lower_stretch) + drawn_height/2,z2])
+                    vertices.append([x2,self.properties["scenery_height"] + -lower_height,z2])
+                    vertices.append([x1,self.properties["scenery_height"] + -lower_height,z1])
                 
-                vertices.append([x1,self.properties["scenery_height"] + -drawn_height*(1-lower_stretch) + drawn_height/2,z1])
-                vertices.append([x2,self.properties["scenery_height"] + -drawn_height*(1-lower_stretch) + drawn_height/2,z2])
-                vertices.append([x2,self.properties["scenery_height"] + -lower_height,z2])
-                vertices.append([x1,self.properties["scenery_height"] + -lower_height,z1])
-            
-                tex_coords.append([i/segments,lower_stretch])
-                tex_coords.append([(i+1)/segments,lower_stretch])
-                tex_coords.append([(i+1)/segments,0])
-                tex_coords.append([i/segments,0])
-                """
-                vertices.append([x1,upper_height,z1])
-                vertices.append([x2,upper_height,z2])
-                vertices.append([x2,drawn_height*(1-upper_stretch) - drawn_height/2,z2])
-                vertices.append([x1,drawn_height*(1-upper_stretch) - drawn_height/2,z1])
+                    tex_coords.append([i/segments,lower_stretch])
+                    tex_coords.append([(i+1)/segments,lower_stretch])
+                    tex_coords.append([(i+1)/segments,0])
+                    tex_coords.append([i/segments,0])
                 
-                tex_coords.append([i/segments,1])
-                tex_coords.append([(i+1)/segments,1])
-                tex_coords.append([(i+1)/segments,1-upper_stretch])
-                tex_coords.append([i/segments,1-upper_stretch])
-                """
             
             def setup():
                 gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 50, 99999)

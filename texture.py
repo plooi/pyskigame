@@ -1,5 +1,8 @@
 from pylooiengine.misc.graphics import VertexHandler
 from pylooiengine import *
+from random import random
+
+
 
 #start texture loading
 key = "key.txt"
@@ -7,7 +10,6 @@ tex = image("XXX.png")
 tex_b = tex.tobytes("raw", "RGBA", 0, -1)
 
 texture_dictionary = {}#input texture name, returns opengl coordinates of this texture where it lies on the master image
-
 
 f = open(key)
 i = 0

@@ -17,6 +17,7 @@ from random import random
 from math import sin,cos
 from tree import Tree
 import world_save
+import shutil
 
 class Launcher(LooiObject):
     def step(self):
@@ -53,10 +54,55 @@ def main_menu():
     ski_mode.button_depth = 10
     ski_mode.set_layer(0)
     
-    abort = Button(800, 400, 400, 85, "Quit", lambda:quit(), Color(.6,.6,.6), black, 64)
+    scan = Button(800, 400, 400, 85, "Scan Terrain", lambda:data_gen.data_gen(), Color(.6,.6,.6), black, 64)
+    scan.button_depth = 10
+    scan.set_layer(0)
+    
+    delete_ = Button(800, 500, 400, 85, "Delete", delete_stuff, Color(.6,.6,.6), black, 64)
+    delete_.button_depth = 10
+    delete_.set_layer(0)
+    
+    abort = Button(800, 600, 400, 85, "Quit", lambda:quit(), Color(.6,.6,.6), black, 64)
     abort.button_depth = 10
     abort.set_layer(0)
+
+def delete_stuff():
+    kill_all()
+    BackgroundPic()
     
+    del_ski_ = Button(600, 250, 800, 85, "Delete a Ski World", del_ski, Color(.6,.6,.6), black, 64)
+    del_ski_.set_layer(0)
+    del_ski_.button_depth = 10
+    del_map_ = Button(600, 350, 800, 85, "Delete a Map Editor World", del_map, Color(.6,.6,.6), black, 64)
+    del_map_.set_layer(0)
+    del_map_.button_depth = 10
+    del_elev_ = Button(600, 450, 800, 85, "Delete an Elevation CSV", del_elev, Color(.6,.6,.6), black, 64)
+    del_elev_.set_layer(0)
+    del_elev_.button_depth = 10
+    back = Button(600, 650, 800, 85, "<--", main_menu, Color(.6,.6,.6), black, 64)
+    back.set_layer(0)
+    back.button_depth = 10
+def del_ski():
+    layout = [[sg.Button(ski_world)] for ski_world in os.listdir("../saves")]
+    window = sg.Window('', layout, size=(500,800))
+    event, values = window.Read()
+    window.close()
+    if event == None:return
+    shutil.move("../saves/"+event, "../recycle")
+def del_map():
+    layout = [[sg.Button(ski_world)] for ski_world in os.listdir("../worlds")]
+    window = sg.Window('', layout, size=(500,800))
+    event, values = window.Read()
+    window.close()
+    if event == None:return
+    shutil.move("../worlds/"+event, "../recycle")
+def del_elev():
+    layout = [[sg.Button(ski_world)] for ski_world in os.listdir("./topographic")]
+    window = sg.Window('', layout, size=(500,800))
+    event, values = window.Read()
+    window.close()
+    if event == None:return
+    shutil.move("./topographic/"+event, "../recycle")
     
 def ski_room():
     kill_all()
@@ -318,16 +364,25 @@ def data_file_world():
     window.close()
             
     choice = event
-            
+    
+    
     if event == None: return
     while 1:
         layout = [
                   [sg.Text('Name:'), sg.Input(event)],
+                  [sg.Text('Tree density (value from 0 to 1):'), sg.Input(".4")],
                   [sg.OK()] ]
         window = sg.Window('', layout)
         event, values = window.Read()
         window.close()
         if event == None: return
+        
+        try:
+            tree_density = float(values[1])
+        except:
+            sg.Popup("Invalid tree density")
+            continue
+            
         
         if values[0] in os.listdir("../worlds/"):
             layout = [
@@ -345,7 +400,7 @@ def data_file_world():
     
     
     try:
-        the_world = world.World().init_csv(values[0], "./topographic/" + choice)
+        the_world = world.World().init_csv(values[0], "./topographic/" + choice, tree_chance=tree_density)
         world_save.write(the_world)
     except Exception as e:
         sleep(1)
@@ -387,7 +442,7 @@ def init_ski_room(world):
 
 
 
-
+import data_gen
 
     
 

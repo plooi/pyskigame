@@ -318,7 +318,8 @@ def settings(menu):
             if fg_tm == "fg_terminal_design_black": build_fg_terminal_model=fg_terminal_design_black
             
             
-            
+            if background_file.lower() in ["none","no","blank","empty","nothing"]:
+                menu.ui.world.pan_background = None
             try:
                 new_back = image(background_file)
                 menu.ui.world.pan_background = new_back,new_back.tobytes("raw", "RGBA", 0, -1)

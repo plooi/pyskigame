@@ -295,7 +295,7 @@ class UI(LooiObject):
                 
             
         vol = 1 - closest_chairlift_distance/50
-        vol /= 2.8
+        vol /= 3.6#2.8
         if vol < 0: vol = 0
         self.set_lift_vol(vol)
         

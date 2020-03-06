@@ -10,5 +10,6 @@ import rooms
 def main():  
     if not os.path.exists("../worlds"):os.mkdir("../worlds")
     if not os.path.exists("../saves"):os.mkdir("../saves")
+    if not os.path.exists("../recycle"):os.mkdir("../recycle")
     w.start()
 if __name__ == "__main__": main()
