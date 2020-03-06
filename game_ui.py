@@ -174,7 +174,8 @@ class UI(LooiObject):
                                     action_made = True
                                     break
                     
-        
+        if self.my_lift != None:
+            print(self.my_lift.player_riding)
         
         #turn on hopping
         if self.my_lift != None and self.my_chair != None:
@@ -203,6 +204,7 @@ class UI(LooiObject):
             self.world.properties["do_floor_textures"] = False
             if self.game_mode == "map editor":
                 if self.key(constants["interact_key"], "pressed"):#this should only be available in map editor!!!!!!!!!!!!!!!!!!
+                    self.my_lift.player_riding = None
                     self.my_lift = None
                     self.my_chair = None
             return True

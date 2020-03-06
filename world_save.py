@@ -180,7 +180,7 @@ def read(path, new_version = True):
             
             for z in range(the_world.get_height_floors()):
                 for x in range(the_world.get_width_floors()):
-                    for obj in the_world.quads[z][x].containedObjects:
+                    for obj in list(the_world.quads[z][x].containedObjects):
                         
                         if isinstance(obj, Terminal):
                             if obj.top_or_bot == "bot":
