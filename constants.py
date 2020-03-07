@@ -42,8 +42,8 @@ x = {
     
     
     "bump_slope" : (math.pi/4.6,math.pi/10),
-    "bump_density" : .36,#.3,
-    "bump_group_density" : .2,
+    "bump_density" : .01,#.36,#.3,
+    "bump_group_density" : .3,
     "bump_collision_radius" : 1.6,
     
     "menu_key" : "c",

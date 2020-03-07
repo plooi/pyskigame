@@ -53,6 +53,7 @@ def find_name(model):
     if m is tree_design_2: return "tree_design_2"
     if m is rock_design_1:return "rock_design_1"
     if m is rock_design_2:return "rock_design_2"
+    if m is rock_design_3:return "rock_design_3"
     
     if m is gondola_model_1_riding: return "gondola_model_1_riding"
     
@@ -893,7 +894,7 @@ def rock_design_2(
     
     
     return [list(x) if isinstance(x,list) else x for x in [
-    u1,u2,u3,u4,"CliffTexture",
+    u1,u2,u3,u4,"MinecraftSnow-lighting-243",
     u1,u2,l2,l1,"CliffTexture",
     u3,u2,l2,l3,"CliffTexture",
     u3,u4,l4,l3,"CliffTexture",
@@ -901,7 +902,34 @@ def rock_design_2(
     
     
     ]]
-
+def rock_design_3(
+    
+    l1 = [-11,-15,-11],
+    l2 = [11,-15,-11],
+    l3 = [11,-15,11],
+    l4 = [-11,-15,11],
+    
+    u1 = [-2.5,0,-2.5],
+    u2 = [2.5,0,-2.5],
+    u3 = [2.5,0,2.5],
+    u4 = [-2.5,0,2.5],
+    
+    front=[.8,.8,.8],
+    right=[.7,.7,.7],
+    left=[.65,.65,.65],
+    back=[.75,.75,.75],
+    top = [.9,.9,.9] ):
+    
+    
+    return [list(x) if isinstance(x,list) else x for x in [
+    u1,u2,u3,u4,"MinecraftSnow-lighting-243",
+    u1,u2,l2,l1,"MinecraftSnow-lighting-219",
+    u3,u2,l2,l3,"MinecraftSnow-lighting-219",
+    u3,u4,l4,l3,"MinecraftSnow-lighting-219",
+    l1,u1,u4,l4,"MinecraftSnow-lighting-219"
+    
+    
+    ]]
 
 def sun_model_1(
         angle_segments = 30,

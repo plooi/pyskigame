@@ -27,6 +27,7 @@ class BigRock(Rock):
         default(args, "model", rock_design_2)
         default(args, "model_type", "tex")
         super().__init__(**args)
+        #self.inside_top_square = False
     def touching(self, x, y, z):
         #numbers 14 and 5 are from the model dimensions 
         dist_under = self.args["model_y"] - (y - self.world.properties["player_height"])
@@ -50,17 +51,31 @@ class BigRock(Rock):
         else:                    alpha = 2*math.pi-phi
         
         d = r/math.sin(math.pi/2 - alpha)
-        return((((x-self.args["model_x"])**2 + (z-self.args["model_z"])**2)**.5) < d) and (dist_under > 0) and (dist_under < 30)
+        ret = ((((x-self.args["model_x"])**2 + (z-self.args["model_z"])**2)**.5) < d) and (dist_under > 0) and (dist_under < 30)
+        
+        #d_top_square = 5/math.sin(math.pi/2 - alpha)
+        #self.inside_top_square = (((x-self.args["model_x"])**2 + (z-self.args["model_z"])**2)**.5) < d_top_square
+        
+        return ret
     def touching_player_consequence(self): 
-        if self.world.properties["momentum"] >= constants["crash_speed"]: 
-            if self.world.properties["momentum"] >= .4:
-                self.world.game_ui.falling = 2
-            else:
-                self.world.game_ui.falling = 1
+        dist_under = self.args["model_y"] - (self.world.view.y - self.world.properties["player_height"])
+        if dist_under < 1:# and self.inside_top_square:
+            self.world.game_ui.modified_floor_y = self.args["model_y"]-.01
+            self.world.game_ui.modified_floor_slope = math.pi/20
         else:
-            angle = get_angle(self.args["model_z"], self.args["model_x"], self.world.view.z, self.world.view.x)
-            self.world.view.z -= .8*math.sin(angle)
-            self.world.view.x += .8*math.cos(angle)
+            if not self.world.game_ui.jumping:#so if you're jumping, you can have a bit more margin
+                if self.world.properties["momentum"] >= constants["crash_speed"]: 
+                    if self.world.properties["momentum"] >= .4:
+                        self.world.game_ui.falling = 2
+                    else:
+                        self.world.game_ui.falling = 1
+                else:
+                    angle = get_angle(self.args["model_z"], self.args["model_x"], self.world.view.z, self.world.view.x)
+                    self.world.view.z -= .8*math.sin(angle)
+                    self.world.view.x += .8*math.cos(angle)
+            else:
+                self.world.game_ui.modified_floor_y = self.args["model_y"]-.01
+                self.world.game_ui.modified_floor_slope = math.pi/20
 def angle_in_between(a1, x, a2):
     da1 = angle_distance(x, a1)
     da2 = angle_distance(x, a2)

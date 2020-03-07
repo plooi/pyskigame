@@ -107,6 +107,9 @@ class UI(LooiObject):
         
         self.jumping = False
         
+        self.modified_floor_y = None
+        self.modified_floor_hr = None
+        self.modified_floor_slope = None
         
     def stop_sounds(self):
         self.wind_sound.stop()
@@ -173,9 +176,7 @@ class UI(LooiObject):
                                     self.can_hop = False
                                     action_made = True
                                     break
-                    
-        if self.my_lift != None:
-            print(self.my_lift.player_riding)
+
         
         #turn on hopping
         if self.my_lift != None and self.my_chair != None:
@@ -354,11 +355,12 @@ class UI(LooiObject):
                     if self.falling:
                         self.fall()
                     else:
-                        self.ski_mode_move()
                         self.collision_check()
+                        self.ski_mode_move()
                 else:
-                    self.walk()
                     self.collision_check()
+                    self.walk()
+                    
             
                     
         if self.game_mode.startswith("ski") and not self.falling: 
@@ -390,6 +392,11 @@ class UI(LooiObject):
         model_3d.add_model_to_world_mobile(model, self.world)
             
     def collision_check(self):
+    
+        self.modified_floor_y = None
+        self.modified_floor_hr = None
+        self.modified_floor_slope = None
+        
         hs = self.world.properties["horizontal_stretch"]
         vs = self.world.properties["vertical_stretch"]
         my_z = int(self.world.view.z/hs)
@@ -419,7 +426,8 @@ class UI(LooiObject):
     
     #input scaled position
     def get_elevation_continuous(self, z, x):
-        
+        if self.modified_floor_y != None:
+            return self.modified_floor_y/self.world.properties["vertical_stretch"]
         
         
         #make z and x unscaled so we can call world.getelevation with them
@@ -498,9 +506,9 @@ class UI(LooiObject):
                 if self.fall_clock == 0:
                     self.fall_sound.play(maxtime=1800)
                     if self.falling==2:
-                        self.health(-50, animate=True)
+                        self.health(-8, animate=True)
                     elif self.falling == 1:
-                        self.health(-20, animate=True)
+                        self.health(-4, animate=True)
                     self.world.properties["momentum"] = 0
                     self.original_pos = [self.world.view.x,self.world.view.y,self.world.view.z,self.world.view.hor_rot,self.world.view.vert_rot]
                 elif self.fall_clock <= 16:
@@ -550,9 +558,9 @@ class UI(LooiObject):
                 if self.fall_clock == 0:
                     self.fall_sound.play(maxtime=1800)
                     if self.falling==2:
-                        self.health(-50, animate=True)
+                        self.health(-8, animate=True)
                     elif self.falling == 1:
-                        self.health(-20, animate=True)
+                        self.health(-4, animate=True)
                     self.world.properties["momentum"] = 0
                     self.original_pos = [self.world.view.x,self.world.view.y,self.world.view.z,self.world.view.hor_rot,self.world.view.vert_rot]
                 elif self.fall_clock <= 16:
@@ -657,14 +665,18 @@ class UI(LooiObject):
             if self.world.view.vert_rot < -self.world.view.max_vert_rot:
                 self.world.view.vert_rot = -self.world.view.max_vert_rot
                 
+            
             p1,p2,p3 = self.xyz_of_current_triangle(self.world.view.z, self.world.view.x)
             floor_hr, floor_vr = get_plane_rotation(p1[0],p1[1],p1[2],p2[0],p2[1],p2[2],p3[0],p3[1],p3[2])
-               
+            
             if floor_vr < 0:
                 floor_vr = -floor_vr
                 floor_hr += math.pi
+            
             floor_slope = math.pi/2 - floor_vr
             
+            if self.modified_floor_hr != None: floor_hr = self.modified_floor_hr
+            if self.modified_floor_slope != None: floor_slope = self.modified_floor_slope
             
             if self.key("w", "down") and self.key("d", "down"):
                 if floor_slope < math.pi/6 or angle_distance(self.world.view.hor_rot-math.pi/4, floor_hr) > math.pi/2:
@@ -822,11 +834,11 @@ class UI(LooiObject):
                     self.fall_sound.play(maxtime=1800)
                     self.jumping = 0
                     damage = angle_distance(self.world.properties["ski_direction"], self.world.properties["momentum_direction"])/math.pi
-                    
+                    v.y = self.get_elevation_continuous(v.z, v.x)*self.world.properties["vertical_stretch"] + self.world.properties["player_height"]
                     if damage > .25:
                         self.falling = 1
                     elif damage > .08:
-                        damage *= 70
+                        damage *= 20
                         self.health(-damage)
                     self.world.properties["y_momentum"] = 0
             else:
@@ -856,6 +868,7 @@ class UI(LooiObject):
                 
                 
                 #calculate floor slope
+                
                 p1,p2,p3 = self.xyz_of_current_triangle(v.z, v.x)
                 floor_hr, floor_vr = get_plane_rotation(p1[0],p1[1],p1[2],p2[0],p2[1],p2[2],p3[0],p3[1],p3[2])
                 
@@ -864,6 +877,10 @@ class UI(LooiObject):
                     floor_hr += math.pi
                 
                 floor_slope = math.pi/2 - floor_vr
+                
+                if self.modified_floor_hr != None: floor_hr = self.modified_floor_hr
+                if self.modified_floor_slope != None: floor_slope = self.modified_floor_slope
+                
                 self.slope = floor_slope
                 
                 
@@ -880,6 +897,7 @@ class UI(LooiObject):
                     self.jumping = 1
                     self.world.properties["y_momentum"] = math.sin(-equivalent_floor_slope + constants["jump_angle"]) * self.world.properties["momentum"]
                     self.world.properties["momentum"] = math.cos(-equivalent_floor_slope + constants["jump_angle"]) * self.world.properties["momentum"]
+                    #print("ymom", self.world.properties["y_momentum"], "mom", self.world.properties["momentum"])
                     return
                 
                 
