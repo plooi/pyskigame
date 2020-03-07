@@ -4,7 +4,7 @@
 
 
 
-
+import pyperclip
 from rooms import *
 from pylooiengine import *
 import pylooiengine
@@ -41,7 +41,10 @@ def alert():
 def data_gen():
     global sound
     sound = LooiObject().new_sound("sounds/ChairliftTerminal.ogg",volume=60)
-    
+    try:
+        for file in os.listdir('screenshots'): os.remove("screenshots/"+file)
+    except:
+        pass
     
     kill_all()
     BackgroundPic()
@@ -96,7 +99,7 @@ def data_gen10():
     alert()
     dropdown_menu_location = pyautogui.position()
     Text(text=split("Great! Now, when you press next, switch over to google earth (just like last time)" +
-    "and move your mouse to the UPPER LEFT corner of the imaginary rectangle that encompasses your ski area.Wait for the sound.\n\nThe imaginary rectangle that encompasses your ski area must be within the magenta polygon"))
+    "and move your mouse to the UPPER LEFT corner of the imaginary rectangle that encompasses your ski area. Wait for the sound.\n\nThe imaginary rectangle that encompasses your ski area must be within the magenta polygon"))
     next(data_gen11)
 def data_gen11():
     global UL
@@ -113,10 +116,9 @@ def data_gen12():
     screenshot_box = (UL[0],UL[1],LR[0],LR[1])
     print(screenshot_box)
     #take screenshot
-    os.system("python capture.py screenshot")
+    os.system("python capture.py screenshots/screenshot.png %d %d %d %d" % screenshot_box)
     
     im = image("screenshots/screenshot.png")
-    im = im.crop(screenshot_box)
     sleep(1)
     alert()
     
@@ -175,7 +177,7 @@ def data_gen14():
     f.close()
     
     Text(text=split("Tree file complete. Now, press next and enter the minimum elevation (in meters) that your ski location has (you can "+
-                    "go extra low to give margin if you want) and the highest elevation (in meters). You may want to hover your mouse pointer at different locations on google earth to check for the highest and lowest elevation."))
+                    "go extra low to give margin if you want) and the highest elevation (in meters). You may want to hover your mouse pointer at different locations on google earth to check for the highest and lowest elevation.\n\nWarning: If what you say is the highest elevation is not actually the highest elevation in the area, then unexpected behavior will occur."))
     
             
     next(data_gen15)
@@ -209,17 +211,27 @@ def data_gen16():
         pyautogui.moveTo(altitude_box_location[0], altitude_box_location[1])
         pyautogui.click()
         pyautogui.hotkey('ctrl', 'a')
-        for char in str(elevation):
-            pyautogui.press(char)
+        pyperclip.copy(str(elevation))
+        pyautogui.hotkey('ctrl', 'v')
         pyautogui.moveTo(dropdown_menu_location[0], dropdown_menu_location[1])
         pyautogui.click()
         sleep(.01)
-        os.system("python capture.py screenshot")
-        im = image("screenshots/screenshot.png")
-        im.crop(screenshot_box).save("screenshots/"+world_name + "___" + str(elevation) + ".png")
+        os.system("python capture.py %s %d %d %d %d" % ("screenshots/"+world_name + "___" + str(elevation) + ".png", screenshot_box[0], screenshot_box[1], screenshot_box[2], screenshot_box[3]))
         
         
     grid = None
+    
+    points = set()
+    
+    #find magenta
+    last_elev = 0
+    for elevation in range(min_elevation, max_elevation, step):
+        last_elev = elevation
+    img = Image.open("screenshots/"+world_name + "___" + str(last_elev) + ".png")
+    magenta = img.getpixel((0, 0))
+    magenta = magenta[0], magenta[1], magenta[2]
+    #trust that the upper left hand corner is magneta. #trust
+    
     
     loading.progress_bar("Post processing...")
     for elevation in range(min_elevation, max_elevation, step):
@@ -230,11 +242,20 @@ def data_gen16():
                 grid.append([])
                 for x in range(img.width):
                     grid[y].append(None)
-        print(img.width, img.height)
-        for y in range(img.height):
-            for x in range(img.width):
-                if ( color_distance(img.getpixel((x, y)), (201,25,201)) < 15 ) and grid[y][x]==None:
-                    grid[y][x] = elevation
+            for y in range(img.height):
+                for x in range(img.width):
+                    points.add((x,y))
+        print("elevation", elevation)
+        
+        to_remove = set()
+        for point in points:
+            x,y=point
+            if (img.getpixel((x, y)) == magenta) and grid[y][x]==None:
+                grid[y][x] = elevation
+                to_remove.add(point)
+        print("Updated " + str(len(to_remove)) + " points")
+        points = points-to_remove
+        print("We have " + str(len(points)) + " points left")
         loading.update((elevation-min_elevation)/(max_elevation-min_elevation)*100)
     loading.update(100)
     
@@ -253,7 +274,7 @@ def data_gen16():
         f.write(output_line+"\n")
     f.close()
     
-    for file in os.listdir('screenshots'): os.remove("screenshots/"+file)
+    
     Text(text=split("All done! When you select 'new from topology', you should see your topology there! It will be a file called '" + world_name + ".csv'"))
 class X(LooiObject):
     def __init__(self):
@@ -320,7 +341,7 @@ class X(LooiObject):
     
 def color_distance(c1, c2):
     dist = (c1[0]-c2[0])**2 + (c1[1]-c2[1])**2 + (c1[2]-c2[2])**2
-    return dist
+    return dist**.5
 def nearest_neighbor():
     loading.progress_bar()
     global im,yes_tree,no_tree,trees

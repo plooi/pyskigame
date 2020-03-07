@@ -7,5 +7,10 @@ if __name__ == '__main__':
         os.mkdir("./screenshots")
     except:
         pass
-    im = ImageGrab.grab()  # X1,Y1,X2,Y2
-    im.save("./screenshots/"+sys.argv[1]+".png")
+    
+    if len(sys.argv) > 2:
+        im = ImageGrab.grab(bbox = (int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5])))
+        im.save("./"+sys.argv[1])
+    else:
+        im = ImageGrab.grab()
+        im.save("./"+sys.argv[1])
