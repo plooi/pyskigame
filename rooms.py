@@ -88,6 +88,8 @@ def del_ski():
     event, values = window.Read()
     window.close()
     if event == None:return
+    if os.path.isdir("../recycle/"+event):shutil.rmtree("../recycle/"+event)
+    if os.path.isfile("../recycle/"+event):os.remove("../recycle/"+event)
     shutil.move("../saves/"+event, "../recycle")
 def del_map():
     layout = [[sg.Button(ski_world)] for ski_world in os.listdir("../worlds")]
@@ -95,6 +97,8 @@ def del_map():
     event, values = window.Read()
     window.close()
     if event == None:return
+    if os.path.isdir("../recycle/"+event):shutil.rmtree("../recycle/"+event)
+    if os.path.isfile("../recycle/"+event):os.remove("../recycle/"+event)
     shutil.move("../worlds/"+event, "../recycle")
 def del_elev():
     layout = [[sg.Button(ski_world)] for ski_world in os.listdir("./topographic")]
@@ -102,6 +106,8 @@ def del_elev():
     event, values = window.Read()
     window.close()
     if event == None:return
+    if os.path.isdir("../recycle/"+event):shutil.rmtree("../recycle/"+event)
+    if os.path.isfile("../recycle/"+event):os.remove("../recycle/"+event)
     shutil.move("./topographic/"+event, "../recycle")
     
 def ski_room():
