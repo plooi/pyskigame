@@ -134,7 +134,7 @@ class View:
         self.vert_rot = 0
         self.speed = 4
         self.rot_spd = .001
-        self.line_of_sight = 3 #IN NUMBER OF CHUNKS (not opengl space) #the radius
+        self.line_of_sight = 1 #IN NUMBER OF CHUNKS (not opengl space) #the radius
         self.max_vert_rot = math.pi/2.3
         
 
@@ -441,7 +441,8 @@ class World(LooiObject):
             "height" : -1,
             "width_chunks" : -1,
             "height_chunks" : -1,
-            "line_of_sight2" : 8,#how many chunks away before the trees start to disappear
+            "line_of_sight2" : 7,#how many chunks away before the trees start to disappear
+            "line_of_sight3" : 12,#how many chunks away before no pan chunk squares are rendered
             "horizontal_stretch" : 4,
             "vertical_stretch" : .15,
             "sun_angle" : 0,
@@ -1279,7 +1280,10 @@ class World(LooiObject):
     def step(self):
         self.chunk_load_grid = self.get_chunk_load_grid()
         
-    def paint(self):
+    #def paint(self): #make paint execute in step so that there's no view lag
+        glDisable(GL_BLEND)#performance optimization
+        
+        
         
         self.draw_scenery()
         
@@ -1367,7 +1371,7 @@ class World(LooiObject):
     def get_chunk_load_grid(self):
         chunk_load_grid =[]
         for r in range(self.get_height_chunks()):
-            chunk_load_grid.append([-1]*self.get_width_chunks())
+            chunk_load_grid.append([-2]*self.get_width_chunks())
         
         unscaled_view_z = self.view.z/self.properties["horizontal_stretch"]
         unscaled_view_x = self.view.x/self.properties["horizontal_stretch"]
@@ -1378,20 +1382,37 @@ class World(LooiObject):
         cs = self.properties["chunk_size"]
         los =self.view.line_of_sight
         los2 =self.properties["line_of_sight2"]
+        los3 =self.properties["line_of_sight3"]
         
         def nearest_multiple(x, m):
             return int(x/m + .5)*m
         
         view_angle = math.pi*.35
+        #far_view_angle = math.pi/6
+        far_view_angle = math.pi/4
         
-        
+        for z in range(nearest_multiple(unscaled_view_z - los3*cs, cs), nearest_multiple(unscaled_view_z + los3*cs, cs)+1, cs):
+            for x in range(nearest_multiple(unscaled_view_x - los3*cs, cs), nearest_multiple(unscaled_view_x + los3*cs, cs)+1, cs):
+                
+                
+                #here we are testing whether the chunk appears or not
+                if ( (z-unscaled_view_z)**2 + (x-unscaled_view_x)**2 )**.5 <= self.properties["line_of_sight3"]*cs:
+                    if far_view_angle > normal.angle_distance(self.view.hor_rot, util.get_angle(unscaled_view_z, unscaled_view_x, z, x)):
+                        #then all four neighboring chunks are visible
+                        cz = int(z/cs)
+                        cx = int(x/cs)
+                        
+                        if self.valid_chunk(cz, cx): chunk_load_grid[cz][cx] = -1
+                        if self.valid_chunk(cz-1, cx-1): chunk_load_grid[cz-1][cx-1] = -1
+                        if self.valid_chunk(cz, cx-1): chunk_load_grid[cz][cx-1] = -1
+                        if self.valid_chunk(cz-1, cx): chunk_load_grid[cz-1][cx] = -1
         for z in range(nearest_multiple(unscaled_view_z - los2*cs, cs), nearest_multiple(unscaled_view_z + los2*cs, cs)+1, cs):
             for x in range(nearest_multiple(unscaled_view_x - los2*cs, cs), nearest_multiple(unscaled_view_x + los2*cs, cs)+1, cs):
                 
                 
                 #here we are testing whether the chunk at least has trees or not
                 if ( (z-unscaled_view_z)**2 + (x-unscaled_view_x)**2 )**.5 <= self.properties["line_of_sight2"]*cs:
-                    if view_angle > normal.angle_distance(self.view.hor_rot, util.get_angle(unscaled_view_z, unscaled_view_x, z, x)):
+                    if far_view_angle > normal.angle_distance(self.view.hor_rot, util.get_angle(unscaled_view_z, unscaled_view_x, z, x)):
                         #then all four neighboring chunks have trees
                         cz = int(z/cs)
                         cx = int(x/cs)
@@ -1529,7 +1550,7 @@ class World(LooiObject):
                     
                     tex_vertices_draw.append(self.chunks[z][x].tvh.vertices)
                     tex_coords_draw.append(self.chunks[z][x].tvh.vertex_colors)
-                if chunk_load_grid[z][x] == 1:
+                elif chunk_load_grid[z][x] == 1:
                     #add this chunk's vertices and colors to the stuff that's gonna be drawn
                     vertices_draw_far.append(self.chunks[z][x].vh.vertices)
                     colors_draw_far.append(self.chunks[z][x].vh.vertex_colors)
@@ -1544,6 +1565,8 @@ class World(LooiObject):
                     pcsquares = self.chunks[z][x].get_pan_chunk_squares(z, x, trees=False)
                     vertices_draw_far.append(pcsquares.vertices)
                     colors_draw_far.append(pcsquares.vertex_colors)
+                elif chunk_load_grid[z][x] == -2:
+                    pass
                     
                 
                 
@@ -1554,18 +1577,16 @@ class World(LooiObject):
         
         #now here's where we do all the drawing (and stacking)
         if len(vertices_draw_far) > 0:
+            glDisable(GL_ALPHA_TEST);
             #first draw far stuff, then clear the depth buffer bit so close stuff can draw ontop of it
             vertices_draw_far = numpy.vstack(vertices_draw_far)
             colors_draw_far = numpy.vstack(colors_draw_far)
             self.draw_quad_array_3d(vertices_draw_far, colors_draw_far, setup_3d=self.get_setup_3d_far())
+            glEnable(GL_ALPHA_TEST);
         if len(tex_vertices_draw_far) > 0:
-            glBlendFunc(GL_ONE, GL_ZERO)#textures have to be completely opaque to be drawn
-            glEnable(GL_BLEND);
             tex_vertices_draw_far = numpy.vstack(tuple(tex_vertices_draw_far))
             tex_coords_draw_far = numpy.vstack(tuple(tex_coords_draw_far))
             self.draw_image_array_3d(tex_vertices_draw_far, tex_coords_draw_far, texture.tex, texture.tex_b, setup_3d=self.get_setup_3d_far())
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-            glEnable(GL_BLEND);
         
         glClear(GL_DEPTH_BUFFER_BIT)
         
@@ -1575,13 +1596,10 @@ class World(LooiObject):
             colors_draw = numpy.vstack(tuple(colors_draw))
             self.draw_quad_array_3d(vertices_draw, colors_draw, setup_3d=self.get_setup_3d_close())
         if len(tex_vertices_draw) > 0:
-            glBlendFunc(GL_ONE, GL_ZERO)#textures have to be completely opaque to be drawn
-            glEnable(GL_BLEND);
             tex_vertices_draw = numpy.vstack(tuple(tex_vertices_draw))
             tex_coords_draw = numpy.vstack(tuple(tex_coords_draw))
             self.draw_image_array_3d(tex_vertices_draw, tex_coords_draw, texture.tex, texture.tex_b, setup_3d=self.get_setup_3d_close())
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-            glEnable(GL_BLEND);
+
             
             
        

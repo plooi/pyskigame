@@ -18,6 +18,7 @@ def tree_design_2():
     
     
     ]
+"""
 def tree_design_1(shade=.8,scale=1.4):
     bark = "Bark"
     trunk_width = .4*scale#.2
@@ -67,38 +68,6 @@ def tree_design_1(shade=.8,scale=1.4):
         
         
         ]
-    """
-    leaf1 = leaf(0,-math.pi/3.7,leaf_length,leaf_width,4.5)
-    leaf2 = leaf(math.pi/3,-math.pi/3.7,leaf_length,leaf_width,4.5)
-    leaf3 = leaf(2*math.pi/3,-math.pi/3.7,leaf_length,leaf_width,4.5)
-    leaf4 = leaf(3*math.pi/3,-math.pi/3.7,leaf_length,leaf_width,4.5)
-    leaf5 = leaf(4*math.pi/3,-math.pi/3.7,leaf_length,leaf_width,4.5)
-    leaf6 = leaf(5*math.pi/3,-math.pi/3.7,leaf_length,leaf_width,4.5)
-    
-    leaf11 = leaf(0,-math.pi/3.2,leaf_length*.8,leaf_width*.8,5.3)
-    leaf12 = leaf(math.pi/3,-math.pi/3.2,leaf_length*.8,leaf_width*.8,5.3)
-    leaf13 = leaf(2*math.pi/3,-math.pi/3.2,leaf_length*.8,leaf_width*.8,5.3)
-    leaf14 = leaf(3*math.pi/3,-math.pi/3.2,leaf_length*.8,leaf_width*.8,5.3)
-    leaf15 = leaf(4*math.pi/3,-math.pi/3.2,leaf_length*.8,leaf_width*.8,5.3)
-    leaf16 = leaf(5*math.pi/3,-math.pi/3.2,leaf_length*.8,leaf_width*.8,5.3)
-    
-    leaf21 = leaf(0,-math.pi/3,leaf_length*.6,leaf_width*.6,6)
-    leaf22 = leaf(math.pi/2,-math.pi/3,leaf_length*.6,leaf_width*.6,6)
-    leaf23 = leaf(2*math.pi/2,-math.pi/3,leaf_length*.6,leaf_width*.6,6)
-    leaf24 = leaf(3*math.pi/2,-math.pi/3,leaf_length*.6,leaf_width*.6,6)
-    
-    leaf31 = leaf(0,-math.pi/3,leaf_length*.4,leaf_width*.4,6.8)
-    leaf32 = leaf(2*math.pi/3,-math.pi/3,leaf_length*.4,leaf_width*.4,6.8)
-    leaf33 = leaf(4*math.pi/3,-math.pi/3,leaf_length*.4,leaf_width*.4,6.8)
-    
-    ret = [
-        [t2,0,0],[.3*t2,0,-.95*t2],[0,tree_height,0],[0,tree_height,0], bark,
-        [.3*t2,0,-.95*t2], [-.8*t2,0,-.58*t2], [0,tree_height,0],[0,tree_height,0], bark,
-        [t2,0,0],[.3*t2,0,.95*t2],[0,tree_height,0],[0,tree_height,0], bark,
-        [.3*t2,0,.95*t2], [-.8*t2,0,.58*t2], [0,tree_height,0],[0,tree_height,0], bark,
-        [-.8*t2,0,-.58*t2], [-.8*t2,0,.58*t2],[0,tree_height,0], [0,tree_height,0], bark,
-        ]
-    """
     ret = [
     
     [t2,0,t2],[t2,0,-t2],[-t2,0,-t2],[0,tree_height*.7,0], bark,
@@ -115,36 +84,90 @@ def tree_design_1(shade=.8,scale=1.4):
         ret += leaf(random()*math.pi*2,-math.pi/3.2 - ( (i/n)**2*.6+.4 )*math.pi/8,leaf_length - ( (i/n)*.6+.4 )*2, leaf_width - ( (i/n)*.6+.4 )*.6,( ((i/n)**1.4)*.5+.5 ) * (tree_height+2.5))
         ret.append(leaf_color)
     return ret
-        
-        
-        
-        
-        
-    [
-    leaf1[0], leaf1[1], leaf1[2], leaf1[3], leaf_color,
-    leaf2[0], leaf2[1], leaf2[2], leaf2[3], leaf_color,
-    leaf3[0], leaf3[1], leaf3[2], leaf3[3], leaf_color,
-    leaf4[0], leaf4[1], leaf4[2], leaf4[3], leaf_color,
-    leaf5[0], leaf5[1], leaf5[2], leaf5[3], leaf_color,
-    leaf6[0], leaf6[1], leaf6[2], leaf6[3], leaf_color,
+"""
+def tree_design_1(shade=.8,scale=1.4):
+    bark = "Bark"
+    trunk_width = .4*scale#.2
+    tree_height = 10*scale#6.5
+    t2 = trunk_width/2
     
-    leaf11[0], leaf11[1], leaf11[2], leaf11[3], leaf_color,
-    leaf12[0], leaf12[1], leaf12[2], leaf12[3], leaf_color,
-    leaf13[0], leaf13[1], leaf13[2], leaf13[3], leaf_color,
-    leaf14[0], leaf14[1], leaf14[2], leaf14[3], leaf_color,
-    leaf15[0], leaf15[1], leaf15[2], leaf15[3], leaf_color,
-    leaf16[0], leaf16[1], leaf16[2], leaf16[3], leaf_color,
     
-    leaf21[0], leaf21[1], leaf21[2], leaf21[3], leaf_color,
-    leaf22[0], leaf22[1], leaf22[2], leaf22[3], leaf_color,
-    leaf23[0], leaf23[1], leaf23[2], leaf23[3], leaf_color,
-    leaf24[0], leaf24[1], leaf24[2], leaf24[3], leaf_color,
+    if shade < .75:
+        tex="PineTexture1"
+    elif shade < .83:
+        tex = "PineTexture2"
+    elif shade < .91:
+        tex = "PineTexture3"
+    else:
+        tex="PineTexture4"
     
-    leaf31[0], leaf31[1], leaf31[2], leaf31[3], leaf_color,
-    leaf32[0], leaf32[1], leaf32[2], leaf32[3], leaf_color,
-    leaf33[0], leaf33[1], leaf33[2], leaf33[3], leaf_color,
+    leaf_color = tex
+    
+    #no alpha:
+    #leaf_length=5*scale#4
+    #leaf_width = 1*scale#.7
+    
+    #with alpha
+    leaf_length = 9.2*scale#7*scale
+    leaf_width = 2*scale#.7
+    
+    
+    
+    
+    #hr around the tree, vr up or down, length out, thickenss left to right, height up the tree
+    def leaf(hr, vr, length, thickness, height):
+        if height > tree_height:
+            height = tree_height
+        middle_to_corner = ((thickness/2)**2 + length**2)**.5
+        angle_middle_to_corner = math.atan(thickness/2 / length)
+        
+        p = ((math.cos(vr)*length)**2 + (thickness/2)**2)**.5
+        pangle = math.atan(thickness/2/(math.cos(vr)*length))
+        return [
+        
+        [math.cos(hr-math.pi/2)*thickness/2, height, -math.sin(hr-math.pi/2)*thickness/2], 
+        [math.cos(hr+math.pi/2)*thickness/2, height, -math.sin(hr+math.pi/2)*thickness/2],
+        #[math.cos(vr)*math.cos(angle_middle_to_corner+hr)*middle_to_corner, height+sin(vr)*length, -math.cos(vr)*math.sin(angle_middle_to_corner+hr)*middle_to_corner],
+        #[math.cos(vr)*math.cos(-angle_middle_to_corner+hr)*middle_to_corner, height+sin(vr)*length, -math.cos(vr)*math.sin(-angle_middle_to_corner+hr)*middle_to_corner],
+        [p*cos(hr+pangle+math.pi/4),height+sin(vr)*length,-p*sin(hr+pangle+math.pi/4)],
+        [p*cos(hr-pangle),height+sin(vr)*length,-p*sin(hr-pangle)]
+        
+        
+        ]
+    
+    ret = [
+    
+    [t2,0,t2],[t2,0,-t2],[-t2,0,-t2],[0,tree_height*.7,0], bark,
+    [t2,0,t2],[-t2,0,t2],[-t2,0,-t2],[0,tree_height*.7,0], bark,
     
     ]
+    #n = 20
+    n=6
+    
+    
+    ret += leaf(0+random()*.25,-math.pi/2.3,leaf_length, leaf_width, tree_height)
+    ret.append(leaf_color)
+    ret += leaf(2*math.pi/3+random()*.25,-math.pi/2.3,leaf_length, leaf_width, tree_height)
+    ret.append(leaf_color)
+    ret += leaf(4*math.pi/3+random()*.25,-math.pi/2.3,leaf_length, leaf_width, tree_height)
+    ret.append(leaf_color)
+    
+    ret += leaf(math.pi/3+random()*.25,-math.pi/2.45,leaf_length*.84, leaf_width, tree_height*.88)
+    ret.append(leaf_color)
+    ret += leaf(3*math.pi/3+random()*.25,-math.pi/2.45,leaf_length*.84, leaf_width, tree_height*.88)
+    ret.append(leaf_color)
+    ret += leaf(5*math.pi/3+random()*.25,-math.pi/2.45,leaf_length*.84, leaf_width, tree_height*.88)
+    ret.append(leaf_color)
+    
+    return ret
+
+
+
+
+
+
+
+
 """
 def tree_design_1():
     bark = [.8,.4,0]

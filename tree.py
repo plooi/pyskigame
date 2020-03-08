@@ -16,7 +16,8 @@ class Tree(WorldObject):
     #darkness factor represents the minimum brightness that the object can have
     #scale parameter is currently not used
     def __init__(self, **args):
-        default(args, "model", tree_design_1)
+        args["model"] = tree_design_1
+        #default(args, "model", tree_design_1)
         hr,vr = args["world"].get_rotation(int(args["z"]),int(args["x"]))
         if vr < 0:
             vr = -vr
