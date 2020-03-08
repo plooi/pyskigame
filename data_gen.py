@@ -177,7 +177,7 @@ def data_gen14():
     f.close()
     
     Text(text=split("Tree file complete. Now, press next and enter the minimum elevation (in meters) that your ski location has (you can "+
-                    "go extra low to give margin if you want) and the highest elevation (in meters). You may want to hover your mouse pointer at different locations on google earth to check for the highest and lowest elevation.\n\nWarning: If what you say is the highest elevation is not actually the highest elevation in the area, then unexpected behavior will occur."))
+                    "go extra low to give margin if you want) and the highest elevation (in meters). You may want to hover your mouse pointer at different locations on google earth to check for the highest and lowest elevation.\n\nWarning: If what you say is the highest elevation is not greater than or equal to the highest elevation in the area, then unexpected behavior will occur."))
     
             
     next(data_gen15)

@@ -895,10 +895,10 @@ def rock_design_2(
     
     return [list(x) if isinstance(x,list) else x for x in [
     u1,u2,u3,u4,"MinecraftSnow-lighting-243",
-    u1,u2,l2,l1,"CliffTexture",
-    u3,u2,l2,l3,"CliffTexture",
-    u3,u4,l4,l3,"CliffTexture",
-    l1,u1,u4,l4,"CliffTexture"
+    u1,u2,l2,l1,"RockTexture",
+    u3,u2,l2,l3,"RockTexture",
+    u3,u4,l4,l3,"RockTexture",
+    l1,u1,u4,l4,"RockTexture"
     
     
     ]]

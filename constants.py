@@ -41,8 +41,8 @@ x = {
     "ice_radius" : 27,#scaled value
     
     
-    "bump_slope" : (math.pi/4.6,math.pi/10),
-    "bump_density" : .01,#.36,#.3,
+    "bump_slope" : (math.pi/4,math.pi/16),
+    "bump_density" : .001,#.36,#.3,
     "bump_group_density" : .3,
     "bump_collision_radius" : 1.6,
     
