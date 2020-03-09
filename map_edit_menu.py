@@ -871,32 +871,38 @@ class TreeAdd(TwoPointEdit):
 def TreeFilter(menu):
     layout = [
     [sg.Text("Filtering trees helps reduce lag by thinning out dense patches of trees.")],
-    [sg.Text("Remove all trees with "), sg.Input(4)], 
-    [sg.Text(" or more adjacent trees.")],
+    [sg.Text("Remove all trees with "), sg.Input(7)], 
+    [sg.Text(" or more nearby trees (max 20 nearby trees for fully surrounded tree)")],
+    [sg.Text("You may want to save before carrying through with this operation.")],
     [sg.OK(), sg.Cancel()],
     ]
-    window = sg.Window('', layout, size = (500,300))
+    window = sg.Window('', layout, size = (700,300))
     event, values = window.Read()
     window.close()
     if event == None or event == "Cancel":
         return
     try:
+        trees_to_remove = []
         threshold = int(values[0])
-        for z in range(1, menu.ui.world.get_height_floors()-1):
-            for x in range(1, menu.ui.world.get_width_floors()-1):
+        for z in range(2, menu.ui.world.get_height_floors()-2):
+            for x in range(2, menu.ui.world.get_width_floors()-2):
                 for obj in list(menu.ui.world.quads[z][x].containedObjects):
                     if isinstance(obj, Tree):
                         
                         #count adjacent trees
                         adjacent_trees = 0
-                        for z,x in [(z-1,x-1),(z-1,x),(z-1,x+1),(z,x-1),(z,x+1),(z+1,x-1),(z+1,x),(z+1,x+1)]:
-                            for obj2 in list(menu.ui.world.quads[z][x].containedObjects):
+                        for zz,xx in [(z-1,x-1),(z-1,x),(z-1,x+1),(z,x-1),(z,x+1),(z+1,x-1),(z+1,x),(z+1,x+1),
+                                        (z-2,x-1),(z-2,x),(z-2,x+1),(z+2,x-1),(z+2,x),(z+2,x+1),
+                                        (z-1,x-2),(z,x-2),(z+1,x-2),(z-1,x+2),(z,x+2),(z+1,x+2)]:
+                            for obj2 in list(menu.ui.world.quads[zz][xx].containedObjects):
                                 if isinstance(obj2, Tree):
                                     adjacent_trees += 1
                             
-                        if adjacent_trees >= threshold: obj.delete()
+                        if adjacent_trees >= threshold: trees_to_remove.append(obj)
                             
                         break
+        for tree in trees_to_remove:
+            tree.delete()
     except Exception as e:
         sg.Popup(str(e))
                                 
