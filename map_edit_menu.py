@@ -21,6 +21,7 @@ from landmark import Landmark
 from world_object import WorldObject
 from bump import *
 import mission_center
+from tree import Tree
 
 
 build_hs_terminal_model = hs_terminal_design_gray
@@ -81,6 +82,10 @@ class Menu(LooiObject):
         self.btn4 = Button(x = 680, y=200, width=70, height=70, font_size=10, text="", image=image("Tree Icon3.png"), action=TreeAdd, action_parameter=(self, .2))
         self.btn4.set_layer(-2)
         self.add(self.btn4)
+        
+        self.btn100 = Button(x = 920, y=200, width=70, height=70, font_size=10, text="", image=image("Tree Filter Icon.png"), action=TreeFilter, action_parameter=self)
+        self.btn100.set_layer(-2)
+        self.add(self.btn100)
         
         self.btn5 = Button(x = 760, y=200, width=70, height=70, font_size=10, text="", image=image("Chainsaw.png"), action=Chainsaw, action_parameter=self)
         self.btn5.set_layer(-2)
@@ -863,6 +868,42 @@ class TreeAdd(TwoPointEdit):
         self.density = density
     def execute(self, p1, p2):
         fill_trees_circular(self.world(), p1[0], p1[1], p2[0], p2[1], self.density)
+def TreeFilter(menu):
+    layout = [
+    [sg.Text("Filtering trees helps reduce lag by thinning out dense patches of trees.")],
+    [sg.Text("Remove all trees with "), sg.Input(4)], 
+    [sg.Text(" or more adjacent trees.")],
+    [sg.OK(), sg.Cancel()],
+    ]
+    window = sg.Window('', layout, size = (500,300))
+    event, values = window.Read()
+    window.close()
+    if event == None or event == "Cancel":
+        return
+    try:
+        threshold = int(values[0])
+        for z in range(1, menu.ui.world.get_height_floors()-1):
+            for x in range(1, menu.ui.world.get_width_floors()-1):
+                for obj in list(menu.ui.world.quads[z][x].containedObjects):
+                    if isinstance(obj, Tree):
+                        
+                        #count adjacent trees
+                        adjacent_trees = 0
+                        for z,x in [(z-1,x-1),(z-1,x),(z-1,x+1),(z,x-1),(z,x+1),(z+1,x-1),(z+1,x),(z+1,x+1)]:
+                            for obj2 in list(menu.ui.world.quads[z][x].containedObjects):
+                                if isinstance(obj2, Tree):
+                                    adjacent_trees += 1
+                            
+                        if adjacent_trees >= threshold: obj.delete()
+                            
+                        break
+    except Exception as e:
+        sg.Popup(str(e))
+                                
+                            
+                        
+                        
+        
 
 
 
