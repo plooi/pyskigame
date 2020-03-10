@@ -3,7 +3,7 @@ import pylooiengine
 import numpy
 #from queue import Queue
 
-
+size_increase = 50*4#this has to be a multiple of four.
 class Queue:
     def __init__(self):
         self.data = []
@@ -29,6 +29,25 @@ class VertexHandler:
         for i in range(initial_capacity):
             self.available_indices.put(i, block=False)
             self.num_available_indices += 1
+    """
+    def clean(self):
+        
+        for i in range(self.capacity()-1, -1, -1):
+            if i not in self.available_indices.data or i == 7:
+                #this is the highest index that is taken
+                #cut out everything above this value
+                break
+            else:
+                #this index is not taken
+                self.available_indices.data.remove(i)
+                self.num_available_indices -= 1
+            
+        #now i is the largest index that still has a value
+        self.vertices = self.vertices[0:i+1]
+        self.vertex_colors = self.vertex_colors[0:i+1]
+    """
+        
+                
     def get_vertices(self):
         return self.vertices
     def get_colors(self):
@@ -55,6 +74,17 @@ class VertexHandler:
         self.available_indices.put(index, block=False)
         self.num_available_indices += 1
     def inc_size(self):
+        #increases the size by size_increase variable
+        original_length = len(self.vertices)
+        for i in range(size_increase):
+            self.available_indices.put(i + original_length, block=False)
+            
+        self.vertices = numpy.vstack((self.vertices, [[0]*self.vertex_size]*size_increase))
+        self.vertex_colors = numpy.vstack((self.vertex_colors, [[0]*self.color_size]*size_increase))
+        
+        self.num_available_indices += size_increase
+        """
+        #doubles the list's length
         original_length = len(self.vertices)
         for i in range(original_length):
             self.available_indices.put(i + original_length, block=False)
@@ -62,6 +92,7 @@ class VertexHandler:
         self.vertices = numpy.vstack((self.vertices, [[0]*self.vertex_size]*original_length))
         self.vertex_colors = numpy.vstack((self.vertex_colors, [[0]*self.color_size]*original_length))
         self.num_available_indices += original_length
+        """
         
     def update_vertex(self, index, new_vertex, new_color):
         if index >= len(self.vertices):

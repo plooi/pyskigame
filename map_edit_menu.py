@@ -184,7 +184,7 @@ class Menu(LooiObject):
         
     def paint(self):
         self.draw_rect(self.x1, self.y1, self.x2, self.y2, self.menu_color)
-
+        
 def top_button(menu):
     if menu.btn32.text == "topend":
         menu.btn32.text = "topmid"
@@ -212,10 +212,11 @@ def settings(menu):
     
     
     setting = OrderedDict()
-    setting["Horizontal Stretch"] = menu.ui.world.properties["horizontal_stretch"]
-    setting["Vertical Stretch"] = menu.ui.world.properties["vertical_stretch"]
+    setting["Horizontal Stretch*"] = menu.ui.world.properties["horizontal_stretch"]
+    setting["Vertical Stretch*"] = menu.ui.world.properties["vertical_stretch"]
     setting["Sub Chunk Squares"] = menu.ui.world.properties["sub_chunk_squares"]
-    setting["Sun Angle"] = menu.ui.world.properties["sun_angle"]
+    setting["Sun Angle*"] = menu.ui.world.properties["sun_angle"]
+    setting["Chunk Size*"] = menu.ui.world.properties["chunk_size"]
     setting["Scenery Angle"] = menu.ui.world.properties["scenery_angle"]
     setting["Scenery Height"] = menu.ui.world.properties["scenery_height"]
     setting["Scenery Radius"] = menu.ui.world.properties["scenery_radius"]
@@ -260,8 +261,13 @@ def settings(menu):
     
     col = sg.Column(col, size=(1000,800), scrollable=True)
     
-    layout = [    [sg.OK(), sg.Cancel()],
-                  [sg.Text("Name: %s" % menu.ui.world.properties["name"])],
+    layout = [    [sg.OK(), sg.Cancel(), sg.Button("Ok+Reset")],
+                  [sg.Text("Settings with the * next to them will not take effect until a reset occurs.")],
+                  [sg.Text("    Name: %s" % menu.ui.world.properties["name"])],
+                  [sg.Text("    Width: %s" % (menu.ui.world.get_width_floors()*menu.ui.world.properties["horizontal_stretch"]))],
+                  [sg.Text("    Height: %s" % (menu.ui.world.get_height_floors()*menu.ui.world.properties["horizontal_stretch"]))],
+                  [sg.Text("    Width(Squares): %s" % (menu.ui.world.get_width_floors()))],
+                  [sg.Text("    Height(Squares): %s" % (menu.ui.world.get_height_floors()))],
                   [col],
                    ]
     window = sg.Window('', layout, size = (1000,800))
@@ -287,7 +293,7 @@ def settings(menu):
     def nsame(key):
         return not same(key)
     
-    if event == "OK":
+    if event == "OK" or event=="Ok+Reset":
         try:
             #do all the non-reload settings first...
             menu.ui.world.view.line_of_sight = float(new_settings["Line of Sight"])
@@ -347,107 +353,27 @@ def settings(menu):
                         chairlift.set_chair_time_distance(menu.ui.world.properties["chair_time_distance_fixed"])
                     #chairlift.update_object_account()
                             
-                        
-            
-            
-            #then do the settings that require a reload
-            if nsame("Sun Angle"):
-                layout = [[sg.Text("Changing the sun angle will require a short wait. Confirm can?")],
-                            [sg.OK(), sg.Cancel()]]
-                window = sg.Window('', layout, size = (500,300))
-                event2, _ = window.Read()
-                window.close()
-                if event2 == "OK":
-                    loading.progress_bar("Loading 1/2...")
-                    menu.ui.world.properties["sun_angle"] = float(new_settings["Sun Angle"])
-                    for z in range(menu.ui.world.get_height_floors()):
-                        for x in range(menu.ui.world.get_width_floors()):
-                            menu.ui.world.reset_floor_texture(z, x)
-                        if z % 7 == 0: loading.update(z/menu.ui.world.properties["height"]*50)
-                    for z in range(menu.ui.world.get_height_floors()):
-                        for x in range(menu.ui.world.get_width_floors()):
-                            for obj in list(menu.ui.world.quads[z][x].containedObjects):
-                                if isinstance(obj, NaturalBump):
-                                    obj.delete()
-                                elif isinstance(obj, Terminal):
-                                    if obj.top_or_bot == 'bot':
-                                        obj.chairlift.reset()
-                                elif isinstance(obj, Pole):
-                                    pass
-                                else:
-                                    obj.reset()
-                        if z % 7 == 0: loading.update(z/menu.ui.world.properties["height"]*50+50)
-                loading.update(100)
-                world = menu.ui.world
-                natural_bumps(world, 0,0,world.get_width_points(), world.get_width_points(), prog_bar=True)
-            
+            menu.ui.world.properties["sub_chunk_squares"] = int(new_settings["Sub Chunk Squares"])
             if nsame("Sub Chunk Squares"):
-                menu.ui.world.properties["sub_chunk_squares"] = int(new_settings["Sub Chunk Squares"])
+                if event != "Ok+Reset":
+                    sg.Popup("Please wait for all chunks to reset.")
+                    for z in range(menu.ui.world.get_height_chunks()):
+                        for x in range(menu.ui.world.get_width_chunks()):
+                            menu.ui.world.chunks[z][x].colors_changed = True
+            
+            
+            # settings involving reset
+            
+            
+            
+            if event=="Ok+Reset":
+                menu.ui.world.properties["sun_angle"] = float(new_settings["Sun Angle*"])
+                menu.ui.world.properties["horizontal_stretch"] = float(new_settings["Horizontal Stretch*"])
+                menu.ui.world.properties["vertical_stretch"] = float(new_settings["Vertical Stretch*"])
+                menu.ui.world.reset(new_chunk_size = int(new_settings["Chunk Size*"]))
+                world_save.write(menu.ui.world)
                 
-                for chunk_row in menu.ui.world.chunks:
-                    for chunk in chunk_row:
-                        chunk.colors_changed = True
                 
-                
-            if nsame("Horizontal Stretch") or nsame("Vertical Stretch"):
-                layout = [[sg.Text("Changing the horizontal or vertical stretch will require a reload. Confirm can?")],
-                            [sg.OK(), sg.Cancel()]]
-                window = sg.Window('', layout, size = (500,300))
-                event2, _ = window.Read()
-                window.close()
-                if event2 == "OK":
-                    name = menu.ui.world.properties["name"]
-                    old_hs = menu.ui.world.properties["horizontal_stretch"]
-                    old_vs = menu.ui.world.properties["vertical_stretch"]
-                    menu.ui.world.properties["horizontal_stretch"] = float(new_settings["Horizontal Stretch"])
-                    menu.ui.world.properties["vertical_stretch"] = float(new_settings["Vertical Stretch"])
-                    menu.ui.world.view.x = 0
-                    menu.ui.world.view.y = 10
-                    menu.ui.world.view.z = 0
-                    menu.ui.world.view.hor_rot = -math.pi/4
-                    menu.ui.world.view.vert_rot = -math.pi/4
-                    
-                    
-                    #modify the world object
-                    world = menu.ui.world
-                    hratio = world.properties["horizontal_stretch"]/old_hs
-                    vratio = world.properties["vertical_stretch"]/old_vs
-                    
-                    
-                    loading.progress_bar("Loading 1/2...")
-                    for z in range(world.get_height_floors()):
-                        for x in range(world.get_width_floors()):
-                            z_chunk, x_chunk = world.convert_to_chunk_coords(z, x)#find which chunk this quad z,x is in
-                            q=world.quads[z][x]
-                            
-                            tvh = world.chunks[z_chunk][x_chunk].tvh
-                            for i in range(4):
-                                tvh.vertices[q.floor_pointer+i][0] *= hratio
-                                tvh.vertices[q.floor_pointer+i][1] *= vratio
-                                tvh.vertices[q.floor_pointer+i][2] *= hratio
-                        if z % 7 == 0: loading.update(z/world.properties["height"]*33)
-                    for z in range(world.get_height_floors()):
-                        for x in range(world.get_width_floors()):
-                            world.reset_floor_texture(z, x)
-                        if z % 7 == 0: loading.update(z/world.properties["height"]*33+33)
-                    for z in range(world.get_height_floors()):
-                        for x in range(world.get_width_floors()):
-                            for obj in list(menu.ui.world.quads[z][x].containedObjects):
-                                if isinstance(obj, NaturalBump):
-                                    obj.delete()
-                                elif isinstance(obj, Terminal):
-                                    if obj.top_or_bot == 'bot':
-                                        obj.chairlift.reset()
-                                elif isinstance(obj, Pole):
-                                    pass
-                                else:
-                                    obj.reset()
-                                
-                        if z % 7 == 0: loading.update(z/world.properties["height"]*33+66)
-                    loading.update(100)
-                    natural_bumps(world, 0,0,world.get_width_points(), world.get_width_points(), prog_bar=True)
-                    
-                    world_save.write(world)
         except Exception as e:
             traceback.print_exc()
             sg.Popup(str(e))

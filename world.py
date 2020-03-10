@@ -21,7 +21,7 @@ import model_3d
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from constants import x as constants
-from bump import Bump
+from bump import Bump, NaturalBump
 from world_object import WorldObject
 
 import texture
@@ -29,6 +29,7 @@ import world_operations
 from PIL import Image
 from time import time
 from lift import Pole
+import lift
 import os
 
 
@@ -134,7 +135,7 @@ class View:
         self.vert_rot = 0
         self.speed = 4
         self.rot_spd = .001
-        self.line_of_sight = 1 #IN NUMBER OF CHUNKS (not opengl space) #the radius
+        self.line_of_sight = 3 #IN NUMBER OF CHUNKS (not opengl space) #the radius
         self.max_vert_rot = math.pi/2.3
         
 
@@ -435,14 +436,14 @@ class World(LooiObject):
         self.properties = {
             "name" : "unnamed",
             #"chunk_size" : 8,
-            "chunk_size" : 32,
-            "sub_chunk_squares" : 16,
+            "chunk_size" : 16,
+            "sub_chunk_squares" : 4,
             "width" : -1,
             "height" : -1,
             "width_chunks" : -1,
             "height_chunks" : -1,
             "line_of_sight2" : 7,#how many chunks away before the trees start to disappear
-            "line_of_sight3" : 12,#how many chunks away before no pan chunk squares are rendered
+            "line_of_sight3" : 15,#how many chunks away before no pan chunk squares are rendered
             "horizontal_stretch" : 4,
             "vertical_stretch" : .15,
             "sun_angle" : 0,
@@ -526,7 +527,7 @@ class World(LooiObject):
         self.pan_background = image("Panorama.png")
         self.pan_background = self.pan_background,self.pan_background.tobytes("raw", "RGBA", 0, -1)
         
-        
+        self.disable_remove_fixed_quads = False
     
     """
     init_csv
@@ -750,6 +751,47 @@ class World(LooiObject):
         must unscale the elevation
     """
     def get_elevation(self, z, x, scaled=False):
+        x = int(x)
+        z = int(z)
+        if z < 0: z = 0
+        if x < 0: x = 0
+        if z >= self.get_height_points(): z = self.get_height_points()-1
+        if x >= self.get_width_points(): x = self.get_width_points()-1
+        
+        if z > 0 and x > 0:
+            #for all the points not in first column or row
+            chunk_z, chunk_x = self.convert_to_chunk_coords(z-1, x-1)
+            chunk_obj = self.chunks[chunk_z][chunk_x]
+            floor_pointer = self.quads[z-1][x-1].floor_pointer
+            point = chunk_obj.tvh.vertices[floor_pointer+2]#+2 for lower right
+            return point[1] if scaled else point[1]/self.properties["vertical_stretch"]#1 for the y elevation
+        else:
+            #we must be in the first row, or first column, or both
+            if x == 0 and z == 0:
+                chunk_z, chunk_x = self.convert_to_chunk_coords(0, 0)
+                chunk_obj = self.chunks[chunk_z][chunk_x]
+                floor_pointer = self.quads[0][0].floor_pointer
+                point = chunk_obj.tvh.vertices[floor_pointer+0]#+0 for upper left
+                return point[1] if scaled else point[1]/self.properties["vertical_stretch"]#1 for the y elevation
+            elif x == 0:
+                chunk_z, chunk_x = self.convert_to_chunk_coords(z-1, 0)
+                chunk_obj = self.chunks[chunk_z][chunk_x]
+                floor_pointer = self.quads[z-1][0].floor_pointer
+                point = chunk_obj.tvh.vertices[floor_pointer+3]#+3 for lower left
+                return point[1] if scaled else point[1]/self.properties["vertical_stretch"]#1 for the y elevation
+            elif z == 0:
+                #for all the points not in first column or row
+                chunk_z, chunk_x = self.convert_to_chunk_coords(0, x-1)
+                chunk_obj = self.chunks[chunk_z][chunk_x]
+                floor_pointer = self.quads[0][x-1].floor_pointer
+                point = chunk_obj.tvh.vertices[floor_pointer+1]#+1 for upper right right
+                return point[1] if scaled else point[1]/self.properties["vertical_stretch"]#1 for the y elevation
+            else:
+                raise Exception("Impossible!"+str(z)+" " + str(x))
+            
+        """
+            
+        
         if z < self.get_height_floors() and x < self.get_width_floors():#is the point we're looking for NOT on the last row or col?
             #then we can just find the corresponding floor z, x and get it's upper left hand corner 
             chunk_z, chunk_x = self.convert_to_chunk_coords(z, x)
@@ -779,7 +821,11 @@ class World(LooiObject):
                 floor_pointer = self.quads[z-1][x-1].floor_pointer
                 point = chunk_obj.tvh.vertices[floor_pointer+2]#+1 for lower right
                 return point[1] if scaled else point[1]/self.properties["vertical_stretch"]
-                
+        """
+    
+    
+    
+    
     #input unscaled position
     #output unscaled elevation
     def get_elevation_continuous(self, z, x):
@@ -1369,9 +1415,19 @@ class World(LooiObject):
             self.draw_image_array_3d(vertices, tex_coords, self.pan_background[0], self.pan_background[1],setup_3d=setup)
             glClear(GL_DEPTH_BUFFER_BIT)
     def get_chunk_load_grid(self):
+        los =self.view.line_of_sight
+        los2 =self.properties["line_of_sight2"]
+        los3 =self.properties["line_of_sight3"]
+        
+        
+        
         chunk_load_grid =[]
-        for r in range(self.get_height_chunks()):
-            chunk_load_grid.append([-2]*self.get_width_chunks())
+        if los3 == -1:
+            for r in range(self.get_height_chunks()):
+                chunk_load_grid.append([-1]*self.get_width_chunks())
+        else:
+            for r in range(self.get_height_chunks()):
+                chunk_load_grid.append([-2]*self.get_width_chunks())
         
         unscaled_view_z = self.view.z/self.properties["horizontal_stretch"]
         unscaled_view_x = self.view.x/self.properties["horizontal_stretch"]
@@ -1380,9 +1436,7 @@ class World(LooiObject):
         player_z_chunk, player_x_chunk = self.convert_to_chunk_coords(unscaled_view_z, unscaled_view_x)
         
         cs = self.properties["chunk_size"]
-        los =self.view.line_of_sight
-        los2 =self.properties["line_of_sight2"]
-        los3 =self.properties["line_of_sight3"]
+        
         
         def nearest_multiple(x, m):
             return int(x/m + .5)*m
@@ -1391,24 +1445,26 @@ class World(LooiObject):
         #far_view_angle = math.pi/6
         far_view_angle = math.pi/4
         
-        for z in range(nearest_multiple(unscaled_view_z - los3*cs, cs), nearest_multiple(unscaled_view_z + los3*cs, cs)+1, cs):
-            for x in range(nearest_multiple(unscaled_view_x - los3*cs, cs), nearest_multiple(unscaled_view_x + los3*cs, cs)+1, cs):
-                
-                
-                #here we are testing whether the chunk appears or not
-                if ( (z-unscaled_view_z)**2 + (x-unscaled_view_x)**2 )**.5 <= self.properties["line_of_sight3"]*cs:
-                    if far_view_angle > normal.angle_distance(self.view.hor_rot, util.get_angle(unscaled_view_z, unscaled_view_x, z, x)):
-                        #then all four neighboring chunks are visible
-                        cz = int(z/cs)
-                        cx = int(x/cs)
-                        
-                        if self.valid_chunk(cz, cx): chunk_load_grid[cz][cx] = -1
-                        if self.valid_chunk(cz-1, cx-1): chunk_load_grid[cz-1][cx-1] = -1
-                        if self.valid_chunk(cz, cx-1): chunk_load_grid[cz][cx-1] = -1
-                        if self.valid_chunk(cz-1, cx): chunk_load_grid[cz-1][cx] = -1
+        if los3 != -1:
+            for z in range(nearest_multiple(unscaled_view_z - los3*cs, cs), nearest_multiple(unscaled_view_z + los3*cs, cs)+1, cs):
+                for x in range(nearest_multiple(unscaled_view_x - los3*cs, cs), nearest_multiple(unscaled_view_x + los3*cs, cs)+1, cs):
+                    
+                    if not self.valid_point(z, x): continue
+                    
+                    #here we are testing whether the chunk appears or not
+                    if ( (z-unscaled_view_z)**2 + (x-unscaled_view_x)**2 )**.5 <= self.properties["line_of_sight3"]*cs:
+                        if far_view_angle > normal.angle_distance(self.view.hor_rot, util.get_angle(unscaled_view_z, unscaled_view_x, z, x)):
+                            #then all four neighboring chunks are visible
+                            cz = int(z/cs)
+                            cx = int(x/cs)
+                            
+                            if self.valid_chunk(cz, cx): chunk_load_grid[cz][cx] = -1
+                            if self.valid_chunk(cz-1, cx-1): chunk_load_grid[cz-1][cx-1] = -1
+                            if self.valid_chunk(cz, cx-1): chunk_load_grid[cz][cx-1] = -1
+                            if self.valid_chunk(cz-1, cx): chunk_load_grid[cz-1][cx] = -1
         for z in range(nearest_multiple(unscaled_view_z - los2*cs, cs), nearest_multiple(unscaled_view_z + los2*cs, cs)+1, cs):
             for x in range(nearest_multiple(unscaled_view_x - los2*cs, cs), nearest_multiple(unscaled_view_x + los2*cs, cs)+1, cs):
-                
+                if not self.valid_point(z, x): continue
                 
                 #here we are testing whether the chunk at least has trees or not
                 if ( (z-unscaled_view_z)**2 + (x-unscaled_view_x)**2 )**.5 <= self.properties["line_of_sight2"]*cs:
@@ -1550,6 +1606,11 @@ class World(LooiObject):
                     
                     tex_vertices_draw.append(self.chunks[z][x].tvh.vertices)
                     tex_coords_draw.append(self.chunks[z][x].tvh.vertex_colors)
+                    
+                    #print("chunk",z,x,"num occupied",self.chunks[z][x].tvh.num_occupied(), "capacity", self.chunks[z][x].tvh.capacity())
+                    
+                    
+                    
                 elif chunk_load_grid[z][x] == 1:
                     #add this chunk's vertices and colors to the stuff that's gonna be drawn
                     vertices_draw_far.append(self.chunks[z][x].vh.vertices)
@@ -1602,8 +1663,8 @@ class World(LooiObject):
 
             
             
-       
-            
+        
+        
             
         
             
@@ -1633,7 +1694,11 @@ class World(LooiObject):
         
         chunk_z = int( (vertex1[2]/self.properties["horizontal_stretch"])/self.properties["chunk_size"] )
         chunk_x = int( (vertex1[0]/self.properties["horizontal_stretch"])/self.properties["chunk_size"] )
-        if self.valid_chunk(chunk_z, chunk_x) and self.chunk_load_grid[chunk_z][chunk_x] == 2:
+        if (
+            chunk_z >= 0 and chunk_z < len(self.chunk_load_grid) and 
+            chunk_x >= 0 and chunk_x < len(self.chunk_load_grid[0]) and
+            self.chunk_load_grid[chunk_z][chunk_x] == 2
+            ):
             v = self.mobile_vertices_close
             c = self.mobile_colors_close
         else:
@@ -1678,6 +1743,7 @@ class World(LooiObject):
 
         return ret
     def remove_fixed_quad(self, quad_id, anchor_z, anchor_x, object=None):
+        if self.disable_remove_fixed_quads: return
         chunk_z, chunk_x = self.convert_to_chunk_coords(anchor_z, anchor_x)
         
         self.chunks[chunk_z][chunk_x].vh.rm_vertex(quad_id)
@@ -1720,28 +1786,66 @@ class World(LooiObject):
             ray[0] += step_size*self.properties["horizontal_stretch"] * math.cos(hr) * math.cos(vr)
             ray[2] += step_size*self.properties["horizontal_stretch"] * -math.sin(hr) * math.cos(vr)
             ray[1] += step_size*self.properties["horizontal_stretch"] * math.sin(vr)
-    """
-    add_object_account
-    
-    accounts for this object so that when the world is saved to a file, 
-    this object can be recreated the next time this world is made
-    
-    the creation code should be one (or more if you use semicolons) lines of 
-    code that create, setup, and add the appropriate object into the world.
-    This code will be invoked when the world is being loaded next time.
-    
-    This code can assume that the variable "world" contains the world we will
-    be adding to
-    """
-    #def add_object_account(self, object, creation_code):
-    #    self.object_account[id(object)] = creation_code
-    """
-    When you delete an object in game, you want it so that when you save
-    the world, that object is never saved. Use delete_object_account to
-    remove the object from the save list
-    """
-    #def delete_object_account(self, object):
-    #    del self.object_account[id(object)]
+    def reset(self, new_chunk_size = None):
+        if new_chunk_size == None: new_chunk_size = self.properties["chunk_size"]
+        old_chunk_size = self.properties["chunk_size"]
+        self.properties["chunk_size"] = new_chunk_size
+        
+        
+        
+        
+        
+        
+        all_contained_objects = []
+        for z in range(self.get_height_floors()):
+            for x in range(self.get_width_floors()):
+                for obj in self.quads[z][x].containedObjects:
+                    if isinstance(obj, WorldObject) and not isinstance(obj, NaturalBump):#copy everything but the natural bumps and lifts
+                        all_contained_objects.append(obj)
+                        
+                        
+            
+        world2 = World()
+        world2.properties = dict(self.properties)
+        #print("Starting init")
+        
+        
+        self.properties["chunk_size"] = old_chunk_size
+        world2.init(self.properties["name"], self.properties["width"], self.properties["height"], view=self.view, elevation_function=lambda z,x:self.get_elevation(z,x),natural_bumps=False)
+        self.properties["chunk_size"] = new_chunk_size
+        
+        
+        #print("Finishing init")
+        
+        
+        self.properties = world2.properties
+        
+        self.quads = world2.quads
+        self.chunks = world2.chunks
+        
+        self.disable_remove_fixed_quads = True#because all the objects' quads have already been removed because we cleaned out everything, so if they try to remove again it'll just error
+        
+        world_operations.natural_bumps(self, 0,0,self.get_height_points(), self.get_width_points(), prog_bar=True)#re add the natural bumps here
+        
+        num_objs = len(all_contained_objects)
+        loading_update = int(num_objs/150)
+        if loading_update < 1:loading_update = 1
+        i=0
+        loading.progress_bar("Loading objects...")
+        for obj in all_contained_objects: 
+            obj.reset()
+            
+            if i%loading_update == 0:
+                loading.update(i/num_objs*100)
+            i+=1
+        loading.update(100)
+        for l in list(lift.active_lifts): l.reset()
+        
+        
+        self.disable_remove_fixed_quads = False
+        
+        
+        
 def rad_to_deg(radians):
     return radians/(2*math.pi) * 360
 def round(x):

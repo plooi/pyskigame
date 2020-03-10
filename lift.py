@@ -234,6 +234,7 @@ class Lift(LooiObject, Selectable):
         self.delete()
         if not hasattr(self, "mids"):#for backward compatibility
             self.mids = "neither"
+        if (not self.world.valid_floor(self.z1, self.x1)) or (not self.world.valid_floor(self.z2, self.x2)):return#for size shrink due to chunk size changes
         return Lift(self.world).build(self.chairlift_array, self.rope_speed, self.terminal_speed, self.chair_time_distance, self.chair_model, self.blurry_chair_model, self.super_blurry_chair_model,terminal_model=self.terminal_model,pole_model=self.pole_model,chair_riding_model=self.chair_riding_model,mids=self.mids)
         
     def do_rope(self):
@@ -391,7 +392,11 @@ class Lift(LooiObject, Selectable):
                     self.chair_segments[i] = segment_index
                     
                     #execute the chair drawing
-                    if self.world.in_los(chair_i_position[2], chair_i_position[0], scaled=True):
+                    #if self.world.in_los(chair_i_position[2], chair_i_position[0], scaled=True):
+                    
+                    #now, you dont have to be in the line of sight, but you do have to be in front of the player
+                    #either in front of play, or super duper close
+                    if normal.angle_distance(get_angle(self.world.view.z,self.world.view.x,chair_i_position[2],chair_i_position[0]), self.world.view.hor_rot) < math.pi/4 or (((chair_i_position[0]-self.world.view.x)**2 + (chair_i_position[2]-self.world.view.z)**2)**.5 < 15):
                         if self.player_riding == i:
                             model = self.chair_riding_model()
                             horizontal_rotate_model_around_origin(model, chair_i_angle)

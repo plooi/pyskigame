@@ -178,6 +178,9 @@ def read(path, new_version = True):
             the_world = pickle.load(f)
             f.close()
             
+            if not hasattr(the_world, "disable_remove_fixed_quads"):
+                the_world.disable_remove_fixed_quads = False
+            
             for z in range(the_world.get_height_floors()):
                 for x in range(the_world.get_width_floors()):
                     for obj in list(the_world.quads[z][x].containedObjects):
@@ -209,6 +212,7 @@ def read(path, new_version = True):
                 the_world.mobile_colors_far = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
             if not hasattr(the_world, "pan_background"):
                 the_world.pan_background = None
+            
                 
             #end backward compatibility code
             return the_world

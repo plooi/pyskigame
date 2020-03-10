@@ -47,7 +47,6 @@ class Menu(LooiObject):
         
     def paint(self):
         self.draw_rect(self.x1, self.y1, self.x2, self.y2, self.menu_color)
-
 def settings(menu):
 
     setting = OrderedDict()

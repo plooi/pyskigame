@@ -72,6 +72,10 @@ class WorldObject(LooiObject):
         
     def recreate(self):
         self.delete()
+        
+        if not self.world.valid_floor(self.args["z"], self.args["x"]): return#for size shrink due to chunk size changes
+        
+        
         del self.args["y"]
         del self.args["model_x"]
         del self.args["model_y"]
@@ -149,8 +153,6 @@ class WorldObject(LooiObject):
         check(self.vertex_handler_pointers == None)
         if "model_args" in self.args: model = self.args["model"](**self.args["model_args"])
         else: model = self.args["model"]()
-        
-        if("Lodge" in str(type(self))):print(model)
         
         gm = True if self.args["model_type"] == "grad" else False
         tex = True if self.args["model_type"] == "tex" else False

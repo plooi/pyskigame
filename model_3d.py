@@ -1,6 +1,7 @@
 import copy
 from math import *
 import texture
+from random import random
 
 def main():
     p = [1,0,1]
@@ -97,12 +98,16 @@ def add_model_to_world_fixed(model, world, anchor_z, anchor_x, object=None, grad
 
 
 def rm_model_from_world_fixed(keys, world, anchor_z, anchor_x, object=None, texture_model=False):
+    if world.disable_remove_fixed_quads: return
+    
+    #print("world hasnot disabled remove fixed quads",world.disable_remove_fixed_quads,random(), "myworld is", id(world))
     if object != None:#remove the anchor
         world.quads[anchor_z][anchor_x].containedObjects.remove(object)
         
     if texture_model:
         for key in keys:
             chunk_z, chunk_x = world.convert_to_chunk_coords(anchor_z, anchor_x)
+            #print("SERIOUSLY!",world.disable_remove_fixed_quads,random(),"myworld is",id(world))
             texture.remove_image_from_vertex_handler(world.chunks[chunk_z][chunk_x].tvh, key)
             world.chunks[chunk_z][chunk_x].colors_changed = True
     else:
