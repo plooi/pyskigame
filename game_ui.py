@@ -6,7 +6,7 @@ import lift
 from normal import *
 import ski_draw
 from random import random
-from constants import x as constants
+
 from tree import Tree
 from rock import Rock
 import models
@@ -17,11 +17,12 @@ import mission_center
 import model_3d
 import pylooiengine
 
+from util import is_a_left_of_b
+from OpenGL.GL import *
+from OpenGL.GLU import *
 
 
-
-
-
+from constants import x as constants
 
 class UI(LooiObject):
     def __init__(self, world, game_mode):
@@ -79,7 +80,7 @@ class UI(LooiObject):
         self.lift_sound.play(loops = 9999999)#63 years about. We should be okay
         
         
-        self.swish_sound = self.new_sound("sounds/SkiSwish4.ogg", volume=.45)
+        self.swish_sound = self.new_sound("sounds/SkiSwish4.ogg", volume=.5)
         
         
         self.fall_sound = self.new_sound("sounds/Fall.ogg",volume=.365)
@@ -111,6 +112,10 @@ class UI(LooiObject):
         self.modified_floor_hr = None
         self.modified_floor_slope = None
         
+        
+        self.vr_margin = 999
+        self.correct_vr_angle = 0
+        
     def stop_sounds(self):
         self.wind_sound.stop()
         self.lift_sound.stop()
@@ -140,12 +145,13 @@ class UI(LooiObject):
                 if dist <= 10:#if close to a terminal
                     if self.my_lift != None and self.my_chair != None:#if currently riding
                         self.can_unload = True
-                        if self.key(constants["action_key"], "pressed"):
+                        if self.key(constants["interact_key"], "pressed"):
                             self.my_lift.player_riding = None
                             self.my_lift = None
                             self.my_chair = None
                             action_made = True
-                            self.stop_go = False#then it will be switched when the ski function is called
+                            self.stop_go = True
+                            self.world.properties["ski_direction"] = self.world.view.hor_rot
                             break
                     for i in range(len(cp)):
                         i = len(cp)-1-i
@@ -153,7 +159,7 @@ class UI(LooiObject):
                         if dist < chair_ride_distance:#if a chair is close
                             if self.my_lift == None and self.my_chair == None:#if not currently riding
                                 self.can_load = True
-                                if self.key(constants["action_key"], "pressed"):
+                                if self.key(constants["interact_key"], "pressed"):
                                     
                                     self.my_lift = chairlift
                                     self.my_chair = i
@@ -212,6 +218,8 @@ class UI(LooiObject):
         self.world.properties["do_floor_textures"] = True
         return False
     def put_on_or_take_off_skis(self):
+        self.skis = "on"
+        return#DISABLE
         if self.skis_changing:
             if self.ski_put_on_timer == 0:
                 self.world.view.vert_rot = 0
@@ -310,8 +318,8 @@ class UI(LooiObject):
         if vol < 0: vol = 0
         self.set_lift_vol(vol)
         
-        #if self.swish_timer == 15:
-        #    self.swish_sound.fadeout(1000)
+        if self.swish_timer <= 17:
+            self.swish_sound.fadeout(700)
                 
             
     def set_lift_vol(self, vol):
@@ -371,6 +379,7 @@ class UI(LooiObject):
             if self.game_mode == "map editor": 
                 self.game_mode = "ski test"
                 self.scenery = False
+                self.world.properties["ski_direction"] = self.world.view.hor_rot
             elif self.game_mode == "ski test": 
                 self.game_mode = "map editor"
                 self.scenery = True
@@ -506,9 +515,9 @@ class UI(LooiObject):
                 if self.fall_clock == 0:
                     self.fall_sound.play(maxtime=1800)
                     if self.falling==2:
-                        self.health(-8, animate=True)
+                        self.health(-12, animate=True)
                     elif self.falling == 1:
-                        self.health(-4, animate=True)
+                        self.health(-6, animate=True)
                     self.world.properties["momentum"] = 0
                     self.original_pos = [self.world.view.x,self.world.view.y,self.world.view.z,self.world.view.hor_rot,self.world.view.vert_rot]
                 elif self.fall_clock <= 16:
@@ -558,9 +567,9 @@ class UI(LooiObject):
                 if self.fall_clock == 0:
                     self.fall_sound.play(maxtime=1800)
                     if self.falling==2:
-                        self.health(-8, animate=True)
+                        self.health(-12, animate=True)
                     elif self.falling == 1:
-                        self.health(-4, animate=True)
+                        self.health(-6, animate=True)
                     self.world.properties["momentum"] = 0
                     self.original_pos = [self.world.view.x,self.world.view.y,self.world.view.z,self.world.view.hor_rot,self.world.view.vert_rot]
                 elif self.fall_clock <= 16:
@@ -774,22 +783,43 @@ class UI(LooiObject):
         g = .1
         ski_g = constants["g_force"]
         
+        
+        
+        #calculate floor slope
+                
+        p1,p2,p3 = self.xyz_of_current_triangle(v.z, v.x)
+        floor_hr, floor_vr = get_plane_rotation(p1[0],p1[1],p1[2],p2[0],p2[1],p2[2],p3[0],p3[1],p3[2])
+        
+        if floor_vr < 0:
+            floor_vr = -floor_vr
+            floor_hr += math.pi
+        
+        floor_slope = math.pi/2 - floor_vr
+        
+        if self.modified_floor_hr != None: floor_hr = self.modified_floor_hr
+        if self.modified_floor_slope != None: floor_slope = self.modified_floor_slope
+        
+        self.slope = floor_slope
+        
+        
+        #calculate force pulling down
+        
+        resistance = angle_distance(self.world.properties["ski_direction"], floor_hr)
+        equivalent_floor_slope = math.cos(resistance) * floor_slope
+        f_parallel = ski_g * math.sin(equivalent_floor_slope)
+        fhorizontal = f_parallel * math.cos(equivalent_floor_slope)
+        
+        
         if self.interface_mode == "game" or self.interface_mode == "can_move_temporarily":
-            #if stopped, look around normally
-            if self.world.properties["momentum"] == 0:
-                rel = pygame.mouse.get_rel()
-                self.world.view.hor_rot += -(rel[0])*self.world.view.rot_spd
-                self.world.view.vert_rot += -(rel[1])*self.world.view.rot_spd
-                if self.world.view.vert_rot > self.world.view.max_vert_rot:
-                    self.world.view.vert_rot = self.world.view.max_vert_rot
-                if self.world.view.vert_rot < -self.world.view.max_vert_rot:
-                    self.world.view.vert_rot = -self.world.view.max_vert_rot
-                
-            #if skiing, when you rotate the mouse make it change the ski turn
-            else:
-                rel = pygame.mouse.get_rel()
-                
+            rel = pygame.mouse.get_rel()
+            if self.world.properties["momentum"] > .15:
+                if abs(rel[0])*self.world.view.rot_spd > constants["swish_angle"]:
+                    if self.swish_timer <= 0:
+                        self.swish_sound.play(fade_ms=500)
+                        self.swish_timer = 25
+            if self.world.properties["momentum"] > 0:
                 #turn the skis
+                
                 self.turning -= rel[0]*constants["scroll_speed"]
                 if self.turning > constants["turn_limit"]:
                     self.turning = constants["turn_limit"]
@@ -800,14 +830,19 @@ class UI(LooiObject):
                     self.world.view.vert_rot = self.world.view.max_vert_rot
                 if self.world.view.vert_rot < -self.world.view.max_vert_rot:
                     self.world.view.vert_rot = -self.world.view.max_vert_rot
-                self.world.properties["ski_direction"] += self.turning
                 
-            
+                if self.jumping:
+                    self.world.properties["ski_direction"] += self.turning
+                else:
+                    self.world.properties["ski_direction"] += -(rel[0])*self.world.view.rot_spd
+                
+                
+                """
                 #deal with hr target
                 angle_d = angle_distance(self.world.properties["ski_direction"], self.world.view.hor_rot)
                 angle_inc = math.pi/10 *angle_d/(math.pi/2)
-                if angle_inc < math.pi/550:
-                    angle_inc = math.pi/550
+                #if angle_inc < math.pi/550:
+                #    angle_inc = math.pi/550
                 if angle_d > angle_inc:
                     if (angle_distance(self.world.view.hor_rot+angle_inc, self.world.properties["ski_direction"]) 
                         <
@@ -816,7 +851,16 @@ class UI(LooiObject):
                     else: self.world.view.hor_rot -= angle_inc
                 else: self.world.view.hor_rot = self.world.properties["ski_direction"]
                 
+                """
+                self.world.view.hor_rot = self.world.properties["ski_direction"]
+            else:
+                self.turning = 0
+                self.world.view.vert_rot += -(rel[1])*self.world.view.rot_spd
+                self.world.view.hor_rot -= (rel[0])*self.world.view.rot_spd
             if self.jumping:
+                
+                
+                
                 v.x += self.world.properties["momentum"] * math.cos(self.world.properties["momentum_direction"])
                 v.z += self.world.properties["momentum"] * -math.sin(self.world.properties["momentum_direction"])
                 
@@ -842,59 +886,36 @@ class UI(LooiObject):
                         self.health(-damage)
                     self.world.properties["y_momentum"] = 0
             else:
-                        
                 
                 
                         
                 #switch between stop and go modes
-                if self.key(constants["action_key"], "pressed"):
-                    self.stop_go = not self.stop_go
-                    self.turning = 0
-                    self.world.properties["ski_direction"] = self.world.view.hor_rot
-                    self.world.properties["momentum_direction"] = self.world.view.hor_rot
-                
-                
-            
-            
-                #max rotation
-                if self.world.view.vert_rot > self.world.view.max_vert_rot:
-                    self.world.view.vert_rot = self.world.view.max_vert_rot
-                if self.world.view.vert_rot < -self.world.view.max_vert_rot:
-                    self.world.view.vert_rot = -self.world.view.max_vert_rot
+                #if self.key(constants["action_key"], "pressed"):
+                switched = 0
+                if self.key(constants["action_key"], "pressed"):#if self.mouse("right", "down") and self.mouse("left", "released"):
+                    if not self.stop_go or self.world.properties["momentum"] < .15:
+                        self.stop_go = not self.stop_go
+                        self.turning = 0
+                        self.world.properties["ski_direction"] = self.world.view.hor_rot
+                        self.world.properties["momentum_direction"] = self.world.view.hor_rot
+                        switched = 1
                 
                 
                 
                 
                 
                 
-                #calculate floor slope
-                
-                p1,p2,p3 = self.xyz_of_current_triangle(v.z, v.x)
-                floor_hr, floor_vr = get_plane_rotation(p1[0],p1[1],p1[2],p2[0],p2[1],p2[2],p3[0],p3[1],p3[2])
-                
-                if floor_vr < 0:
-                    floor_vr = -floor_vr
-                    floor_hr += math.pi
-                
-                floor_slope = math.pi/2 - floor_vr
-                
-                if self.modified_floor_hr != None: floor_hr = self.modified_floor_hr
-                if self.modified_floor_slope != None: floor_slope = self.modified_floor_slope
-                
-                self.slope = floor_slope
                 
                 
-                #calculate force pulling down
-                resistance = angle_distance(self.world.properties["ski_direction"], floor_hr)
-                equivalent_floor_slope = math.cos(resistance) * floor_slope
-                f_parallel = ski_g * math.sin(equivalent_floor_slope)
-                fhorizontal = f_parallel * math.cos(equivalent_floor_slope)
+                
+                
                 
                 
                 
                 #jump
-                if self.mouse("left", "released"):
+                if self.mouse("left", "released") and not switched:
                     self.jumping = 1
+                    self.turning = 0
                     self.world.properties["y_momentum"] = math.sin(-equivalent_floor_slope + constants["jump_angle"]) * self.world.properties["momentum"]
                     self.world.properties["momentum"] = math.cos(-equivalent_floor_slope + constants["jump_angle"]) * self.world.properties["momentum"]
                     #print("ymom", self.world.properties["y_momentum"], "mom", self.world.properties["momentum"])
@@ -914,15 +935,16 @@ class UI(LooiObject):
                     self.world.properties["momentum"] -= brake
                 
                 
+                #breaks
+                if self.mouse("right","down"):
+                    if resistance > math.pi/2 or equivalent_floor_slope < math.pi/10:
+                        break_factor = 1
+                    else:
+                        break_factor = resistance/(math.pi/2)
+                    self.world.properties["momentum"] -= break_factor * .03
                 
                 #momentum direction
-                if self.world.is_ice(int(v.z/self.world.properties["horizontal_stretch"]), int(v.x/self.world.properties["horizontal_stretch"])):
-                    #dont change direction on ice
-                    if self.swish_timer == 0:
-                        self.swish_sound.play(maxtime=800, fade_ms=150)
-                        self.swish_timer = 100
-                else:
-                    self.world.properties["momentum_direction"] = self.world.properties["ski_direction"]
+                self.world.properties["momentum_direction"] = self.world.properties["ski_direction"]
                 
                 
                 
@@ -930,6 +952,7 @@ class UI(LooiObject):
                 
                 #no going backwards
                 if self.world.properties["momentum"] < 0: self.world.properties["momentum"] = 0
+                
                 
                 
                 
@@ -944,6 +967,75 @@ class UI(LooiObject):
                 if v.z < 0: v.z = 0
                 
                 v.y = self.get_elevation_continuous(v.z, v.x)*self.world.properties["vertical_stretch"] + self.world.properties["player_height"]
+                
+                
+                
+                
+                
+                
+                
+            #falling due to incorrect vr
+            
+            
+            
+            resistance_for_hr = angle_distance(self.world.view.hor_rot, floor_hr)
+            equivalent_floor_slope_for_hr = math.cos(resistance_for_hr) * floor_slope
+            floor_slope_2 = floor_slope
+            if floor_slope_2 > math.pi/3:
+                floor_slope_2 = math.pi/3
+            #self.vr_margin =  abs(1-abs(equivalent_floor_slope_for_hr/(math.pi/2))) * math.pi/15 * 1.2/(self.world.properties["momentum"]+.3)
+            #self.vr_margin =  abs(1-abs(equivalent_floor_slope_for_hr/(math.pi/3))) * math.pi/15 * 1.2/(self.world.properties["momentum"]+.3)
+            
+            """
+            self.vr_margin =  abs(1-abs(floor_slope_2/(math.pi/3))) * math.pi/15 * 1.35/(self.world.properties["momentum"]**2+.3)
+            if self.vr_margin < constants["min_vr_margin"]:
+                self.vr_margin = constants["min_vr_margin"]
+            """
+            vr_margin_target =  abs(1-abs(floor_slope_2/(math.pi/3))) * math.pi/15 * 1.35/(self.world.properties["momentum"]**2+.3)
+            if vr_margin_target < constants["min_vr_margin"]: vr_margin_target = constants["min_vr_margin"]
+            
+            correct_vr_angle_target = equivalent_floor_slope_for_hr + math.pi/25
+            #inc = (self.world.properties["momentum"])**2 * math.pi/70 + math.pi/150
+            #if inc > math.pi/100:
+            #    inc = math.pi/100
+            inc = math.pi/150
+            #inc = math.pi/200
+            if self.world.properties["momentum"] > 0:
+                
+                if self.vr_margin < vr_margin_target - inc:
+                    self.vr_margin += inc
+                elif self.vr_margin > vr_margin_target + inc:
+                    self.vr_margin -= inc
+                else:
+                    self.vr_margin = vr_margin_target
+                
+                if self.correct_vr_angle < correct_vr_angle_target - inc:
+                    self.correct_vr_angle += inc
+                elif self.correct_vr_angle > correct_vr_angle_target + inc:
+                    self.correct_vr_angle -= inc
+                else:
+                    self.correct_vr_angle = correct_vr_angle_target
+                if not self.jumping:
+                    if abs(-self.world.view.vert_rot - self.correct_vr_angle) > self.vr_margin:
+                            if random() < .06:
+                                if self.world.properties["momentum"] > .2:
+                                    self.falling = 1
+                
+                
+            else:
+                self.correct_vr_angle = correct_vr_angle_target
+                self.vr_margin = vr_margin_target
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
                 
                     
             
@@ -1021,7 +1113,16 @@ class UI(LooiObject):
         z = -math.sin(hor_rot)*magnitude
         x = math.cos(hor_rot)*magnitude
         return x,z
+    def conv_slope_to_screen_y(self, slope):
+        return (slope/(math.pi/2)+1)/2 * self.get_my_window().get_internal_size()[1]
     def paint(self):
+        
+        
+        
+        
+        
+        
+        
         #self.draw_text(0,100,str(self.world.properties["momentum"]), font_size=20)
         if self.health_timer > 0:
             #draw health bar
@@ -1038,6 +1139,7 @@ class UI(LooiObject):
             
             self.draw_text(0,13,str(self.fps), font_size=13)
         #self.draw_text(0,13,str(self.world.view.y), font_size=13)
+        """
         if self.game_mode.startswith("ski"):
             
             
@@ -1073,7 +1175,7 @@ class UI(LooiObject):
                         self.get_my_window().get_internal_size()[1] - 2*pointer_radius,
                         self.get_my_window().get_internal_size()[0]/2 + pointer_radius - (angle_d*self.get_my_window().get_internal_size()[0]/2),
                         self.get_my_window().get_internal_size()[1], Color(.3,.3,.3))
-                    
+        """
         if self.draw_black_screen:
             self.draw_rect(0,0,self.get_my_window().get_internal_size()[0],self.get_my_window().get_internal_size()[1], black)
         #if self.interface_mode == "menu":
@@ -1100,9 +1202,99 @@ class UI(LooiObject):
                             internal_size[0]/2+self.crosshair_length/2, 
                             internal_size[1]/2,
                             black)
-    
+        #draw the vr diagram
+        if self.world.properties["momentum"] > 0 and self.vr_margin != 0 and self.game_mode != "map editor":
+            glBlendEquation(GL_FUNC_ADD)
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+            glEnable(GL_BLEND);
+            glDisable(GL_ALPHA_TEST)
+            screen_w = self.get_my_window().get_internal_size()[0]
+            
+            a= abs(-self.world.view.vert_rot-self.correct_vr_angle)/self.vr_margin
+            
+            
+            if a > .7:
+                if -self.world.view.vert_rot > self.correct_vr_angle:
+                    color_top = Color(1,.1,0,.7)
+                    color_bot = Color(0,0,1,.06)
+                else:
+                    color_top = Color(0,1,0,.06)
+                    color_bot = Color(1,0,.1,.7)
+            else:
+                color_top = Color(0,1,0,.06)
+                color_bot = Color(0,0,1,.06)
+            
+            division_y = self.conv_slope_to_screen_y(-self.world.view.vert_rot)
+            if division_y < self.conv_slope_to_screen_y(self.correct_vr_angle-self.vr_margin): division_y = self.conv_slope_to_screen_y(self.correct_vr_angle-self.vr_margin)
+            if division_y > self.conv_slope_to_screen_y(self.correct_vr_angle+self.vr_margin): division_y = self.conv_slope_to_screen_y(self.correct_vr_angle+self.vr_margin)
+            
+            """
+            
+            #top rect
+            self.draw_rect(0,self.conv_slope_to_screen_y(self.correct_vr_angle-self.vr_margin), screen_w, division_y, color_top)
+            
+            #bottom rect
+            self.draw_rect(0,division_y, screen_w, self.conv_slope_to_screen_y(self.correct_vr_angle+self.vr_margin), color_bot)
+            """
+            
+            
+            #top rect
+            self.draw_rect(0,self.conv_slope_to_screen_y(self.correct_vr_angle-self.vr_margin), screen_w/3, division_y, color_top)
+            
+            #bottom rect
+            self.draw_rect(0,division_y, screen_w/3, self.conv_slope_to_screen_y(self.correct_vr_angle+self.vr_margin), color_bot)
+            
+            #top rect
+            self.draw_rect(screen_w*2/3,self.conv_slope_to_screen_y(self.correct_vr_angle-self.vr_margin), screen_w, division_y, color_top)
+            
+            #bottom rect
+            self.draw_rect(screen_w*2/3,division_y, screen_w, self.conv_slope_to_screen_y(self.correct_vr_angle+self.vr_margin), color_bot)
+            
+            
+            glDisable(GL_BLEND)
+            glEnable(GL_ALPHA_TEST)
+        """
+        if self.world.properties["momentum"] > 0:
+            glBlendEquation(GL_FUNC_ADD)
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+            glEnable(GL_BLEND);
+            glDisable(GL_ALPHA_TEST)
+            screen_w = self.get_my_window().get_internal_size()[0]
+            
+            a = 0
+            au = 0
+            ad = 0
+            if self.vr_margin != 0:
+                a= abs(-self.world.view.vert_rot-self.correct_vr_angle)/self.vr_margin
+                if a > 1: a = 1
+                
+                if a > .7: a = .7
+                else: a = 0
+                
+                if -self.world.view.vert_rot > self.correct_vr_angle:
+                    au = 0
+                    ad = a
+                else:
+                    au = a
+                    ad = 0
+            if self.world.properties["momentum"] == 0:
+                a = -.05/.55#-.18/.55
+            
+            division_y = self.conv_slope_to_screen_y(-self.world.view.vert_rot)
+            if division_y < self.conv_slope_to_screen_y(self.correct_vr_angle-self.vr_margin): division_y = self.conv_slope_to_screen_y(self.correct_vr_angle-self.vr_margin)
+            if division_y > self.conv_slope_to_screen_y(self.correct_vr_angle+self.vr_margin): division_y = self.conv_slope_to_screen_y(self.correct_vr_angle+self.vr_margin)
+            
+            
+            self.draw_rect(0,self.conv_slope_to_screen_y(self.correct_vr_angle-self.vr_margin), screen_w, division_y, Color(ad,1-ad,0,.55*a+.05))
+            self.draw_rect(0,division_y, screen_w, self.conv_slope_to_screen_y(self.correct_vr_angle+self.vr_margin), Color(au,0,1-au,.55*a+.05))
+            glDisable(GL_BLEND)
+            glEnable(GL_ALPHA_TEST)
+        """
     def enable_crosshairs(self, crosshairs):
         self.crosshairs = crosshairs
+    def deactivate(self):
+        super().deactivate()
+        self.stop_sounds()
 def abs(x):
     if x >= 0:
         return x

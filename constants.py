@@ -28,13 +28,16 @@ x = {
     "scroll_speed": math.pi/20000,#math.pi/40,
     "scroll_speed_lift" : math.pi/40,
     "turn_limit" : math.pi/20,
+    "min_vr_margin" : math.pi/45,
+    
+    "swish_angle" : math.pi/36, 
     
     #when you jump, how much angle does the skier get boosted off from the ground
     "jump_angle" : math.pi/12,
     "jump_g" : .019,
     
     
-    "friction" : .018,#.0068,]
+    "friction" : .009,#.018,#.0068,]
     "g_force" : .019,
     
     "ice_color" : Color(.84,.87,.9),

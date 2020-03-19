@@ -22,6 +22,7 @@ from world_object import WorldObject
 from bump import *
 import mission_center
 from tree import Tree
+from portal import Portal
 
 
 build_hs_terminal_model = hs_terminal_design_gray
@@ -98,6 +99,10 @@ class Menu(LooiObject):
         self.btn6 = Button(x = 520, y=600, width=70, height=70, font_size=10, text="", image=image("Select.png"), action=Select, action_parameter=self)
         self.btn6.set_layer(-2)
         self.add(self.btn6)
+        
+        self.btn69 = Button(x = 600, y=600, width=70, height=70, font_size=10, text="", image=image("textures/Portal Icon.png"), action=PlacePortal, action_parameter=self)
+        self.btn69.set_layer(-2)
+        self.add(self.btn69)
         
         self.btn7 = Button(x = 1240, y=760, width=70, height=70, font_size=10, text="", image=image("Save Icon.png"), action=save, action_parameter=self)
         self.btn7.set_layer(-2)
@@ -396,7 +401,7 @@ def exit(menu):
     elif event == None:
         return
         
-    menu.ui.stop_sounds()
+    
     #code for exiting:
     #print("going to deactivate",pylooiengine.main_window.unlayered_looi_objects+main_window.layered_looi_objects+main_window.transfer_to_unlayered_looi_objects+main_window.transfer_to_layered_looi_objects)
     for looi_object in pylooiengine.main_window.unlayered_looi_objects+main_window.layered_looi_objects+main_window.transfer_to_unlayered_looi_objects+main_window.transfer_to_layered_looi_objects:
@@ -1033,6 +1038,31 @@ class PlaceLandmark(OnePointEdit):
         super().__init__(menu)
     def execute(self, point):
         Landmark(z=point[0], x=point[1], world=self.world())
+class PlacePortal(OnePointEdit):
+    def __init__(self, menu):
+        super().__init__(menu)
+        game_ui.set_mouse_mode("normal")
+        layout = [
+            [sg.Text("Destination world:"), sg.Input("")],
+            [sg.Text("Destination X:"), sg.Input("")],
+            [sg.Text("Destination Z:"), sg.Input("")],
+            [sg.OK()]
+        ]
+        window = sg.Window('', layout, size = (500,800))
+        event, values = window.Read()
+        window.close()
+        game_ui.set_mouse_mode("3D")
+        if event == "OK":
+            try:
+                self.dest_x = int(values[1])
+                self.dest_z = int(values[2])
+                self.dest_world = values[0]
+                
+            except Exception as e:
+                sg.Popup(str(e))
+                raise e
+    def execute(self, point):
+        Portal(z=point[0], x=point[1], world=self.world(), destination_world = self.dest_world, destination_x = self.dest_x, destination_z = self.dest_z)
 """
 End map edits
 """

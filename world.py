@@ -443,7 +443,7 @@ class World(LooiObject):
             "width_chunks" : -1,
             "height_chunks" : -1,
             "line_of_sight2" : 7,#how many chunks away before the trees start to disappear
-            "line_of_sight3" : 15,#how many chunks away before no pan chunk squares are rendered
+            "line_of_sight3" : -1,#how many chunks away before no pan chunk squares are rendered
             "horizontal_stretch" : 4,
             "vertical_stretch" : .15,
             "sun_angle" : 0,

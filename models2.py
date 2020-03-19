@@ -595,6 +595,18 @@ def landmark_model_1(
     
     
     ]
+def portal_model_1():
+    width = 2
+    height = 3
+    top_color = [1,1,1]
+    bot_color = [.5,.5,1]
+    
+    return [
+        [-width/2,0,-width/2],[width/2,0,-width/2],[width/2,0,width/2],[0,height,0],bot_color,bot_color,bot_color,top_color,
+        [-width/2,0,-width/2],[-width/2,0,width/2],[width/2,0,width/2],[0,height,0],bot_color,bot_color,bot_color,top_color,
+        
+        
+        ]
     
 """
 def terminal_design_2(

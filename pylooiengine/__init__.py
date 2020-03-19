@@ -27,7 +27,7 @@ class Color:
          self.r = r
          self.g = g
          self.b = b
-     def to_tuple(self, form="RGB"):
+     def to_tuple(self, form="RGBA"):
          if form == "RGB":
              return (self.r, self.g, self.b)
          elif form == "ARGB":
@@ -36,10 +36,11 @@ class Color:
              return (self.r, self.g, self.b, self.a)
          else:
              fail("%s is not a valid form for a color" % (form,))
-     def to_tuple_255(self, form="RGB"):
+     def to_tuple_255(self, form="RGBA"):
          r = int(self.r * 255)
          g = int(self.g * 255)
          b = int(self.b * 255)
+         a = int(self.a * 255)
          if form == "RGB":
              return (r, g, b)
          elif form == "ARGB":
@@ -397,7 +398,8 @@ class Window():
         y2 = self.window_y_to_opengl_coord(y2)
         glPushMatrix()
         glBegin(GL_QUADS)
-        glColor3fv(color)
+        #glColor3fv(color)
+        glColor4fv(color)
         glVertex2f(x1,y1)
         glVertex2f(x2,y1)
         glVertex2f(x2,y2)
@@ -515,7 +517,8 @@ class LooiObject:
         
         glLineWidth((line_width))
         glBegin(GL_LINES)
-        glColor3fv(color)
+        #glColor3fv(color)
+        glColor4fv(color)
         glVertex2f(x1,y1)
         glVertex2f(x2,y2)
         glEnd()
@@ -534,7 +537,8 @@ class LooiObject:
         else:
             glLineWidth((line_width))
             glBegin(GL_LINE_LOOP)
-        glColor3fv(color)
+        #glColor3fv(color)
+        glColor4fv(color)
         glVertex2f(x1,y1)
         glVertex2f(x2,y1)
         glVertex2f(x2,y2)
@@ -558,7 +562,8 @@ class LooiObject:
         else:
             glLineWidth((line_width))
             glBegin(GL_LINE_LOOP)
-        glColor3fv(color)
+        #glColor3fv(color)
+        glColor4fv(color)
         glVertex2f(x1,y1)
         glVertex2f(x2,y2)
         glVertex2f(x3,y3)
@@ -585,8 +590,8 @@ class LooiObject:
             glLineWidth((line_width))
             glBegin(GL_LINE_LOOP)
             
-        glColor3fv(color)
-        
+        #glColor3fv(color)
+        glColor4fv(color)
         for i in range(precision+1):
             angle = 2 * math.pi * i / precision
             x = center_x + math.cos(angle) * width_radius
@@ -680,7 +685,8 @@ class LooiObject:
         
         glLineWidth((line_width))
         glBegin(GL_LINES)
-        glColor3fv(color)
+        #glColor3fv(color)
+        glColor4fv(color)
         glVertex3f(x1,y1,z1)
         glVertex3f(x2,y2,z2)
         glEnd()
@@ -738,7 +744,9 @@ class LooiObject:
     def draw_quad_3d(self, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, color, setup_3d=default_3d_view_setup):
         color = color.to_tuple()
         glPushMatrix()
-        glColor3fv(color)
+        
+        #glColor3fv(color)
+        glColor4fv(color)
         setup_3d()
         #glTranslatef(0.0,.5, -x/50)
         #glRotatef(0, 1, -2, 0)

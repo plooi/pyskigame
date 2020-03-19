@@ -132,7 +132,7 @@ def exit(menu):
         save(menu)
     if event == None:
         return
-    menu.ui.stop_sounds()
+    
     #code for exiting:
     for looi_object in pylooiengine.main_window.unlayered_looi_objects+main_window.layered_looi_objects+main_window.transfer_to_unlayered_looi_objects+main_window.transfer_to_layered_looi_objects:
         looi_object.deactivate()
