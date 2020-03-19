@@ -936,12 +936,25 @@ class UI(LooiObject):
                 
                 
                 #breaks
+                if self.mouse("right", "pressed"):
+                    if self.world.properties["momentum"] > .15:
+                        if self.swish_timer <= 0:
+                            self.swish_sound.play(fade_ms=500)
+                            self.swish_timer = 25
                 if self.mouse("right","down"):
+                    """
                     if resistance > math.pi/2 or equivalent_floor_slope < math.pi/10:
                         break_factor = 1
                     else:
                         break_factor = resistance/(math.pi/2)
                     self.world.properties["momentum"] -= break_factor * .03
+                    """
+                    if resistance > math.pi/2 or equivalent_floor_slope < math.pi/10:
+                        break_factor = 1
+                    else:
+                        break_factor = resistance/(math.pi/2) 
+                    if break_factor < .3: break_factor=0
+                    self.world.properties["momentum"] /= break_factor*.04 + 1#
                 
                 #momentum direction
                 self.world.properties["momentum_direction"] = self.world.properties["ski_direction"]

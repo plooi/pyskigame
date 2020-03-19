@@ -30,7 +30,7 @@ x = {
     "turn_limit" : math.pi/20,
     "min_vr_margin" : math.pi/45,
     
-    "swish_angle" : math.pi/36, 
+    "swish_angle" : math.pi/20, 
     
     #when you jump, how much angle does the skier get boosted off from the ground
     "jump_angle" : math.pi/12,
