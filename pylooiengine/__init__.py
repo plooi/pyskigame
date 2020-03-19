@@ -97,7 +97,7 @@ class Window():
         self.view_width = None
         self.view_height = None
         
-        self.mipmap_max_level = 3
+        self.mipmap_max_level = 999#3
         
         self.fps = fps
         self.seconds_per_frame = 1/self.fps
