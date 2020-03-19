@@ -1633,7 +1633,8 @@ class World(LooiObject):
                 
         
         
-        
+        glAlphaFunc(GL_GREATER, 0.4);
+        glEnable(GL_ALPHA_TEST);
        
         
         #now here's where we do all the drawing (and stacking)
