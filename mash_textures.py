@@ -45,7 +45,15 @@ names = [
 "IceTexture.png",
 "BumpTextureD.png",
 "BumpTextureL.png",
-"PineTexture1.png","PineTexture2.png","PineTexture3.png","PineTexture4.png",
+None,
+"PineTexture1.png",
+None,
+"PineTexture2.png",
+None,
+"PineTexture3.png",
+None,
+"PineTexture4.png",
+None,
 "Bark.png",
 "CliffTexture.png",
 "RockTexture.png",
@@ -60,24 +68,33 @@ for name in names:
     n.append(name)
 names = n
 
-images = [Image.open("3d_textures/"+x) for x in names]
+blank_space = Image.new('RGBA', (8, 150))
+blank_space.paste( (1,1,1,0), [0,0,blank_space.size[0],blank_space.size[1]])
+
+
+images = [blank_space if x==None else Image.open("3d_textures/"+x) for x in names]
 
 
 
 
 widths, heights = zip(*(i.size for i in images))
 
+
 total_width = sum(widths)
 max_height = max(heights)
 
 new_im = Image.new('RGBA', (total_width, max_height))
+new_im.paste( (1,1,1,1), [0,0,new_im.size[0],new_im.size[1]])
+
+
 
 key = str(total_width)+"_"+str(max_height)
 x_offset = 0
 for i in range(len(images)):
     im = images[i]
     new_im.paste(im, (x_offset,0))
-    key+="\n"+minus_extension(names[i])+"_"+str(x_offset)+"_0_"+str(widths[i])+"_"+str(heights[i])
+    if names[i] != None:
+        key+="\n"+minus_extension(names[i])+"_"+str(x_offset)+"_0_"+str(widths[i])+"_"+str(heights[i])
     x_offset += im.size[0]
     
 
