@@ -80,7 +80,7 @@ class UI(LooiObject):
         self.lift_sound.play(loops = 9999999)#63 years about. We should be okay
         
         
-        self.swish_sound = self.new_sound("sounds/SkiSwish4.ogg", volume=.5)
+        self.swish_sound = self.new_sound("sounds/SkiSwish4.ogg", volume=.65)
         
         
         self.fall_sound = self.new_sound("sounds/Fall.ogg",volume=.365)
@@ -318,7 +318,7 @@ class UI(LooiObject):
         if vol < 0: vol = 0
         self.set_lift_vol(vol)
         
-        if self.swish_timer <= 17:
+        if self.swish_timer <= 32:
             self.swish_sound.fadeout(700)
                 
             
@@ -816,7 +816,7 @@ class UI(LooiObject):
                 if abs(rel[0])*self.world.view.rot_spd > constants["swish_angle"]:
                     if self.swish_timer <= 0:
                         self.swish_sound.play(fade_ms=500)
-                        self.swish_timer = 25
+                        self.swish_timer = 40
             if self.world.properties["momentum"] > 0:
                 #turn the skis
                 
@@ -940,7 +940,7 @@ class UI(LooiObject):
                     if self.world.properties["momentum"] > .15:
                         if self.swish_timer <= 0:
                             self.swish_sound.play(fade_ms=500)
-                            self.swish_timer = 25
+                            self.swish_timer = 40
                 if self.mouse("right","down"):
                     """
                     if resistance > math.pi/2 or equivalent_floor_slope < math.pi/10:

@@ -23,9 +23,6 @@ class Tree(WorldObject):
             vr = -vr
             hr += math.pi
             
-            
-        args["z"] = int(args["z"])
-        args["x"] = int(args["x"])
         
         if args["z"]%1==0 and args["x"]%1==0:#if z and x are at the corner of the square
             args["z"] = args["z"]+random()#put them in the middle of square with random deviation
