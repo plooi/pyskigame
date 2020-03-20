@@ -376,7 +376,7 @@ def data_file_world():
     while 1:
         layout = [
                   [sg.Text('Name:'), sg.Input(event)],
-                  [sg.Text('Tree density (value from 0 to 1):'), sg.Input(".5")],
+                  [sg.Text('Tree density (value from 0 to 1):'), sg.Input(".35")],
                   [sg.OK()] ]
         window = sg.Window('', layout)
         event, values = window.Read()

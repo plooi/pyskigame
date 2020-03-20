@@ -23,9 +23,11 @@ class Tree(WorldObject):
             vr = -vr
             hr += math.pi
             
-        if args["z"]%1==0 and args["x"]%1==0:#if z and x are pointing toward the corner of the square
-            #args["z"] = args["z"]+.5#put them in the middle of square
-            #args["x"] = args["x"]+.5#middle of square
+            
+        args["z"] = int(args["z"])
+        args["x"] = int(args["x"])
+        
+        if args["z"]%1==0 and args["x"]%1==0:#if z and x are at the corner of the square
             args["z"] = args["z"]+random()#put them in the middle of square with random deviation
             args["x"] = args["x"]+random()
         shade = args["world"].calculate_floor_color_single(hr,vr)
