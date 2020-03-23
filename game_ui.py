@@ -857,6 +857,10 @@ class UI(LooiObject):
                 self.turning = 0
                 self.world.view.vert_rot += -(rel[1])*self.world.view.rot_spd
                 self.world.view.hor_rot -= (rel[0])*self.world.view.rot_spd
+                if self.world.view.vert_rot > self.world.view.max_vert_rot:
+                    self.world.view.vert_rot = self.world.view.max_vert_rot
+                if self.world.view.vert_rot < -self.world.view.max_vert_rot:
+                    self.world.view.vert_rot = -self.world.view.max_vert_rot
             if self.jumping:
                 
                 

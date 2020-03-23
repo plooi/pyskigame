@@ -150,8 +150,8 @@ class Quad:
         self.containedObjects = []#keeps track of all 3d objects that are related to this quadrilateral (like trees)
 class Chunk:
     def __init__(self, world):
-        self.vh = VertexHandler(3)#vertex handler to store all non-moving drawables in this chunk
-        self.tvh = texture.new_texture_handler(initial_capacity=world.properties["chunk_size"]**2+1)
+        self.vh = VertexHandler(3,initial_capacity=world.properties["chunk_size"]**2+1)#vertex handler to store all non-moving drawables in this chunk
+        self.tvh = texture.new_texture_handler()
         
         
         #is this even used???
@@ -662,23 +662,23 @@ class World(LooiObject):
                 q.my_chunk_z = z_chunk#set properly which chunk it belongs to
                 q.my_chunk_x = x_chunk
                 
-                tvh = self.chunks[z_chunk][x_chunk].tvh
+                vh = self.chunks[z_chunk][x_chunk].vh
                 
                 hs = self.properties["horizontal_stretch"]
                 
                 #allocate memory for the quad that is going to be drawn and
                 #set all the elevations to what the elevation function wants
-                q.floor_pointer = tvh.add_vertex([x*hs,elevation_function(z,x),z*hs])
-                tvh.add_vertex([(x+1)*hs,elevation_function(z, x+1),z*hs])
-                tvh.add_vertex([(x+1)*hs,elevation_function(z+1, x+1),(z+1)*hs])
-                tvh.add_vertex([x*hs,elevation_function(z+1, x),(z+1)*hs])
+                q.floor_pointer = vh.add_vertex([x*hs,elevation_function(z,x),z*hs])
+                vh.add_vertex([(x+1)*hs,elevation_function(z, x+1),z*hs])
+                vh.add_vertex([(x+1)*hs,elevation_function(z+1, x+1),(z+1)*hs])
+                vh.add_vertex([x*hs,elevation_function(z+1, x),(z+1)*hs])
                 
             if prog_bar and z % 7 == 0: loading.update(z/self.properties["height"]*50)
         #reset floor textures
         #by the way, having this as it's own loop increased performance by 15%
         for z in range(self.properties["height"]):
             for x in range(self.properties["width"]):
-                self.reset_floor_texture(z, x)
+                self.reset_floor_color(z, x)
             if prog_bar and z % 7 == 0: loading.update(z/self.properties["height"]*50+50)
             
         #print("loading 1/3 took",time() - t1)
@@ -763,7 +763,7 @@ class World(LooiObject):
             chunk_z, chunk_x = self.convert_to_chunk_coords(z-1, x-1)
             chunk_obj = self.chunks[chunk_z][chunk_x]
             floor_pointer = self.quads[z-1][x-1].floor_pointer
-            point = chunk_obj.tvh.vertices[floor_pointer+2]#+2 for lower right
+            point = chunk_obj.vh.vertices[floor_pointer+2]#+2 for lower right
             return point[1] if scaled else point[1]/self.properties["vertical_stretch"]#1 for the y elevation
         else:
             #we must be in the first row, or first column, or both
@@ -771,20 +771,20 @@ class World(LooiObject):
                 chunk_z, chunk_x = self.convert_to_chunk_coords(0, 0)
                 chunk_obj = self.chunks[chunk_z][chunk_x]
                 floor_pointer = self.quads[0][0].floor_pointer
-                point = chunk_obj.tvh.vertices[floor_pointer+0]#+0 for upper left
+                point = chunk_obj.vh.vertices[floor_pointer+0]#+0 for upper left
                 return point[1] if scaled else point[1]/self.properties["vertical_stretch"]#1 for the y elevation
             elif x == 0:
                 chunk_z, chunk_x = self.convert_to_chunk_coords(z-1, 0)
                 chunk_obj = self.chunks[chunk_z][chunk_x]
                 floor_pointer = self.quads[z-1][0].floor_pointer
-                point = chunk_obj.tvh.vertices[floor_pointer+3]#+3 for lower left
+                point = chunk_obj.vh.vertices[floor_pointer+3]#+3 for lower left
                 return point[1] if scaled else point[1]/self.properties["vertical_stretch"]#1 for the y elevation
             elif z == 0:
                 #for all the points not in first column or row
                 chunk_z, chunk_x = self.convert_to_chunk_coords(0, x-1)
                 chunk_obj = self.chunks[chunk_z][chunk_x]
                 floor_pointer = self.quads[0][x-1].floor_pointer
-                point = chunk_obj.tvh.vertices[floor_pointer+1]#+1 for upper right right
+                point = chunk_obj.vh.vertices[floor_pointer+1]#+1 for upper right right
                 return point[1] if scaled else point[1]/self.properties["vertical_stretch"]#1 for the y elevation
             else:
                 raise Exception("Impossible!"+str(z)+" " + str(x))
@@ -797,7 +797,7 @@ class World(LooiObject):
             chunk_z, chunk_x = self.convert_to_chunk_coords(z, x)
             chunk_obj = self.chunks[chunk_z][chunk_x]
             floor_pointer = self.quads[z][x].floor_pointer
-            point = chunk_obj.tvh.vertices[floor_pointer+0]#+0 for upper left
+            point = chunk_obj.vh.vertices[floor_pointer+0]#+0 for upper left
             return point[1] if scaled else point[1]/self.properties["vertical_stretch"]#1 for the y elevation
         else:# we are either on the last row, or the last column, or both
             #so we will have to access other corners and be smart about it
@@ -806,20 +806,20 @@ class World(LooiObject):
                 chunk_z, chunk_x = self.convert_to_chunk_coords(z-1, x)
                 chunk_obj = self.chunks[chunk_z][chunk_x]
                 floor_pointer = self.quads[z-1][x].floor_pointer
-                point = chunk_obj.tvh.vertices[floor_pointer+3]#+0 for lower left
+                point = chunk_obj.vh.vertices[floor_pointer+3]#+0 for lower left
                 return point[1] if scaled else point[1]/self.properties["vertical_stretch"]
             elif z == 0:#then we are on the last column, first (0th) row
                 #so ill just go to that floor and get the upper right point
                 chunk_z, chunk_x = self.convert_to_chunk_coords(z, x-1)
                 chunk_obj = self.chunks[chunk_z][chunk_x]
                 floor_pointer = self.quads[z][x-1].floor_pointer
-                point = chunk_obj.tvh.vertices[floor_pointer+1]#+1 for upper right
+                point = chunk_obj.vh.vertices[floor_pointer+1]#+1 for upper right
                 return point[1] if scaled else point[1]/self.properties["vertical_stretch"]
             else:#then we can just go to the corresponding floor z-1,x-1 and get it's lower right corner
                 chunk_z, chunk_x = self.convert_to_chunk_coords(z-1, x-1)
                 chunk_obj = self.chunks[chunk_z][chunk_x]
                 floor_pointer = self.quads[z-1][x-1].floor_pointer
-                point = chunk_obj.tvh.vertices[floor_pointer+2]#+1 for lower right
+                point = chunk_obj.vh.vertices[floor_pointer+2]#+1 for lower right
                 return point[1] if scaled else point[1]/self.properties["vertical_stretch"]
         """
     
@@ -888,11 +888,11 @@ class World(LooiObject):
             chunk_z, chunk_x = self.convert_to_chunk_coords(z-1, x-1)
             chunk_obj = self.chunks[chunk_z][chunk_x]
             floor_pointer = self.quads[z-1][x-1].floor_pointer
-            point = chunk_obj.tvh.vertices[floor_pointer+2]#+2 for upper left floor's LOWER RIGHT point
+            point = chunk_obj.vh.vertices[floor_pointer+2]#+2 for upper left floor's LOWER RIGHT point
             point[1] = elevation
             
             if reset_color:
-                self.reset_floor_texture(z-1,x-1)
+                self.reset_floor_color(z-1,x-1)
                 
             if delete_trees:
                 i=0
@@ -908,11 +908,11 @@ class World(LooiObject):
             chunk_z, chunk_x = self.convert_to_chunk_coords(z-1, x)
             chunk_obj = self.chunks[chunk_z][chunk_x]
             floor_pointer = self.quads[z-1][x].floor_pointer
-            point = chunk_obj.tvh.vertices[floor_pointer+3]#+3 for upper right floor's LOWER LEFT point
+            point = chunk_obj.vh.vertices[floor_pointer+3]#+3 for upper right floor's LOWER LEFT point
             point[1] = elevation
             
             if reset_color:
-                self.reset_floor_texture(z-1,x)
+                self.reset_floor_color(z-1,x)
             if delete_trees:
                 i=0
                 while i < len(self.quads[z-1][x].containedObjects):
@@ -927,11 +927,11 @@ class World(LooiObject):
             chunk_z, chunk_x = self.convert_to_chunk_coords(z, x)
             chunk_obj = self.chunks[chunk_z][chunk_x]
             floor_pointer = self.quads[z][x].floor_pointer
-            point = chunk_obj.tvh.vertices[floor_pointer+0]#+0 for lower right floor's UPPER LEFT point
+            point = chunk_obj.vh.vertices[floor_pointer+0]#+0 for lower right floor's UPPER LEFT point
             point[1] = elevation
             
             if reset_color:
-                self.reset_floor_texture(z,x)
+                self.reset_floor_color(z,x)
             if delete_trees:
                 i=0
                 while i < len(self.quads[z][x].containedObjects):
@@ -946,11 +946,11 @@ class World(LooiObject):
             chunk_z, chunk_x = self.convert_to_chunk_coords(z, x-1)
             chunk_obj = self.chunks[chunk_z][chunk_x]
             floor_pointer = self.quads[z][x-1].floor_pointer
-            point = chunk_obj.tvh.vertices[floor_pointer+1]#+1 for upper left floor's UPPER RIGHT point
+            point = chunk_obj.vh.vertices[floor_pointer+1]#+1 for upper left floor's UPPER RIGHT point
             point[1] = elevation
             
             if reset_color:
-                self.reset_floor_texture(z,x-1)
+                self.reset_floor_color(z,x-1)
             if delete_trees:
                 i=0
                 while i < len(self.quads[z][x-1].containedObjects):
@@ -968,10 +968,10 @@ class World(LooiObject):
         
         
         #find the coordinates of all the 
-        ul = chunk.tvh.vertices[floor.floor_pointer]
-        ur = chunk.tvh.vertices[floor.floor_pointer+1]
-        lr = chunk.tvh.vertices[floor.floor_pointer+2]
-        ll = chunk.tvh.vertices[floor.floor_pointer+3]
+        ul = chunk.vh.vertices[floor.floor_pointer]
+        ur = chunk.vh.vertices[floor.floor_pointer+1]
+        lr = chunk.vh.vertices[floor.floor_pointer+2]
+        ll = chunk.vh.vertices[floor.floor_pointer+3]
         
         #find hr and vr or the floor so we can use that to calculate the color
         hr, vr = normal.get_plane_rotation(ul[0],ul[1],ul[2],ur[0],ur[1],ur[2],lr[0],lr[1],lr[2])
@@ -1054,34 +1054,7 @@ class World(LooiObject):
     finds the floor that we're dealing with
     goes to the floor pointer in the floor's chunk's vertexhandler and sets the color
     """
-    def set_floor_texture(self, floor_z, floor_x, texture_str, is_snow_texture=True):
-        check(self.valid_floor(floor_z, floor_x))
-        
-        floor = self.quads[floor_z][floor_x]
-        chunk = self.chunks[floor.my_chunk_z][floor.my_chunk_x]
-        
-        texture.set_texture(chunk.tvh, floor.floor_pointer, texture_str)#THIS is where you make the special function to pick only as many pixels as the horizontal stretch allows. Start with 32X32 image, then select from that. pixels = 2 * hs
-        if is_snow_texture:
-            pixels = self.properties["horizontal_stretch"] * 2
-            if pixels < 1: pixels = 1
-            if pixels > 32: pixels = 32
-            
-            pixels_w = pixels/texture.totalw
-            pixels_h = pixels/texture.totalh
-            
-            coords = texture.texture_dictionary[texture_str]
-            
-            ul = coords[0]
-            ulx = ul[0]
-            uly = ul[1]
-            
-            chunk.tvh.vertex_colors[floor.floor_pointer] = coords[0]
-            chunk.tvh.vertex_colors[floor.floor_pointer+1] = [ulx+pixels_w,uly]
-            chunk.tvh.vertex_colors[floor.floor_pointer+2] = [ulx+pixels_w,uly-pixels_h]
-            chunk.tvh.vertex_colors[floor.floor_pointer+3] = [ulx,uly-pixels_h]
-        chunk.colors_changed = True
-        
-        """
+    def set_floor_color(self, floor_z, floor_x, color):
         
         if floor_z == self.get_height_floors()-1:
             floor = self.quads[floor_z][floor_x]
@@ -1116,24 +1089,14 @@ class World(LooiObject):
             chunk = self.chunks[floor.my_chunk_z][floor.my_chunk_x]
             chunk.vh.vertex_colors[floor.floor_pointer+1] = color
             chunk.colors_changed = True
-        
-        """
     """
-    reset_floor_texture
+    reset_floor_color
     
     calls get_proper_floor_color and sets this floor to whatever shade
     we just got out of that function
     """
-    def reset_floor_texture(self, floor_z, floor_x):
-        shade = self.get_proper_floor_color(floor_z, floor_x)[0]
-        #shade = self.get_proper_floor_shade(floor_z, floor_x)
-        #floor = self.quads[floor_z][floor_x]
-        
-        if self.is_ice(floor_z, floor_x):
-            self.set_floor_texture(floor_z, floor_x, "IceTexture-lighting-%d" % (conv_155_255(shade),))
-        else:
-            self.set_floor_texture(floor_z, floor_x, "MinecraftSnow-lighting-%d" % (conv_155_255(shade),))
-    
+    def reset_floor_color(self, floor_z, floor_x):
+        self.set_floor_color(floor_z, floor_x, self.get_proper_floor_color(floor_z, floor_x))
     
     
     """
@@ -1152,10 +1115,10 @@ class World(LooiObject):
         
         
         #find the coordinates of all the 
-        ul = chunk.tvh.vertices[floor.floor_pointer]
-        ur = chunk.tvh.vertices[floor.floor_pointer+1]
-        lr = chunk.tvh.vertices[floor.floor_pointer+2]
-        ll = chunk.tvh.vertices[floor.floor_pointer+3]
+        ul = chunk.vh.vertices[floor.floor_pointer]
+        ur = chunk.vh.vertices[floor.floor_pointer+1]
+        lr = chunk.vh.vertices[floor.floor_pointer+2]
+        ll = chunk.vh.vertices[floor.floor_pointer+3]
         
         #find hr and vr or the floor so we can use that to calculate the color
         hr, vr = normal.get_plane_rotation(ul[0],ul[1],ul[2],ur[0],ur[1],ur[2],lr[0],lr[1],lr[2])
@@ -1186,6 +1149,9 @@ class World(LooiObject):
         
         
         ret = [(color1[0]+color2[0])/2, (color1[1]+color2[1])/2, (color1[2]+color2[2])/2]
+        ret[2] *= 1.065
+        if ret[2] > 1:ret[2] = 1
+        
         
         return ret
     """
@@ -1219,6 +1185,7 @@ class World(LooiObject):
         
         inverse_vertical_rotation_0_to_1 = (util.root(2,inverse_vertical_rotation_0_to_1*2-1)+1)/2
         
+        #color_value = neutral_floor_color + inverse_angle_distance_from_sun_m1_to_p1*inverse_vertical_rotation_0_to_1*extremity#original shader that doesn't give enough contrast
         color_value = neutral_floor_color + inverse_angle_distance_from_sun_m1_to_p1*inverse_vertical_rotation_0_to_1*extremity#original shader that doesn't give enough contrast
         #color_value = neutral_floor_color + util.root(2, inverse_angle_distance_from_sun_m1_to_p1)*(inverse_vertical_rotation_0_to_1)**.5*extremity#I fell in love with this shader. extremity .5
         #another thing that looks cool is doing extremity 2.5. But I feel like the contrast is too much there. it looks like fricking mars
@@ -1232,7 +1199,7 @@ class World(LooiObject):
         color_value = color_value**.5
         #color_value = stretch(color_value, .6, 1)
         #color_value = stretch(color_value, .54, 1)
-        color_value = stretch(color_value, .5, 1)
+        color_value = stretch(color_value, .3, 1)
         #color_value = stretch(color_value, .6, 1)
         
         return color_value
@@ -1257,10 +1224,10 @@ class World(LooiObject):
             floor = self.quads[zz][xx]
             chunk = self.chunks[floor.my_chunk_z][floor.my_chunk_x]
             return (
-                        chunk.tvh.vertices[floor.floor_pointer],
-                        chunk.tvh.vertices[floor.floor_pointer+1],
-                        chunk.tvh.vertices[floor.floor_pointer+2],
-                        chunk.tvh.vertices[floor.floor_pointer+3])
+                        chunk.vh.vertices[floor.floor_pointer],
+                        chunk.vh.vertices[floor.floor_pointer+1],
+                        chunk.vh.vertices[floor.floor_pointer+2],
+                        chunk.vh.vertices[floor.floor_pointer+3])
         
         if hr==None and vr==None:
             elevs = get_elev(z, x)
@@ -1322,7 +1289,48 @@ class World(LooiObject):
 #STEP AND PAINT STUFF
 ###################################
     
+    
+    def draw_sparkles(self):
+        def range_float(start, stop, step):
+            x = start
+            while x < stop:
+                yield x
+                x += step
         
+        
+        
+        z_c = int(self.view.z/3)*3
+        x_c = int(self.view.x/3)*3
+        
+        radius = 15
+        for z in range_float(-radius+z_c,radius+z_c,3):
+            for x in range_float(-radius+x_c,radius+x_c,3):
+                #if not self.valid_point(z, x):continue
+                key = z*self.get_width_points()+x
+                key *= 10
+                key = key ** 2
+                if math.sin(key) > .85:
+                    w = .01 + (math.sin(key)-.75)*4 * .02
+                    dist = ((self.view.x-x) ** 2 + (self.view.z-z) ** 2)**.5
+                    theta = get_angle(self.view.z,self.view.x,z,x)
+                    if dist < 2 or (normal.angle_distance(theta,self.view.hor_rot) < math.pi/3 and dist < radius):
+                        unscaled_z = z/self.properties["horizontal_stretch"]
+                        unscaled_x = x/self.properties["horizontal_stretch"]
+                        #print(unscaled_z, unscaled_x)
+                        unscaled_y = self.get_elevation_continuous(unscaled_z, unscaled_x)
+                        y = unscaled_y * self.properties["vertical_stretch"]
+                        
+                        theta += math.pi/2
+                        #self.add_mobile_quad([x,y+.3,z],[x+.15,y+.15,z],[x,y,z],[x-.15,y+.15,z],[1,1,1])
+                        self.add_mobile_quad(
+                            [x,y+w*2,z],
+                            [x+w*math.cos(theta),y+w,z-w*math.sin(theta)],
+                            [x,y,z],
+                            [x-w*math.cos(theta),y+w,z+w*math.sin(theta)],
+                            [1,1,1])
+    
+    
+    
     def step(self):
         self.chunk_load_grid = self.get_chunk_load_grid()
         
@@ -1338,7 +1346,7 @@ class World(LooiObject):
         def setup_3d_no_trans_no_rot(): gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 5, 6000 )
         #self.draw_quad_3d(-9999999, -9999999, -5800, 9999999, -9999999, -5800, 9999999, 9999999, -5800, -9999999, 9999999, -5800,constants["background_color"], setup_3d=setup_3d_no_trans_no_rot)#draw Sky
         
-        
+        self.draw_sparkles()
         self.draw(self.chunk_load_grid)
         
         
@@ -1787,11 +1795,14 @@ class World(LooiObject):
             ray[0] += step_size*self.properties["horizontal_stretch"] * math.cos(hr) * math.cos(vr)
             ray[2] += step_size*self.properties["horizontal_stretch"] * -math.sin(hr) * math.cos(vr)
             ray[1] += step_size*self.properties["horizontal_stretch"] * math.sin(vr)
-    def reset(self, new_chunk_size = None):
+    def reset(self, new_chunk_size = None, new_vertical_stretch=None):
         if new_chunk_size == None: new_chunk_size = self.properties["chunk_size"]
+        if new_vertical_stretch == None: new_vertical_stretch = self.properties["chunk_size"]
+        
         old_chunk_size = self.properties["chunk_size"]
         self.properties["chunk_size"] = new_chunk_size
-        
+        old_vertical_stretch = self.properties["vertical_stretch"]
+        self.properties["vertical_stretch"] = new_vertical_stretch
         
         
         
@@ -1812,8 +1823,10 @@ class World(LooiObject):
         
         
         self.properties["chunk_size"] = old_chunk_size
+        self.properties["vertical_stretch"] = old_vertical_stretch
         world2.init(self.properties["name"], self.properties["width"], self.properties["height"], view=self.view, elevation_function=lambda z,x:self.get_elevation(z,x),natural_bumps=False)
         self.properties["chunk_size"] = new_chunk_size
+        self.properties["vertical_stretch"] = new_vertical_stretch
         
         
         #print("Finishing init")
