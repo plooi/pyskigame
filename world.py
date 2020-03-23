@@ -254,7 +254,8 @@ class Chunk:
                             hr = hr + math.pi
                             
                         ret = self.world.calculate_floor_color(hr, vr)
-                        ret[2]*=1.065
+                        #ret[2]*=1.065
+                        ret[2] += -(((ret[2]-155/255)/(256/255-155/255)-.5)*2-1)*7/255
                         if ret[2] > 1: ret[2] = 1#make it blue
                         return ret
                     
