@@ -335,13 +335,17 @@ class UI(LooiObject):
             self.frames = 0
         self.frames += 1
     def step(self):
-        
-        
-        
-        
+        """
+        if self.key("v", "pressed"):
+            self.world.shadow_map.add_triangle_shadow(0,0,10,10,0,10,"obj")
+        if self.key("x", "pressed"):
+            self.world.shadow_map.add_triangle_shadow(0,0,10,10,0,10,None)
+        if self.key("z", "pressed"):
+            self.world.shadow_map.remove_triangle_shadow(0,0,10,10,0,10,None)
+        """
         
         self.fps_calc()
-        if self.key(constants["scenery key"], "pressed"):self.scenery = not self.scenery
+        #if self.key(constants["scenery key"], "pressed"):self.scenery = not self.scenery
         
         
         self.sounds()

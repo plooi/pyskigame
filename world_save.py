@@ -15,6 +15,7 @@ from lodge import *
 import pickle
 import dill
 from time import time
+from shadow_map import ShadowMap
 
 from lift import Lift,Terminal#,chair_model_1,chair_model_2,chair_model_3,chair_model_4,rope_model_1,terminal_design_1,pole_design_1
 
@@ -212,6 +213,8 @@ def read(path, new_version = True):
                 the_world.mobile_colors_far = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
             if not hasattr(the_world, "pan_background"):
                 the_world.pan_background = None
+            if not hasattr(the_world, "shadow_map"):
+                the_world.shadow_map = ShadowMap(the_world)
             
                 
             #end backward compatibility code

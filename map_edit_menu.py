@@ -266,7 +266,7 @@ def settings(menu):
     
     col = sg.Column(col, size=(1000,800), scrollable=True)
     
-    layout = [    [sg.OK(), sg.Cancel(), sg.Button("Ok+Reset")],
+    layout = [    [sg.OK(), sg.Cancel(), sg.Button("Ok+Reset"), sg.Button("Fix Shadows")],
                   [sg.Text("Settings with the * next to them will not take effect until a reset occurs.")],
                   [sg.Text("    Name: %s" % menu.ui.world.properties["name"])],
                   [sg.Text("    Width: %s" % (menu.ui.world.get_width_floors()*menu.ui.world.properties["horizontal_stretch"]))],
@@ -297,7 +297,10 @@ def settings(menu):
         return new_settings[key] == setting[key]
     def nsame(key):
         return not same(key)
-    
+        
+        
+    if event == "Fix Shadows":
+        menu.ui.world.shadow_map.update_shadows()
     if event == "OK" or event=="Ok+Reset":
         try:
             #do all the non-reload settings first...

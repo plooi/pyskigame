@@ -9,6 +9,7 @@ from pylooiengine import *
 import PySimpleGUI as sg
 from world_object import *
 from constants import x as constants
+import shadow_map
 
 
 
@@ -38,6 +39,40 @@ class Tree(WorldObject):
                 return
         
         super().__init__(**args)
+        
+        self.add_shadow()
+    
+    
+    def get_shadow_pos(self):
+        s_base = 3#actually equal to base over 2, the real base of the triangle is sbase * 2
+        s_height = 15#12
+        sa = self.world.properties["sun_angle"]
+        hs = self.world.properties["horizontal_stretch"]
+        
+        
+        x1 = s_base*math.cos(sa+math.pi/2)
+        z1 = s_base*-math.sin(sa+math.pi/2)
+        
+        x2 = s_base*math.cos(sa-math.pi/2)
+        z2 = s_base*-math.sin(sa-math.pi/2)
+        
+        x3 = s_height*math.cos(sa+math.pi)
+        z3 = s_height*-math.sin(sa+math.pi)
+        
+        z1+=self.args["z"]*hs*shadow_map.D
+        x1+=self.args["x"]*hs*shadow_map.D
+        z2+=self.args["z"]*hs*shadow_map.D
+        x2+=self.args["x"]*hs*shadow_map.D
+        z3+=self.args["z"]*hs*shadow_map.D
+        x3+=self.args["x"]*hs*shadow_map.D
+        
+        return z1,x1,z2,x2,z3,x3
+    def add_shadow(self):
+        z1,x1,z2,x2,z3,x3=self.get_shadow_pos()
+        self.world.shadow_map.add_triangle_shadow(z1,x1,z2,x2,z3,x3,self)
+    def remove_shadow(self):
+        z1,x1,z2,x2,z3,x3=self.get_shadow_pos()
+        self.world.shadow_map.remove_triangle_shadow(z1,x1,z2,x2,z3,x3,self)
     def touching(self, x, y, z): return (((x-self.args["model_x"])**2 + (z-self.args["model_z"])**2) ** .5 < 1.4) and y<self.args["model_y"]+6
     def touching_player_consequence(self): 
         if self.world.properties["momentum"] >= constants["crash_speed"]:
@@ -63,6 +98,8 @@ class Tree(WorldObject):
             window.close()
             raise StopSelectingException()
         window.close()
-
+    def delete(self):
+        super().delete()
+        self.remove_shadow()
         
         

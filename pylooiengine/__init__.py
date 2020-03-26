@@ -247,6 +247,7 @@ class Window():
             self.to_remove.clear()
             
             pygame.display.flip()
+            print(str(time()-start_time) + " seconds per frame")
             while time() - start_time < self.seconds_per_frame:
                 sleep(.000000001)
             

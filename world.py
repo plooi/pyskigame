@@ -32,6 +32,8 @@ from lift import Pole
 import lift
 import os
 
+from shadow_map import ShadowMap
+
 
 #improves performance. 
 def conv_155_255(x):
@@ -529,6 +531,8 @@ class World(LooiObject):
         self.pan_background = self.pan_background,self.pan_background.tobytes("raw", "RGBA", 0, -1)
         
         self.disable_remove_fixed_quads = False
+        
+        self.shadow_map = ShadowMap(self)
     
     """
     init_csv
@@ -562,7 +566,7 @@ class World(LooiObject):
                     if trees[r][c] == "1" and self.valid_floor(r, c):
                         if random() < tree_chance:
                             Tree(z=r, x=c, world=self)
-                if r % 7 == 0:
+                if r % 25 == 0:
                     loading.update(r/len(trees)*100)
             loading.update(100)
             
@@ -674,13 +678,13 @@ class World(LooiObject):
                 tvh.add_vertex([(x+1)*hs,elevation_function(z+1, x+1),(z+1)*hs])
                 tvh.add_vertex([x*hs,elevation_function(z+1, x),(z+1)*hs])
                 
-            if prog_bar and z % 7 == 0: loading.update(z/self.properties["height"]*50)
+            if prog_bar and z % 25 == 0: loading.update(z/self.properties["height"]*50)
         #reset floor textures
         #by the way, having this as it's own loop increased performance by 15%
         for z in range(self.properties["height"]):
             for x in range(self.properties["width"]):
                 self.reset_floor_texture(z, x)
-            if prog_bar and z % 7 == 0: loading.update(z/self.properties["height"]*50+50)
+            if prog_bar and z % 25 == 0: loading.update(z/self.properties["height"]*50+50)
             
         #print("loading 1/3 took",time() - t1)
         
@@ -1325,28 +1329,30 @@ class World(LooiObject):
     
         
     def step(self):
-        self.chunk_load_grid = self.get_chunk_load_grid()
         
-    #def paint(self): #make paint execute in step so that there's no view lag
+        start = time()
+        self.chunk_load_grid = self.get_chunk_load_grid()
+        print("chunk load grid took " + str(time()-start) + " seconds")
+        
+    
         glDisable(GL_BLEND)#performance optimization
         
         
-        
+        start = time()
         self.draw_scenery()
-        
+        print("draw scenery took " + str(time()-start) + " seconds")
         
         #draw sky(sun is drawn by game ui)
         def setup_3d_no_trans_no_rot(): gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 5, 6000 )
         #self.draw_quad_3d(-9999999, -9999999, -5800, 9999999, -9999999, -5800, 9999999, 9999999, -5800, -9999999, 9999999, -5800,constants["background_color"], setup_3d=setup_3d_no_trans_no_rot)#draw Sky
         
-        
+        start = time()
         self.draw(self.chunk_load_grid)
-        
+        print("draw took " + str(time()-start) + " seconds")
         
         
         glClear(GL_DEPTH_BUFFER_BIT)#clear the depth buffer bit so that the 2d stuff renders on top
         pylooiengine.main_window.draw_borders()
-        
         
     def draw_scenery(self):
         glClearColor(.3,.42,.63, 1)
@@ -1569,6 +1575,8 @@ class World(LooiObject):
         self.mobile_vertices_far = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
         self.mobile_colors_far = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
         
+        #Timing
+        start = time()
         
         height = len(chunk_load_grid)
         width = 0 if height == 0 else len(chunk_load_grid[0])
@@ -1632,12 +1640,12 @@ class World(LooiObject):
                     
                 
                 
-        
+        #print("setting up took " + str(time()-start) + " seconds")
         
         #glAlphaFunc(GL_GREATER, 0.4);
         #glEnable(GL_ALPHA_TEST);
        
-        
+        start = time()
         #now here's where we do all the drawing (and stacking)
         if len(vertices_draw_far) > 0:
             glDisable(GL_ALPHA_TEST);
@@ -1646,10 +1654,19 @@ class World(LooiObject):
             colors_draw_far = numpy.vstack(colors_draw_far)
             self.draw_quad_array_3d(vertices_draw_far, colors_draw_far, setup_3d=self.get_setup_3d_far())
             glEnable(GL_ALPHA_TEST);
+        
+        
         if len(tex_vertices_draw_far) > 0:
+            _start=time()###
             tex_vertices_draw_far = numpy.vstack(tuple(tex_vertices_draw_far))
             tex_coords_draw_far = numpy.vstack(tuple(tex_coords_draw_far))
+            print("Stacking took %f secs" % (time()-_start,))###
+            _start=time()###
             self.draw_image_array_3d(tex_vertices_draw_far, tex_coords_draw_far, texture.tex, texture.tex_b, setup_3d=self.get_setup_3d_far())
+            print("Drawing took %f secs" % (time()-_start,))###
+        
+        
+        
         
         glClear(GL_DEPTH_BUFFER_BIT)
         
@@ -1658,16 +1675,23 @@ class World(LooiObject):
             vertices_draw = numpy.vstack(tuple(vertices_draw))
             colors_draw = numpy.vstack(tuple(colors_draw))
             self.draw_quad_array_3d(vertices_draw, colors_draw, setup_3d=self.get_setup_3d_close())
+        
+        
         if len(tex_vertices_draw) > 0:
+            _start=time()###
             tex_vertices_draw = numpy.vstack(tuple(tex_vertices_draw))
             tex_coords_draw = numpy.vstack(tuple(tex_coords_draw))
+            print("Stacking took %f secs" % (time()-_start,))###
+            _start=time()###
             self.draw_image_array_3d(tex_vertices_draw, tex_coords_draw, texture.tex, texture.tex_b, setup_3d=self.get_setup_3d_close())
+            print("Drawing took %f secs" % (time()-_start,))###
+
 
             
-            
         
         
-            
+        #print("drawing took " + str(time()-start) + " seconds")
+        #print("drew %d vertices"%(len(tex_vertices_draw)+len(vertices_draw)+len(tex_vertices_draw_far)+len(vertices_draw_far),))    
         
             
         
@@ -1824,6 +1848,7 @@ class World(LooiObject):
         
         self.quads = world2.quads
         self.chunks = world2.chunks
+        self.shadow_map = world2.shadow_map
         
         self.disable_remove_fixed_quads = True#because all the objects' quads have already been removed because we cleaned out everything, so if they try to remove again it'll just error
         

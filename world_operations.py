@@ -38,7 +38,7 @@ def natural_bumps(world, z1, x1, z2, x2, prog_bar=False):
     vs = world.properties["vertical_stretch"]
     bump_grid_space = 5
     for z in range(int((middle_z - radius)*hs), int((middle_z + radius)*hs),bump_grid_space):
-        if prog_bar and z % 7 == 0: loading.update(100*(z-int((middle_z - radius)*hs))/((int((middle_z + radius)*hs))-(int((middle_z - radius)*hs))))
+        if prog_bar and z % 25 == 0: loading.update(100*(z-int((middle_z - radius)*hs))/((int((middle_z + radius)*hs))-(int((middle_z - radius)*hs))))
         #print(z,"/",radius*2*hs)
         
         for x in range(int((middle_x - radius)*hs), int((middle_x + radius)*hs), bump_grid_space):
