@@ -138,12 +138,11 @@ class Window():
             self.scroll_up = False
             self.scroll_down = False
             for event in pygame.event.get():
-                #if event.type == pygame.QUIT:
-                #    pygame.quit()
-                #    quit()
                 if event.type == pygame.VIDEORESIZE:
                     self.window_size = (event.w, event.h)
                     surface = pygame.display.set_mode(self.window_size, DOUBLEBUF|OPENGL|pygame.RESIZABLE)
+                    for looi_object in self.layered_looi_objects: looi_object.upon_resize()
+                    for looi_object in self.unlayered_looi_objects: looi_object.upon_resize()
                 if event.type == pygame.KEYDOWN:
                     keysdown[event.key] = True
                 if event.type == pygame.KEYUP:
@@ -247,7 +246,7 @@ class Window():
             self.to_remove.clear()
             
             pygame.display.flip()
-            print(str(time()-start_time) + " seconds per frame")
+            #print(str(time()-start_time) + " seconds per frame")
             while time() - start_time < self.seconds_per_frame:
                 sleep(.000000001)
             
@@ -438,6 +437,7 @@ class LooiObject:
         
     def step(self): pass
     def paint(self): pass
+    def upon_resize(self): pass
     def upon_activation(self): pass
     def upon_deactivation(self): pass
     def add(self, contained_looi_object):
@@ -660,6 +660,7 @@ class LooiObject:
         glEnd()
         
         glDeleteTextures([ID])
+        glDisable(GL_TEXTURE_2D)
         #http://pyopengl.sourceforge.net/context/tutorials/nehe6.html
         
         
@@ -738,6 +739,7 @@ class LooiObject:
         glEnd()
         
         glDeleteTextures([ID])
+        glDisable(GL_TEXTURE_2D)
         #http://pyopengl.sourceforge.net/context/tutorials/nehe6.html
         
         
@@ -825,6 +827,7 @@ class LooiObject:
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         
         glDeleteTextures([ID])
+        glDisable(GL_TEXTURE_2D)
         
         glPopMatrix()
     def draw_image_array_2d(self, vertices, texutre_coords, image, bytes):
@@ -880,6 +883,7 @@ class LooiObject:
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         
         glDeleteTextures([ID])
+        glDisable(GL_TEXTURE_2D)
         
         glPopMatrix()
         

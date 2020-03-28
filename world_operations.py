@@ -202,8 +202,9 @@ def raise_hill(world, z1, x1, z2, x2, amount):
         for x in range(middle_x - radius, middle_x + radius):
             if ((z-middle_z)**2 + (x-middle_x)**2)**.5 <= radius and world.valid_floor(z, x):
                 world.reset_floor_texture(z,x)
-    for recreate in objects_to_reset:
-        recreate.reset()
+    world.reset_objects(objects_to_reset)
+    #for recreate in objects_to_reset:
+    #    recreate.reset()
                 
 def plateau(world, z1, x1, z2, x2, amount):
     middle_z = int((z1+z2)/2)
@@ -229,8 +230,9 @@ def plateau(world, z1, x1, z2, x2, amount):
             if ((z-middle_z)**2 + (x-middle_x)**2)**.5 <= radius and world.valid_floor(z, x):
                 world.reset_floor_texture(z,x)
     
-    for recreate in objects_to_reset:
-        recreate.reset()
+    world.reset_objects(objects_to_reset)
+    #for recreate in objects_to_reset:
+    #    recreate.reset()
         
     
 def smooth(world, z1, x1, z2, x2):
@@ -281,8 +283,9 @@ def smooth(world, z1, x1, z2, x2):
         for x in range(middle_x - radius, middle_x + radius):
             if ((z-middle_z)**2 + (x-middle_x)**2)**.5 <= radius and world.valid_floor(z, x):
                 world.reset_floor_texture(z,x)
-    for recreate in objects_to_reset:
-        recreate.reset()
+    world.reset_objects(objects_to_reset)
+    #for recreate in objects_to_reset:
+    #    recreate.reset()
     
     
 #THICKNESS IS THE  DIAMETER 
@@ -400,7 +403,8 @@ def path(world, z1, x1, z2, x2, thickness):
                 if ((zz-z)**2 + (xx-x)**2)**.5 < thickness and world.valid_floor(zz,xx):
                     world.reset_floor_texture(zz,xx)
                     
-    for recreate in objects_to_reset:
-        recreate.reset()
+    world.reset_objects(objects_to_reset)
+    #for recreate in objects_to_reset:
+    #    recreate.reset()
     
     

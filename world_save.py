@@ -215,7 +215,8 @@ def read(path, new_version = True):
                 the_world.pan_background = None
             if not hasattr(the_world, "shadow_map"):
                 the_world.shadow_map = ShadowMap(the_world)
-            
+            if not hasattr(the_world, "pan_chunk_squares_changed"):
+                the_world.pan_chunk_squares_changed = True
                 
             #end backward compatibility code
             return the_world

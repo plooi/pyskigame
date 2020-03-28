@@ -40,7 +40,9 @@ class Tree(WorldObject):
         
         super().__init__(**args)
         
-        self.add_shadow()
+        default(args, "add_shadow", True)
+        if args["add_shadow"]:
+            self.add_shadow()
     
     
     def get_shadow_pos(self):

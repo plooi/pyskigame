@@ -12,6 +12,8 @@ from constants import x as constants
 import PySimpleGUI as sg
 import normal
 import mission_center
+import shadow_map
+
 def main():
     l = Lift(None)
     l.add_point(Point(0,0,0,1))
@@ -539,7 +541,67 @@ class Pole:
         horizontal_rotate_around_origin(self.down_point, self.angle)
         move_point(self.up_point, self.real_x, self.real_y, self.real_z)
         move_point(self.down_point, self.real_x, self.real_y, self.real_z)
+        
+        self.add_shadow()
+    def get_shadow_pos(self):
+        s_base = .7#actually equal to base over 2, the real base of the triangle is sbase * 2
+        s_height = 11#12
+        t_width = 7#4
+        t_thick = 1.4#1.5
+        sa = self.chairlift.world.properties["sun_angle"]
+        hs = self.chairlift.world.properties["horizontal_stretch"]
+        
+        
+        x1 = s_base*math.cos(sa+math.pi/2)
+        z1 = s_base*-math.sin(sa+math.pi/2)
+        
+        x2 = s_base*math.cos(sa-math.pi/2)
+        z2 = s_base*-math.sin(sa-math.pi/2)
+        
+        pole_top_x = s_height*math.cos(sa+math.pi)
+        pole_top_z = s_height*-math.sin(sa+math.pi)
+        
+        
+        z1+=self.real_z*shadow_map.D
+        x1+=self.real_x*shadow_map.D
+        z2+=self.real_z*shadow_map.D
+        x2+=self.real_x*shadow_map.D
+        pole_top_z+=self.real_z*shadow_map.D
+        pole_top_x+=self.real_x*shadow_map.D
+        
+        x3 = s_base*math.cos(sa-math.pi/2) + pole_top_x
+        z3 = s_base*-math.sin(sa-math.pi/2) + pole_top_z
+        
+        x4 = s_base*math.cos(sa+math.pi/2) + pole_top_x
+        z4 = s_base*-math.sin(sa+math.pi/2) + pole_top_z
+        
+        
+        x_up = t_width/2 * math.cos(self.angle-math.pi/2) + pole_top_x
+        z_up = t_width/2 * -math.sin(self.angle-math.pi/2) + pole_top_z
+        x_dn = -t_width/2 * math.cos(self.angle-math.pi/2) + pole_top_x
+        z_dn = -t_width/2 * -math.sin(self.angle-math.pi/2) + pole_top_z
+        
+        x_up_prime = t_thick*math.cos(self.angle) + x_up
+        z_up_prime = -t_thick*math.sin(self.angle) + z_up
+        x_dn_prime = t_thick*math.cos(self.angle) + x_dn
+        z_dn_prime = -t_thick*math.sin(self.angle) + z_dn
+        
+        
+        
+        
+        
+        return z1,x1,z2,x2,z3,x3,z4,x4,z_up,x_up,z_dn,x_dn,z_dn_prime,x_dn_prime,z_up_prime,x_up_prime
+    
+    def add_shadow(self):
+        z1,x1,z2,x2,z3,x3,z4,x4,z5,x5,z6,x6,z7,x7,z8,x8=self.get_shadow_pos()
+        self.chairlift.world.shadow_map.add_quad_shadow(z1,x1,z2,x2,z3,x3,z4,x4,self)
+        self.chairlift.world.shadow_map.add_quad_shadow(z5,x5,z6,x6,z7,x7,z8,x8,self)
+    def remove_shadow(self):
+        z1,x1,z2,x2,z3,x3,z4,x4,z5,x5,z6,x6,z7,x7,z8,x8=self.get_shadow_pos()
+        self.chairlift.world.shadow_map.remove_quad_shadow(z1,x1,z2,x2,z3,x3,z4,x4,self)
+        self.chairlift.world.shadow_map.remove_quad_shadow(z5,x5,z6,x6,z7,x7,z8,x8,self)
     def delete(self):
+        self.remove_shadow()
         rm_model_from_world_fixed(self.vhkeys, self.chairlift.world, int(self.z), int(self.x), self)
 class Terminal:
     def __init__(self, chairlift, top_or_bot, terminal_model):
@@ -575,7 +637,39 @@ class Terminal:
         
         horizontal_rotate_track_around_origin(self.track, self.angle)
         move_track(self.track, self.real_x, self.real_y, self.real_z)
+        
+        self.add_shadow()
+    def add_shadow(self):
+        z1,x1,z2,x2,z3,x3,z4,x4=self.get_shadow_pos()
+        self.chairlift.world.shadow_map.add_quad_shadow(z1,x1,z2,x2,z3,x3,z4,x4,self)
+    def remove_shadow(self):
+        z1,x1,z2,x2,z3,x3,z4,x4=self.get_shadow_pos()
+        self.chairlift.world.shadow_map.remove_quad_shadow(z1,x1,z2,x2,z3,x3,z4,x4,self)
+    def get_shadow_pos(self):
+        sa = self.chairlift.world.properties["sun_angle"]
+        def horizontal_rotate_around_origin(point, theta):
+            theta *= -1
+            x = point[0]*cos(theta)- point[1]*sin(theta)
+            z = point[0]*sin(theta)+ point[1]*cos(theta)
+            point[0] = x
+            point[1] = z
+        shadow = [[-4.5,-2.7],[4.5,-2.7],[4.5,2.7],[-4.5,2.7]]#x,z
+        for point in shadow:
+            horizontal_rotate_around_origin(point, self.angle)
+        
+        mag = -3
+        sun_vector = mag*math.cos(sa),-mag*math.sin(sa)#x,z
+        for point in shadow:
+            point[0] += sun_vector[0]
+            point[1] += sun_vector[1]
+        
+        
+        for point in shadow:
+            point[0] += self.real_x*shadow_map.D
+            point[1] += self.real_z*shadow_map.D
+        return shadow[0][1],shadow[0][0],shadow[1][1],shadow[1][0],shadow[2][1],shadow[2][0],shadow[3][1],shadow[3][0]
     def delete(self):
+        self.remove_shadow
         rm_model_from_world_fixed(self.vhkeys, self.chairlift.world, int(self.z), int(self.x), self)
 
 

@@ -2,7 +2,7 @@ from pylooiengine.misc.graphics import VertexHandler
 from pylooiengine import *
 from random import random
 
-
+texture_id = None
 
 #start texture loading
 key = "key.txt"
@@ -61,3 +61,32 @@ def set_texture(vh, index, image_name, texture_dict=texture_dictionary):
 def new_texture_handler(initial_capacity=2):
     return VertexHandler(3, color_size=2, initial_capacity=initial_capacity)
 
+
+
+
+class TextureBinder(LooiObject):
+    def __init__(self):
+        super().__init__()
+        self.setup_tex = True
+    def upon_resize(self):
+        self.setup_tex = True
+    def step(self):
+        global texture_id
+        if self.setup_tex:
+            ix, iy, img = tex.size[0], tex.size[1], tex_b
+            ID = glGenTextures(1)
+            
+            texture_id = ID
+            
+            glBindTexture(GL_TEXTURE_2D, ID)
+            glPixelStorei(GL_UNPACK_ALIGNMENT,1)
+            
+            
+            glTexImage2D(
+                GL_TEXTURE_2D, 0, 4, ix, iy, 0,
+                GL_RGBA, GL_UNSIGNED_BYTE, img
+            )
+            self.setup_tex = False
+    def deactivate(self):
+        pass
+TextureBinder()

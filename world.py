@@ -156,10 +156,6 @@ class Chunk:
         self.tvh = texture.new_texture_handler(initial_capacity=world.properties["chunk_size"]**2+1)
         
         
-        #is this even used???
-        self.pan_chunk_square_pointers = None #list of pointers to the locations of the pan chunk squares in the "vertex buffer" (None if not added)
-        
-        
         self.world = world
         
         self.colors_changed = True
@@ -364,12 +360,13 @@ class Chunk:
                     self.pan_chunk_squares["without"].add_vertex(ll,color4587)
                     
                     #with trees
-                    self.pan_chunk_squares["trees"].add_vertex(ul,color1254)
-                    self.pan_chunk_squares["trees"].add_vertex(ur,color2365)
-                    self.pan_chunk_squares["trees"].add_vertex(lr,color5689)
-                    self.pan_chunk_squares["trees"].add_vertex(ll,color4587)
+                    #self.pan_chunk_squares["trees"].add_vertex(ul,color1254)
+                    #self.pan_chunk_squares["trees"].add_vertex(ur,color2365)
+                    #self.pan_chunk_squares["trees"].add_vertex(lr,color5689)
+                    #self.pan_chunk_squares["trees"].add_vertex(ll,color4587)
+                    #remove those lines because the trees pan chunk squares should not contain the floor
                     
-                    
+                    """ NO SKY COVERUP NEEDED because the pan chunk squares always draw
                     #add the sky coverup squares
                     def cmd(point):#short for copy move down. Takes a point (list x,y,z) and copies it and moves it down the y axis a specific amount
                         ret = list(point)
@@ -410,7 +407,7 @@ class Chunk:
                     elif scc == side_length_in_sub_chunks-1:#right side
                         sky_cover_square(ur, lr)
                     
-                    
+                    """
                     
         
         #print("pcs",self.pan_chunk_squares.vertices,"colors",self.pan_chunk_squares.vertex_colors)
@@ -449,6 +446,9 @@ class World(LooiObject):
             "line_of_sight3" : -1,#how many chunks away before no pan chunk squares are rendered
             "horizontal_stretch" : 4,
             "vertical_stretch" : .15,
+            
+            "world_image_pix_per_floor" : 1,
+            
             "sun_angle" : 0,
             "scenery_angle" : 0,
             "scenery_height" : 0,
@@ -506,6 +506,7 @@ class World(LooiObject):
         
         #stores all the pan chunk squares
         self.pan_chunk_squares = VertexHandler(3)
+        self.pan_chunk_squares_changed = True
         
         
         #keep track of the view position
@@ -596,7 +597,7 @@ class World(LooiObject):
     def init(self, name, width, height, more_properties={}, elevation_function=lambda z,x:0, view=None, prog_bar=True, natural_bumps=True):
         self.quads = []
         self.chunks = []
-        self.pan_chunk_squares = VertexHandler(3)
+        self.pan_chunk_squares = None
     
     
         if prog_bar: loading.progress_bar("Loading 1/2")
@@ -731,6 +732,16 @@ class World(LooiObject):
     def get_setup_3d_far(self):
         def setup_3d():
             gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), (constants["front_row_chunk_distance"]-.5)*self.properties["chunk_size"]*self.properties["horizontal_stretch"], constants["max_los"] )
+            try:
+                glRotate(rad_to_deg(-(self.view.hor_rot-math.pi/2)), 0, 1, 0)
+                glRotate(rad_to_deg(-self.view.vert_rot), math.cos(self.view.hor_rot - math.pi/2), 0, -math.sin(self.view.hor_rot - math.pi/2))
+                glTranslate(-self.view.x, -self.view.y, -self.view.z)
+            except Exception as e:
+                pass
+        return setup_3d
+    def get_setup_3d_chunk_draw(self):
+        def setup_3d():
+            gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), self.view.line_of_sight*.7*self.properties["chunk_size"]*self.properties["horizontal_stretch"], constants["max_los"] )
             try:
                 glRotate(rad_to_deg(-(self.view.hor_rot-math.pi/2)), 0, 1, 0)
                 glRotate(rad_to_deg(-self.view.vert_rot), math.cos(self.view.hor_rot - math.pi/2), 0, -math.sin(self.view.hor_rot - math.pi/2))
@@ -1085,6 +1096,7 @@ class World(LooiObject):
             chunk.tvh.vertex_colors[floor.floor_pointer+2] = [ulx+pixels_w,uly-pixels_h]
             chunk.tvh.vertex_colors[floor.floor_pointer+3] = [ulx,uly-pixels_h]
         chunk.colors_changed = True
+        self.pan_chunk_squares_changed = True
         
         """
         
@@ -1331,6 +1343,22 @@ class World(LooiObject):
     def step(self):
         
         start = time()
+        
+        if self.pan_chunk_squares_changed:
+            self.pan_chunk_squares_changed = False
+            verts = []
+            colors = []
+            
+            for z in range(self.get_height_chunks()):
+                for x in range(self.get_width_chunks()):
+                    pan_chunk_squares = self.chunks[z][x].get_pan_chunk_squares(z,x,trees=False)
+                    verts.append(pan_chunk_squares.vertices)
+                    colors.append(pan_chunk_squares.vertex_colors)
+            
+            verts = numpy.vstack(verts)
+            colors = numpy.vstack(colors)
+            self.pan_chunk_squares = {"verts":verts,"colors":colors}
+        
         self.chunk_load_grid = self.get_chunk_load_grid()
         print("chunk load grid took " + str(time()-start) + " seconds")
         
@@ -1596,9 +1624,14 @@ class World(LooiObject):
         tex_vertices_draw_far = []
         tex_coords_draw_far = []
         
+        pan_chunk_vertices = [self.pan_chunk_squares["verts"]]
+        pan_chunk_colors = [self.pan_chunk_squares["colors"]]
         
         
-        #if the chunk load grid is not 1, make sure the pan chunk square is added to self.pan_chunk_squares
+        
+        
+        
+        
         
         
         
@@ -1629,12 +1662,15 @@ class World(LooiObject):
                     tex_coords_draw_far.append(self.chunks[z][x].tvh.vertex_colors)
                 elif chunk_load_grid[z][x] == 0:
                     pcsquares = self.chunks[z][x].get_pan_chunk_squares(z, x)
-                    vertices_draw_far.append(pcsquares.vertices)
-                    colors_draw_far.append(pcsquares.vertex_colors)
+                    #vertices_draw_far.append(pcsquares.vertices)
+                    #colors_draw_far.append(pcsquares.vertex_colors)
+                    pan_chunk_vertices.append(pcsquares.vertices)
+                    pan_chunk_colors.append(pcsquares.vertex_colors)
                 elif chunk_load_grid[z][x] == -1:
-                    pcsquares = self.chunks[z][x].get_pan_chunk_squares(z, x, trees=False)
-                    vertices_draw_far.append(pcsquares.vertices)
-                    colors_draw_far.append(pcsquares.vertex_colors)
+                    #pcsquares = self.chunks[z][x].get_pan_chunk_squares(z, x, trees=False)
+                    #vertices_draw_far.append(pcsquares.vertices)
+                    #colors_draw_far.append(pcsquares.vertex_colors)
+                    pass
                 elif chunk_load_grid[z][x] == -2:
                     pass
                     
@@ -1646,7 +1682,25 @@ class World(LooiObject):
         #glEnable(GL_ALPHA_TEST);
        
         start = time()
+        
         #now here's where we do all the drawing (and stacking)
+        
+        
+        
+        
+        
+        #CHUNK DRAW
+        if len(pan_chunk_vertices) > 0:
+            glDisable(GL_ALPHA_TEST);
+            pan_chunk_vertices = numpy.vstack(pan_chunk_vertices)
+            pan_chunk_colors = numpy.vstack(pan_chunk_colors)
+            self.draw_quad_array_3d(pan_chunk_vertices, pan_chunk_colors, setup_3d=self.get_setup_3d_chunk_draw())
+            glEnable(GL_ALPHA_TEST);
+        
+        glClear(GL_DEPTH_BUFFER_BIT)
+        
+        
+        #FAR DRAW
         if len(vertices_draw_far) > 0:
             glDisable(GL_ALPHA_TEST);
             #first draw far stuff, then clear the depth buffer bit so close stuff can draw ontop of it
@@ -1660,17 +1714,18 @@ class World(LooiObject):
             _start=time()###
             tex_vertices_draw_far = numpy.vstack(tuple(tex_vertices_draw_far))
             tex_coords_draw_far = numpy.vstack(tuple(tex_coords_draw_far))
-            print("Stacking took %f secs" % (time()-_start,))###
+            #print("Stacking took %f secs" % (time()-_start,))###
             _start=time()###
-            self.draw_image_array_3d(tex_vertices_draw_far, tex_coords_draw_far, texture.tex, texture.tex_b, setup_3d=self.get_setup_3d_far())
-            print("Drawing took %f secs" % (time()-_start,))###
+            #self.draw_image_array_3d(tex_vertices_draw_far, tex_coords_draw_far, texture.tex, texture.tex_b, setup_3d=self.get_setup_3d_far())
+            self.draw_tex(tex_vertices_draw_far, tex_coords_draw_far, self.get_setup_3d_far())
+            #print("Drawing took %f secs" % (time()-_start,))###
         
         
         
         
         glClear(GL_DEPTH_BUFFER_BIT)
         
-        
+        #NEAR DRAW
         if len(vertices_draw) > 0:
             vertices_draw = numpy.vstack(tuple(vertices_draw))
             colors_draw = numpy.vstack(tuple(colors_draw))
@@ -1681,10 +1736,11 @@ class World(LooiObject):
             _start=time()###
             tex_vertices_draw = numpy.vstack(tuple(tex_vertices_draw))
             tex_coords_draw = numpy.vstack(tuple(tex_coords_draw))
-            print("Stacking took %f secs" % (time()-_start,))###
+            #print("Stacking took %f secs" % (time()-_start,))###
             _start=time()###
-            self.draw_image_array_3d(tex_vertices_draw, tex_coords_draw, texture.tex, texture.tex_b, setup_3d=self.get_setup_3d_close())
-            print("Drawing took %f secs" % (time()-_start,))###
+            #self.draw_image_array_3d(tex_vertices_draw, tex_coords_draw, texture.tex, texture.tex_b, setup_3d=self.get_setup_3d_close())
+            self.draw_tex(tex_vertices_draw, tex_coords_draw, self.get_setup_3d_close())
+            #print("Drawing took %f secs" % (time()-_start,))###
 
 
             
@@ -1696,7 +1752,47 @@ class World(LooiObject):
             
         
         return#######################
+    def draw_tex(self, vertices, texture_coords, setup_3d):
+        glPushMatrix()
         
+        image = texture.tex
+        
+        ix, iy = image.size[0], image.size[1]
+        
+        image = texture.tex_b
+        
+        ID = texture.texture_id
+        
+        
+        glEnable(GL_TEXTURE_2D)
+        
+        
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)#USED TO BE GL_NEAREST
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST)#USED TO BE GL_NEAREST
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, self.get_my_window().mipmap_max_level)
+        
+        glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE)
+        
+        glBindTexture(GL_TEXTURE_2D, ID)
+        
+        
+        setup_3d()
+        
+        glGenerateMipmap(GL_TEXTURE_2D)
+        
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        
+        glVertexPointerf(vertices);
+        glTexCoordPointerf(texture_coords);
+        glDrawArrays(GL_QUADS, 0, len(vertices));
+        
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        
+        
+        glDisable(GL_TEXTURE_2D)
+        glPopMatrix()
         
 ###################################
 #END paint stuff
@@ -1854,6 +1950,7 @@ class World(LooiObject):
         
         world_operations.natural_bumps(self, 0,0,self.get_height_points(), self.get_width_points(), prog_bar=True)#re add the natural bumps here
         
+        """
         num_objs = len(all_contained_objects)
         loading_update = int(num_objs/150)
         if loading_update < 1:loading_update = 1
@@ -1866,12 +1963,54 @@ class World(LooiObject):
                 loading.update(i/num_objs*100)
             i+=1
         loading.update(100)
+        """
+        self.reset_objects(all_contained_objects)
+        
         for l in list(lift.active_lifts): l.reset()
         
         
         self.disable_remove_fixed_quads = False
         
+    def reset_objects(self, objects_list):
         
+        do_loading = len(objects_list) > 150
+        
+        objects_list = list(objects_list)
+        
+        total_progress = 0
+        for obj in objects_list:
+            if isinstance(obj, Tree): total_progress += 2
+            else: total_progress += 1
+        
+        if do_loading:
+            loading_update = int(total_progress/150)
+            if loading_update < 1:loading_update = 1
+        
+            loading.progress_bar("Loading objects...")
+    
+        i=0
+        trees = []
+        for obj in objects_list:
+            if isinstance(obj, Tree):
+                tree = obj
+                tree.args["add_shadow"] = False
+                new_tree = tree.reset()
+                trees.append(new_tree)
+            else:
+                obj.reset()
+            if do_loading:
+                if i%loading_update == 0:
+                    loading.update(i/total_progress*100)
+            i+=1
+        for tree in trees:
+            tree.add_shadow()
+            tree.args["add_shadow"] = True
+            if do_loading:
+                if i%loading_update == 0:
+                    loading.update(i/total_progress*100)
+            i+=1
+        if do_loading:
+            loading.update(100)
         
 def rad_to_deg(radians):
     return radians/(2*math.pi) * 360

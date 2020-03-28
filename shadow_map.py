@@ -31,7 +31,18 @@ class ShadowMap:
         self.shadow_map = {}
         
         
-        
+    def get_shadow_color(self, z, x):
+        hs = self.world.properties["horizontal_stretch"]
+        try:
+            
+            color = self.world.get_proper_floor_color(int(z/D/hs),int(x/D/hs))
+        except:
+            print("bad",z,x)
+            color = [.8,.8,.8]
+        color[0] -= .25
+        color[1] -= .25
+        color[2] -= .25
+        return color
     #only called by add_one_shadow
     #do not call this from outside
     def add_one_shadow_quad(self, z, x):
@@ -45,13 +56,13 @@ class ShadowMap:
         vs = self.world.properties["vertical_stretch"]
         
         
-        if not w.valid_floor(int(z1/hs),int(x1/hs)):return None
+        if z1<0 or x1<0 or not w.valid_floor(int(z1/hs),int(x1/hs)):return None
         return self.world.add_fixed_quad(
             [x1,w.get_elevation_continuous(z1/hs,x1/hs)*vs+shadow_margin,z1],
             [x2,w.get_elevation_continuous(z1/hs,x2/hs)*vs+shadow_margin,z1],
             [x2,w.get_elevation_continuous(z2/hs,x2/hs)*vs+shadow_margin,z2],
             [x1,w.get_elevation_continuous(z2/hs,x1/hs)*vs+shadow_margin,z2],
-            [.4,.4,.4],
+            self.get_shadow_color(z,x),
             int(z1/hs),
             int(x1/hs))
     
@@ -73,13 +84,14 @@ class ShadowMap:
             hs = self.world.properties["horizontal_stretch"]
             self.world.remove_fixed_quad(self.shadow_map[z,x][0], (z/D)/hs, (x/D)/hs)
             del self.shadow_map[z,x]
+    
     def add_triangle_shadow(self, z1, x1, z2, x2, z3, x3, object):
         zs = [z1,z2,z3]
         xs = [x1,x2,x3]
-        min_z = int(min(zs))
-        min_x = int(min(xs))
-        max_z = int(max(zs))
-        max_x = int(max(xs))
+        min_z = int(min(zs))-1
+        min_x = int(min(xs))-1
+        max_z = int(max(zs))+1
+        max_x = int(max(xs))+1
         
 
         
@@ -93,10 +105,10 @@ class ShadowMap:
     def remove_triangle_shadow(self, z1, x1, z2, x2, z3, x3, object):
         zs = [z1,z2,z3]
         xs = [x1,x2,x3]
-        min_z = int(min(zs))
-        min_x = int(min(xs))
-        max_z = int(max(zs))
-        max_x = int(max(xs))
+        min_z = int(min(zs))-1
+        min_x = int(min(xs))-1
+        max_z = int(max(zs))+1
+        max_x = int(max(xs))+1
         
         ret = []
         
@@ -105,7 +117,12 @@ class ShadowMap:
                 if is_inside(z,x,z1,x1,z2,x2,z3,x3):
                     self.remove_one_shadow(z,x,object)
         return ret
-    
+    def add_quad_shadow(self,z1,x1,z2,x2,z3,x3,z4,x4,object):
+        self.add_triangle_shadow(z1,x1,z2,x2,z3,x3,object)
+        self.add_triangle_shadow(z1,x1,z4,x4,z3,x3,object)
+    def remove_quad_shadow(self,z1,x1,z2,x2,z3,x3,z4,x4,object):
+        self.remove_triangle_shadow(z1,x1,z2,x2,z3,x3,object)
+        self.remove_triangle_shadow(z1,x1,z4,x4,z3,x3,object)
     def update_shadows(self):
         loading.progress_bar("Updating shadows...")
         i = 0
@@ -121,17 +138,57 @@ class ShadowMap:
             
             
             anchor_z, anchor_x = int(z1/hs),int(x1/hs)
-            if not w.valid_floor(anchor_z, anchor_x):continue
+            if z1<0 or x1<0 or not w.valid_floor(anchor_z, anchor_x):continue
             
             chunk_z, chunk_x = self.world.convert_to_chunk_coords(anchor_z, anchor_x)
             v = self.world.chunks[chunk_z][chunk_x].vh.vertices
+            c = self.world.chunks[chunk_z][chunk_x].vh.vertex_colors
             key = self.shadow_map[z,x][0]
             
-            
+            """
             v[key] = [x1,w.get_elevation_continuous(z1/hs,x1/hs)*vs+shadow_margin,z1]
             v[key+1] = [x2,w.get_elevation_continuous(z1/hs,x2/hs)*vs+shadow_margin,z1]
             v[key+2] = [x2,w.get_elevation_continuous(z2/hs,x2/hs)*vs+shadow_margin,z2]
             v[key+3] = [x1,w.get_elevation_continuous(z2/hs,x1/hs)*vs+shadow_margin,z2]
+            """
+            
+            
+            v0y = w.get_elevation_continuous(z1/hs,x1/hs)*vs+shadow_margin
+            v1y = w.get_elevation_continuous(z1/hs,x2/hs)*vs+shadow_margin
+            v2y = w.get_elevation_continuous(z2/hs,x2/hs)*vs+shadow_margin
+            v3y = w.get_elevation_continuous(z2/hs,x1/hs)*vs+shadow_margin
+            
+            
+            changed = False
+            if v[key+0][1] != v0y: 
+                v[key+0][1] = v0y
+                changed = True
+            if v[key+1][1] != v1y: 
+                v[key+1][1] = v1y
+                changed = True
+            if v[key+2][1] != v2y: 
+                v[key+2][1] = v2y
+                changed = True
+            if v[key+3][1] != v3y: 
+                v[key+3][1] = v3y
+                changed = True
+            
+            
+            if changed:
+                color = self.get_shadow_color(z,x)
+                c[key][0] = color[0]
+                c[key][1] = color[1]
+                c[key][2] = color[2]
+                c[key+1][0] = color[0]
+                c[key+1][1] = color[1]
+                c[key+1][2] = color[2]
+                c[key+2][0] = color[0]
+                c[key+2][1] = color[1]
+                c[key+2][2] = color[2]
+                c[key+3][0] = color[0]
+                c[key+3][1] = color[1]
+                c[key+3][2] = color[2]
+            
             
             if i % 1000 == 0: loading.update(i/len(self.shadow_map)*100)
             
