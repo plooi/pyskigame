@@ -255,7 +255,7 @@ def settings(menu):
     
     #FOR ADDING NEW TERMINALS, CHANGE HERE
     col.append([sg.Text("Map Editor: High Speed Terminal Model ("+find_name(build_hs_terminal_model)+")"), sg.Combo(values=["hs_terminal_design_gray", "hs_terminal_design_red","hs_terminal_design_green","hs_terminal_design_blue"], size=(35,10))])
-    col.append([sg.Text("Map Editor: Fixed Grip Terminal Model ("+find_name(build_fg_terminal_model)+")"), sg.Combo(values=["terminal_design_2","fg_terminal_design_red","fg_terminal_design_green","fg_terminal_design_blue","fg_terminal_design_black"], size=(35,10))])
+    col.append([sg.Text("Map Editor: Fixed Grip Terminal Model ("+find_name(build_fg_terminal_model)+")"), sg.Combo(values=["terminal_design_2","fg_terminal_design_red","fg_terminal_design_green","fg_terminal_design_blue","fg_terminal_design_black","fg_terminal_design_gray"], size=(35,10))])
     col.append([sg.Text("Change Background"), sg.Input(), sg.FilesBrowse()])
     
     
@@ -368,6 +368,7 @@ def settings(menu):
                     for z in range(menu.ui.world.get_height_chunks()):
                         for x in range(menu.ui.world.get_width_chunks()):
                             menu.ui.world.chunks[z][x].colors_changed = True
+                    menu.ui.world.pan_chunk_squares_changed = True
             
             
             # settings involving reset

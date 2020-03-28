@@ -653,11 +653,19 @@ class Terminal:
             z = point[0]*sin(theta)+ point[1]*cos(theta)
             point[0] = x
             point[1] = z
-        shadow = [[-4.5,-2.7],[4.5,-2.7],[4.5,2.7],[-4.5,2.7]]#x,z
+        if self.chairlift.terminal_model in [terminal_design_1,hs_terminal_design_gray,hs_terminal_design_blue,hs_terminal_design_green,hs_terminal_design_red]:
+            shadow = [[-4.5,-2.7],[4.5,-2.7],[4.5,2.7],[-4.5,2.7]]#x,z
+            mag = -3
+        elif self.chairlift.terminal_model in [fg_terminal_design_black,fg_terminal_design_gray,fg_terminal_design_blue,fg_terminal_design_green,fg_terminal_design_red]:
+            shadow = [[-2.35,-2],[2.35,-2],[2.35,2],[-2.35,2]]#x,z
+            mag = -2.8
+        else:
+            shadow = [[-1.38,-1.38],[1.38,-1.38],[1.38,1.38],[-1.38,1.38]]#x,z
+            mag = -2.8
         for point in shadow:
             horizontal_rotate_around_origin(point, self.angle)
         
-        mag = -3
+        
         sun_vector = mag*math.cos(sa),-mag*math.sin(sa)#x,z
         for point in shadow:
             point[0] += sun_vector[0]

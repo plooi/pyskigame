@@ -29,7 +29,7 @@ class Tree(WorldObject):
             args["z"] = args["z"]+random()#put them in the middle of square with random deviation
             args["x"] = args["x"]+random()
         shade = args["world"].calculate_floor_color_single(hr,vr)
-        args["model_args"] = {"shade":shade}
+        args["model_args"] = {"shade":shade, "height":8+random()*4}
         default(args, "model_type", "tex")
         default(args, "do_lighting", False)
         default(args, "rotation", random()*math.pi)
@@ -37,6 +37,7 @@ class Tree(WorldObject):
         for obj in args["world"].quads[int(args["z"])][int(args["x"])].containedObjects:
             if isinstance(obj, WorldObject):
                 return
+        
         
         super().__init__(**args)
         
@@ -71,7 +72,7 @@ class Tree(WorldObject):
         return z1,x1,z2,x2,z3,x3
     def add_shadow(self):
         z1,x1,z2,x2,z3,x3=self.get_shadow_pos()
-        self.world.shadow_map.add_triangle_shadow(z1,x1,z2,x2,z3,x3,self)
+        self.world.shadow_map.add_triangle_shadow(z1,x1,z2,x2,z3,x3,self,cut_outside=True)
     def remove_shadow(self):
         z1,x1,z2,x2,z3,x3=self.get_shadow_pos()
         self.world.shadow_map.remove_triangle_shadow(z1,x1,z2,x2,z3,x3,self)

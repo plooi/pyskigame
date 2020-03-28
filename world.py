@@ -253,7 +253,7 @@ class Chunk:
                             
                         ret = self.world.calculate_floor_color(hr, vr)
                         #ret[2]*=1.065
-                        ret[2] += -(((ret[2]-155/255)/(256/255-155/255)-.5)*2-1)*7/255
+                        ret[2] += -(((ret[2]-155/255)/(256/255-155/255)-.5)*2-1)*7/255#THIS IS THE FORMULA FOR BLUE (blue)(Blue) shading
                         if ret[2] > 1: ret[2] = 1#make it blue
                         return ret
                     
@@ -1360,7 +1360,7 @@ class World(LooiObject):
             self.pan_chunk_squares = {"verts":verts,"colors":colors}
         
         self.chunk_load_grid = self.get_chunk_load_grid()
-        print("chunk load grid took " + str(time()-start) + " seconds")
+        #print("chunk load grid took " + str(time()-start) + " seconds")
         
     
         glDisable(GL_BLEND)#performance optimization
@@ -1368,7 +1368,7 @@ class World(LooiObject):
         
         start = time()
         self.draw_scenery()
-        print("draw scenery took " + str(time()-start) + " seconds")
+        #print("draw scenery took " + str(time()-start) + " seconds")
         
         #draw sky(sun is drawn by game ui)
         def setup_3d_no_trans_no_rot(): gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 5, 6000 )
@@ -1376,7 +1376,7 @@ class World(LooiObject):
         
         start = time()
         self.draw(self.chunk_load_grid)
-        print("draw took " + str(time()-start) + " seconds")
+        #print("draw took " + str(time()-start) + " seconds")
         
         
         glClear(GL_DEPTH_BUFFER_BIT)#clear the depth buffer bit so that the 2d stuff renders on top

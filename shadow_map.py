@@ -39,9 +39,23 @@ class ShadowMap:
         except:
             print("bad",z,x)
             color = [.8,.8,.8]
-        color[0] -= .25
-        color[1] -= .25
-        color[2] -= .25
+        
+        color[2] += -(((color[2]-155/255)/(256/255-155/255)-.5)*2-1)*7/255
+        
+        #color[0] -= .25
+        #color[1] -= .25
+        #color[2] -= .25
+        color[0] *= .73
+        color[1] *= .73
+        color[2] *= .73
+        
+        
+        if color[0] < .45: color[0] = .45
+        if color[0] > 1: color[0] = 1
+        if color[1] < .45: color[1] = .45
+        if color[1] > 1: color[1] = 1
+        if color[2] < .5: color[2] = .5
+        if color[2] > 1: color[2] = 1
         return color
     #only called by add_one_shadow
     #do not call this from outside
@@ -85,13 +99,20 @@ class ShadowMap:
             self.world.remove_fixed_quad(self.shadow_map[z,x][0], (z/D)/hs, (x/D)/hs)
             del self.shadow_map[z,x]
     
-    def add_triangle_shadow(self, z1, x1, z2, x2, z3, x3, object):
+    def add_triangle_shadow(self, z1, x1, z2, x2, z3, x3, object, cut_outside = False):
         zs = [z1,z2,z3]
         xs = [x1,x2,x3]
-        min_z = int(min(zs))-1
-        min_x = int(min(xs))-1
-        max_z = int(max(zs))+1
-        max_x = int(max(xs))+1
+        
+        if cut_outside:
+            min_z = int(min(zs))
+            min_x = int(min(xs))
+            max_z = int(max(zs))
+            max_x = int(max(xs))
+        else:
+            min_z = int(min(zs))-1
+            min_x = int(min(xs))-1
+            max_z = int(max(zs))+1
+            max_x = int(max(xs))+1
         
 
         
