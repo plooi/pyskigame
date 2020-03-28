@@ -26,7 +26,7 @@ from portal import Portal
 
 
 build_hs_terminal_model = hs_terminal_design_gray
-build_fg_terminal_model = terminal_design_2
+build_fg_terminal_model = fg_terminal_design_black
 
 
 

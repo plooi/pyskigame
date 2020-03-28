@@ -545,7 +545,10 @@ class Pole:
         self.add_shadow()
     def get_shadow_pos(self):
         s_base = .7#actually equal to base over 2, the real base of the triangle is sbase * 2
-        s_height = 11#12
+        if self.pole_model == pole_design_2:
+            s_height = 4/9*11
+        else:
+            s_height = 11#12
         t_width = 7#4
         t_thick = 1.4#1.5
         sa = self.chairlift.world.properties["sun_angle"]
