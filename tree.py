@@ -48,7 +48,7 @@ class Tree(WorldObject):
     
     def get_shadow_pos(self):
         s_base = 3#actually equal to base over 2, the real base of the triangle is sbase * 2
-        s_height = 15#12
+        s_height = 15*self.args["model_args"]["height"]/10#12
         sa = self.world.properties["sun_angle"]
         hs = self.world.properties["horizontal_stretch"]
         
