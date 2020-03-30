@@ -498,7 +498,7 @@ class UI(LooiObject):
                 self.scenery = True
         
         #draw sun
-        self.draw_sun()
+        #self.draw_sun()
         
         
         if self.world.properties["health"] <= 0:
@@ -511,7 +511,8 @@ class UI(LooiObject):
         model_3d.vertical_rotate_model_around_x_eq_0(model, math.pi/10)
         model_3d.horizontal_rotate_model_around_origin(model, self.world.properties["sun_angle"])
         model_3d.move_model(model, self.world.view.x, self.world.view.y, self.world.view.z)
-        model_3d.add_model_to_world_mobile(model, self.world)
+        #model_3d.add_model_to_world_mobile(model, self.world)
+        self.world.draw_sun(model)
             
     def collision_check(self):
     

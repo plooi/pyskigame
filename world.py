@@ -1344,13 +1344,7 @@ class World(LooiObject):
     def delete_shadow_map_memos(self):
         self.shadow_map.get_elev_memo = {}
         self.shadow_map.shadow_color_memo = {}
-    def step(self):
-        #every step delete the shadow map's memos
-        self.delete_shadow_map_memos()
-        
-        self.numpy_mode()
-        start = time()
-        
+    def calculate_pan_chunk_vertex_handler(self):
         if self.pan_chunk_squares_changed:
             self.pan_chunk_squares_changed = False
             verts = []
@@ -1368,6 +1362,33 @@ class World(LooiObject):
             colors = numpy.vstack(colors)
             self.pan_chunk_squares = {"verts":verts,"colors":colors}
             #print(len(verts))
+    def draw_sun(self, model):
+        
+        vertices = numpy.zeros([len(model), 3])
+        vertex_colors = numpy.zeros([len(model), 3])
+        numpy_index = 0
+        for i in range(0,len(model),5):
+            
+            vertices[numpy_index] = model[i]
+            vertices[numpy_index+1] = model[i+1]
+            vertices[numpy_index+2] = model[i+2]
+            vertices[numpy_index+3] = model[i+3]
+            vertex_colors[numpy_index] = model[i+4]
+            vertex_colors[numpy_index+1] = model[i+4]
+            vertex_colors[numpy_index+2] = model[i+4]
+            vertex_colors[numpy_index+3] = model[i+4]
+            
+            numpy_index += 4
+        self.draw_quad_array_3d(vertices, vertex_colors, self.get_setup_3d_far())
+        
+    def step(self):
+        #every step delete the shadow map's memos
+        self.delete_shadow_map_memos()
+        
+        self.numpy_mode()
+        start = time()
+        
+        self.calculate_pan_chunk_vertex_handler()
         
         self.chunk_load_grid = self.get_chunk_load_grid()
         #print("chunk load grid took " + str(time()-start) + " seconds")
@@ -1378,11 +1399,11 @@ class World(LooiObject):
         
         start = time()
         self.draw_scenery()
-        #print("draw scenery took " + str(time()-start) + " seconds")
+        self.game_ui.draw_sun()
+        glClear(GL_DEPTH_BUFFER_BIT)
         
-        #draw sky(sun is drawn by game ui)
-        def setup_3d_no_trans_no_rot(): gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), 5, 6000 )
-        #self.draw_quad_3d(-9999999, -9999999, -5800, 9999999, -9999999, -5800, 9999999, 9999999, -5800, -9999999, 9999999, -5800,constants["background_color"], setup_3d=setup_3d_no_trans_no_rot)#draw Sky
+        
+        
         
         start = time()
         self.draw(self.chunk_load_grid)
