@@ -29,31 +29,32 @@ class VertexHandler:
         for i in range(initial_capacity):
             self.available_indices.put(i, block=False)
             self.num_available_indices += 1
-    """
-    def clean(self):
-        
-        for i in range(self.capacity()-1, -1, -1):
-            if i not in self.available_indices.data or i == 7:
-                #this is the highest index that is taken
-                #cut out everything above this value
-                break
-            else:
-                #this index is not taken
-                self.available_indices.data.remove(i)
-                self.num_available_indices -= 1
-            
-        #now i is the largest index that still has a value
-        self.vertices = self.vertices[0:i+1]
-        self.vertex_colors = self.vertex_colors[0:i+1]
-    """
-        
                 
     def get_vertices(self):
         return self.vertices
     def get_colors(self):
         return self.vertex_colors
-            
+        
+    #set the vertex handler to read mode. Returns true if mode was switched, and false if it was already in the correct mode
+    def numpy_mode(self):
+        if self.get_mode() == "list":
+            self.vertices = numpy.array(self.vertices)
+            self.vertex_colors = numpy.array(self.vertex_colors)
+            return True
+        return False
+    #set the vertex handler to write mode. Returns true if mode was switched, and false if it was alwritey in the correct mode
+    def list_mode(self):
+        if self.get_mode() == "numpy":
+            self.vertices = self.vertices.tolist()
+            self.vertex_colors = self.vertex_colors.tolist()
+            return True
+        return False
+    def get_mode(self):
+        if type(self.vertices) == type([]):
+            return "list"
+        return "numpy"
     def add_vertex(self, vertex=None, color=None):
+        
         if vertex == None: vertex = [0]*self.vertex_size
         if color == None: color = [0]*self.color_size
         if self.available_indices.empty():
@@ -62,6 +63,7 @@ class VertexHandler:
         self.num_available_indices -= 1
         self.update_vertex(index, vertex, color)
         return index
+        
     def capacity(self):
         return len(self.vertices)
     def num_occupied(self):
@@ -78,9 +80,14 @@ class VertexHandler:
         original_length = len(self.vertices)
         for i in range(size_increase):
             self.available_indices.put(i + original_length, block=False)
-            
-        self.vertices = numpy.vstack((self.vertices, [[0]*self.vertex_size]*size_increase))
-        self.vertex_colors = numpy.vstack((self.vertex_colors, [[0]*self.color_size]*size_increase))
+        
+        if self.get_mode() == "numpy":
+            self.vertices = numpy.vstack((self.vertices, [[0]*self.vertex_size]*size_increase))
+            self.vertex_colors = numpy.vstack((self.vertex_colors, [[0]*self.color_size]*size_increase))
+        else:
+            for i in range(size_increase):
+                self.vertices.append([0]*self.vertex_size)
+                self.vertex_colors.append([0]*self.color_size)
         
         self.num_available_indices += size_increase
         """
@@ -99,8 +106,7 @@ class VertexHandler:
             fail("Cannot update vertex %d from vertex list of length %d" % (index, len(self.vertices)))
         
         
-        
-        
+    
         self.vertices[index] = new_vertex
         self.vertex_colors[index] = new_color
     def clear(self):

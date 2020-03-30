@@ -33,22 +33,28 @@ class Tree(WorldObject):
         default(args, "model_type", "tex")
         default(args, "do_lighting", False)
         default(args, "rotation", random()*math.pi)
+        default(args, "remove_shadow", True)#this property indicates whether to remove shadow when deleted
         
         for obj in args["world"].quads[int(args["z"])][int(args["x"])].containedObjects:
             if isinstance(obj, WorldObject):
                 return
         
         
-        super().__init__(**args)
         
-        default(args, "add_shadow", True)
-        if args["add_shadow"]:
-            self.add_shadow()
-    
+        
+        super().__init__(**args)
+        self.args["has_shadow"] = False
+        #self.add_shadow()
+        
+        
     
     def get_shadow_pos(self):
-        s_base = 3#actually equal to base over 2, the real base of the triangle is sbase * 2
-        s_height = 15*self.args["model_args"]["height"]/10#12
+        if "height" not in self.args["model_args"]: self.args["model_args"]["height"] = 10#for backwared compatibility
+        
+        
+        s_base = 3*shadow_map.D#actually equal to base over 2, the real base of the triangle is sbase * 2
+        
+        s_height = 15*self.args["model_args"]["height"]/10  *shadow_map.D#12
         sa = self.world.properties["sun_angle"]
         hs = self.world.properties["horizontal_stretch"]
         
@@ -62,17 +68,23 @@ class Tree(WorldObject):
         x3 = s_height*math.cos(sa+math.pi)
         z3 = s_height*-math.sin(sa+math.pi)
         
-        z1+=self.args["z"]*hs*shadow_map.D
-        x1+=self.args["x"]*hs*shadow_map.D
-        z2+=self.args["z"]*hs*shadow_map.D
-        x2+=self.args["x"]*hs*shadow_map.D
-        z3+=self.args["z"]*hs*shadow_map.D
-        x3+=self.args["x"]*hs*shadow_map.D
+        
+        z_offset = self.args["z"]*hs*shadow_map.D
+        x_offset = self.args["x"]*hs*shadow_map.D
+        
+        z1+= z_offset
+        x1+= x_offset
+        z2+= z_offset
+        x2+= x_offset
+        z3+= z_offset
+        x3+= x_offset
         
         return z1,x1,z2,x2,z3,x3
     def add_shadow(self):
-        z1,x1,z2,x2,z3,x3=self.get_shadow_pos()
-        self.world.shadow_map.add_triangle_shadow(z1,x1,z2,x2,z3,x3,self,cut_outside=True)
+        if "has_shadow" in self.args and self.args["has_shadow"]==False:
+            z1,x1,z2,x2,z3,x3=self.get_shadow_pos()
+            self.world.shadow_map.add_triangle_shadow(z1,x1,z2,x2,z3,x3,self,cut_outside=True)
+            self.args["has_shadow"] = True
     def remove_shadow(self):
         z1,x1,z2,x2,z3,x3=self.get_shadow_pos()
         self.world.shadow_map.remove_triangle_shadow(z1,x1,z2,x2,z3,x3,self)
@@ -103,6 +115,7 @@ class Tree(WorldObject):
         window.close()
     def delete(self):
         super().delete()
-        self.remove_shadow()
+        
+        if self.args["remove_shadow"]: self.remove_shadow()
         
         

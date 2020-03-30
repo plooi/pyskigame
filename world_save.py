@@ -179,6 +179,14 @@ def read(path, new_version = True):
             the_world = pickle.load(f)
             f.close()
             
+            if not hasattr(the_world, "shadow_map"):
+                the_world.shadow_map = ShadowMap(the_world)
+            if not hasattr(the_world.shadow_map, "get_elev_memo"):
+                the_world.shadow_map.get_elev_memo = {}
+            if not hasattr(the_world.shadow_map, "shadow_color_memo"):
+                the_world.shadow_map.shadow_color_memo = {}
+            
+            
             if not hasattr(the_world, "disable_remove_fixed_quads"):
                 the_world.disable_remove_fixed_quads = False
             
@@ -213,10 +221,10 @@ def read(path, new_version = True):
                 the_world.mobile_colors_far = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
             if not hasattr(the_world, "pan_background"):
                 the_world.pan_background = None
-            if not hasattr(the_world, "shadow_map"):
-                the_world.shadow_map = ShadowMap(the_world)
+            
             if not hasattr(the_world, "pan_chunk_squares_changed"):
                 the_world.pan_chunk_squares_changed = True
+            
                 
             #end backward compatibility code
             return the_world

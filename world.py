@@ -188,7 +188,7 @@ class Chunk:
             self.colors_changed=False
             side_length_in_sub_chunks = int(sub_chunks**.5)#how many sub chunks does this chunk have in each row?
             sub_chunk_side_length = int(cs/side_length_in_sub_chunks)#how many floors does each sub chunk have on each row?
-            self.pan_chunk_squares = {"trees":VertexHandler(3,initial_capacity=50), "without" : VertexHandler(3,initial_capacity=25)}
+            self.pan_chunk_squares = {"trees":VertexHandler(3,initial_capacity=1), "without" : VertexHandler(3,initial_capacity=1)}
             
             #for each sub chunk within this chunk
             #print("making",side_length_in_sub_chunks**2,"sub chunk squares")
@@ -449,6 +449,8 @@ class World(LooiObject):
             
             "world_image_pix_per_floor" : 1,
             
+            "tree_shadow_updates_per_frame" : .6,
+            
             "sun_angle" : 0,
             "scenery_angle" : 0,
             "scenery_height" : 0,
@@ -639,7 +641,7 @@ class World(LooiObject):
             self.chunks.append(row)
             
         
-        
+        self.list_mode()
         
         
         vs = self.properties["vertical_stretch"]
@@ -1339,9 +1341,14 @@ class World(LooiObject):
 #STEP AND PAINT STUFF
 ###################################
     
-        
+    def delete_shadow_map_memos(self):
+        self.shadow_map.get_elev_memo = {}
+        self.shadow_map.shadow_color_memo = {}
     def step(self):
+        #every step delete the shadow map's memos
+        self.delete_shadow_map_memos()
         
+        self.numpy_mode()
         start = time()
         
         if self.pan_chunk_squares_changed:
@@ -1354,10 +1361,13 @@ class World(LooiObject):
                     pan_chunk_squares = self.chunks[z][x].get_pan_chunk_squares(z,x,trees=False)
                     verts.append(pan_chunk_squares.vertices)
                     colors.append(pan_chunk_squares.vertex_colors)
+                    
+                    #print(len(pan_chunk_squares.vertices))
             
             verts = numpy.vstack(verts)
             colors = numpy.vstack(colors)
             self.pan_chunk_squares = {"verts":verts,"colors":colors}
+            #print(len(verts))
         
         self.chunk_load_grid = self.get_chunk_load_grid()
         #print("chunk load grid took " + str(time()-start) + " seconds")
@@ -1670,6 +1680,7 @@ class World(LooiObject):
                     #pcsquares = self.chunks[z][x].get_pan_chunk_squares(z, x, trees=False)
                     #vertices_draw_far.append(pcsquares.vertices)
                     #colors_draw_far.append(pcsquares.vertex_colors)
+                    #dont need these because all pan chunk squares are already all drawn all together
                     pass
                 elif chunk_load_grid[z][x] == -2:
                     pass
@@ -1845,6 +1856,7 @@ class World(LooiObject):
     
     
     def add_fixed_quad(self, vertex1, vertex2, vertex3, vertex4, color, anchor_z, anchor_x, object=None):
+        
         chunk_z, chunk_x = self.convert_to_chunk_coords(anchor_z, anchor_x)
         
         if isinstance(color, list):
@@ -1864,6 +1876,7 @@ class World(LooiObject):
             self.quads[anchor_z][anchor_x].containedObjects.append(object)
 
         return ret
+        
     def remove_fixed_quad(self, quad_id, anchor_z, anchor_x, object=None):
         if self.disable_remove_fixed_quads: return
         chunk_z, chunk_x = self.convert_to_chunk_coords(anchor_z, anchor_x)
@@ -1909,6 +1922,9 @@ class World(LooiObject):
             ray[2] += step_size*self.properties["horizontal_stretch"] * -math.sin(hr) * math.cos(vr)
             ray[1] += step_size*self.properties["horizontal_stretch"] * math.sin(vr)
     def reset(self, new_chunk_size = None):
+        self.list_mode()
+        
+        
         if new_chunk_size == None: new_chunk_size = self.properties["chunk_size"]
         old_chunk_size = self.properties["chunk_size"]
         self.properties["chunk_size"] = new_chunk_size
@@ -1957,6 +1973,7 @@ class World(LooiObject):
         i=0
         loading.progress_bar("Loading objects...")
         for obj in all_contained_objects: 
+            
             obj.reset()
             
             if i%loading_update == 0:
@@ -1964,23 +1981,22 @@ class World(LooiObject):
             i+=1
         loading.update(100)
         """
-        self.reset_objects(all_contained_objects)
+        self.reset_objects(all_contained_objects, trees_dont_remove_shadow=True)
         
         for l in list(lift.active_lifts): l.reset()
         
         
         self.disable_remove_fixed_quads = False
         
-    def reset_objects(self, objects_list):
+        self.game_ui.restart_shadow_search = True
+        
+    def reset_objects(self, objects_list, trees_dont_remove_shadow = False):
         
         do_loading = len(objects_list) > 150
         
         objects_list = list(objects_list)
         
-        total_progress = 0
-        for obj in objects_list:
-            if isinstance(obj, Tree): total_progress += 2
-            else: total_progress += 1
+        total_progress = len(objects_list)
         
         if do_loading:
             loading_update = int(total_progress/150)
@@ -1990,28 +2006,55 @@ class World(LooiObject):
     
         i=0
         trees = []
-        for obj in objects_list:
-            if isinstance(obj, Tree):
-                tree = obj
-                tree.args["add_shadow"] = False
-                new_tree = tree.reset()
-                trees.append(new_tree)
-            else:
+        if trees_dont_remove_shadow:    
+            for obj in objects_list:
+                if isinstance(obj,Tree): 
+                    obj.args["remove_shadow"]=False
+                    newobj = obj.reset()
+                    newobj.args["remove_shadow"]=True
+                else:
+                    obj.reset()
+                
+                if do_loading:
+                    if i%loading_update == 0:
+                        loading.update(i/total_progress*100)
+                i+=1
+        else:
+            for obj in objects_list:
                 obj.reset()
-            if do_loading:
-                if i%loading_update == 0:
-                    loading.update(i/total_progress*100)
-            i+=1
-        for tree in trees:
-            tree.add_shadow()
-            tree.args["add_shadow"] = True
-            if do_loading:
-                if i%loading_update == 0:
-                    loading.update(i/total_progress*100)
-            i+=1
+                
+                if do_loading:
+                    if i%loading_update == 0:
+                        loading.update(i/total_progress*100)
+                i+=1
+        
         if do_loading:
             loading.update(100)
-        
+    
+    
+    
+    ########################################
+    #READ MODE WRITE MODE
+    ##################################
+    
+    def numpy_mode(self):
+        for z in range(self.get_height_chunks()):
+            for x in range(self.get_width_chunks()):
+                chunk = self.chunks[z][x]
+                res = chunk.vh.numpy_mode()
+                chunk.tvh.numpy_mode()
+                
+                
+                if res == False: return#false means no change, so we're already in the right mode
+                
+    def list_mode(self):
+        for z in range(self.get_height_chunks()):
+            for x in range(self.get_width_chunks()):
+                chunk = self.chunks[z][x]
+                res = chunk.vh.list_mode()
+                chunk.tvh.list_mode()
+                
+                if res == False: return#false means no change, so we're already in the right mode
 def rad_to_deg(radians):
     return radians/(2*math.pi) * 360
 def round(x):

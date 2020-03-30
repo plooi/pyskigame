@@ -1,3 +1,9 @@
+
+
+
+
+
+
 import math
 from pylooiengine import *
 import map_edit_menu
@@ -23,6 +29,41 @@ from OpenGL.GLU import *
 
 
 from constants import x as constants
+
+
+
+
+
+
+def outward_search(max_dist):
+    map = []
+    map.append((0,0))
+    for dist in range(1,max_dist+1):
+        for i in range(-dist,dist):
+            map.append((i,-dist))
+        for i in range(-dist,dist):
+            map.append((dist,i))
+        for i in range(-dist,dist):
+            map.append((-i,dist))
+        for i in range(-dist,dist):
+            map.append((-dist,-i))
+    return map
+player_centered_search = outward_search(120)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 class UI(LooiObject):
     def __init__(self, world, game_mode):
@@ -115,6 +156,14 @@ class UI(LooiObject):
         
         self.vr_margin = 999
         self.correct_vr_angle = 0
+        
+        
+        
+        self.shadow_update_index = 0
+        self.shadow_update_center_z = 0
+        self.shadow_update_center_x = 0
+        self.shadow_updates_allowed = 0
+        self.restart_shadow_search = False
         
     def stop_sounds(self):
         self.wind_sound.stop()
@@ -334,7 +383,67 @@ class UI(LooiObject):
             self.fps = self.frames
             self.frames = 0
         self.frames += 1
+    def do_shadow_updates(self):
+        #make this not do too too many distance calculations
+        if self.world.properties["tree_shadow_updates_per_frame"] >= 1:
+            self.shadow_updates_allowed = self.world.properties["tree_shadow_updates_per_frame"]
+        else:
+            self.shadow_updates_allowed += self.world.properties["tree_shadow_updates_per_frame"]
+            if self.shadow_updates_allowed > 1:
+                self.shadow_updates_allowed = 1
+        
+        
+        
+        
+        i = 0
+        
+        player_x = int(self.world.view.x/self.world.properties["horizontal_stretch"])#unscaled
+        player_z = int(self.world.view.z/self.world.properties["horizontal_stretch"])
+        
+        if self.restart_shadow_search or ( ((player_x-self.shadow_update_center_x)**2 + (player_z-self.shadow_update_center_z)**2) ** .5 > constants["distance_before_the_shadow_reset_center_goes_straight_to_you"] ):
+            self.shadow_update_index = 0
+            self.shadow_update_center_x = player_x
+            self.shadow_update_center_z = player_z
+            self.restart_shadow_search = False
+        
+        while i < constants["max_number_of_spots_checked_for_shadow_add_per_step"]:
+            
+            if self.shadow_update_index >= len(player_centered_search):
+                self.shadow_update_index = 0
+                self.shadow_update_center_x = player_x
+                self.shadow_update_center_z = player_z
+                
+                
+            
+                
+                
+            z,x = player_centered_search[self.shadow_update_index]
+            
+            
+            z += self.shadow_update_center_z
+            x += self.shadow_update_center_x
+            
+            
+            if self.world.valid_floor(z,x):
+                for object in self.world.quads[z][x].containedObjects:
+                    if isinstance(object, Tree):
+                        if "has_shadow" in object.args and object.args["has_shadow"]==False:
+                            if self.shadow_updates_allowed < 1:
+                                return
+                            
+                            
+                            object.add_shadow()
+                            self.shadow_updates_allowed -= 1
+                
+            
+            
+            self.shadow_update_index += 1
+            i += 1
     def step(self):
+        
+        
+        
+        self.do_shadow_updates()
         """
         if self.key("v", "pressed"):
             self.world.shadow_map.add_triangle_shadow(0,0,10,10,0,10,"obj")

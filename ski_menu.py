@@ -57,6 +57,7 @@ def settings(menu):
     setting["Chair Time Interval Detachable"] = menu.ui.world.properties["chair_time_distance_detachable"]
     setting["Chair Time Interval Gondola"] = menu.ui.world.properties["chair_time_distance_gondola"]
     setting["Chair Time Interval Fixed Grip"] = menu.ui.world.properties["chair_time_distance_fixed"]
+    setting["Tree Shadow Updates per Frame"] = menu.ui.world.properties["tree_shadow_updates_per_frame"]
     
     
     col = []
@@ -98,6 +99,7 @@ def settings(menu):
             menu.ui.world.properties["chair_time_distance_fixed"] = float(new_settings["Chair Time Interval Fixed Grip"])
             menu.ui.world.properties["line_of_sight2"] = float(new_settings["Line of Sight 2"])
             #menu.ui.world.properties["line_of_sight3"] = float(new_settings["Line of Sight 3"])
+            menu.ui.world.properties["tree_shadow_updates_per_frame"] = float(new_settings["Tree Shadow Updates per Frame"])
             
             
             #then do the settings that require lifts to redo chairs

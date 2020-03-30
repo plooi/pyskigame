@@ -4,6 +4,12 @@ shadow_margin = .09
 #every real unit of length is equal to D shadow units of length
 D = 1
 from time import sleep
+from time import time
+import math
+from normal import angle_distance
+
+
+
 
 #triangle functions
 def about(a,b):
@@ -31,7 +37,24 @@ class ShadowMap:
         self.shadow_map = {}
         
         
+        self.get_elev_memo = {}
+        self.shadow_color_memo = {}
+    def delete_memos(self):
+        self.get_elev_memo = {}
+        self.shadow_color_memo = {}
+    def get_elevation_continuous(self, z, x):
+        if (z,x) in self.get_elev_memo:
+            return self.get_elev_memo[z,x]
+        
+        #otherwise actually calculate it
+        elev = self.world.get_elevation_continuous(z,x)
+        self.get_elev_memo[z,x] = elev
+        return elev
     def get_shadow_color(self, z, x):
+        if (z,x) in self.shadow_color_memo:
+            return self.shadow_color_memo[z,x]
+        #otherwise actually calculate it 
+        
         hs = self.world.properties["horizontal_stretch"]
         try:
             
@@ -40,15 +63,23 @@ class ShadowMap:
             print("bad",z,x)
             color = [.8,.8,.8]
         
-        color[2] += -(((color[2]-155/255)/(256/255-155/255)-.5)*2-1)*7/255
+        #color[2] += -(((color[2]-155/255)/(256/255-155/255)-.5)*2-1)*7/255
+        #                    |
+        #                    |
+        #                    |
+        #                    V
+        color[2] -= color[2]/7.14 - .14
+        
         
         #color[0] -= .25
         #color[1] -= .25
         #color[2] -= .25
-        color[0] *= .73
-        color[1] *= .73
-        color[2] *= .73
-        
+        #color[0] *= .73
+        #color[1] *= .73
+        #color[2] *= .73
+        color[0] *= .68
+        color[1] *= .68
+        color[2] *= .68
         
         if color[0] < .45: color[0] = .45
         if color[0] > 1: color[0] = 1
@@ -56,33 +87,48 @@ class ShadowMap:
         if color[1] > 1: color[1] = 1
         if color[2] < .5: color[2] = .5
         if color[2] > 1: color[2] = 1
+        
+        
+        self.shadow_color_memo[z,x] = color
         return color
     #only called by add_one_shadow
     #do not call this from outside
     def add_one_shadow_quad(self, z, x):
+        shadow_unit_in_real_distance = 1/D
         z1 = z/D
-        z2 = (z+1)/D
+        z2 = z1 + shadow_unit_in_real_distance
         x1 = x/D
-        x2 = (x+1)/D
+        x2 = x1 + shadow_unit_in_real_distance
         w=self.world
         
         hs = self.world.properties["horizontal_stretch"]
         vs = self.world.properties["vertical_stretch"]
         
         
-        if z1<0 or x1<0 or not w.valid_floor(int(z1/hs),int(x1/hs)):return None
+        
+        z1_unscaled = z1/hs#unscaled but likely is a fractional floor value, so aka between two floors/points, so that's why we use get elev continuous
+        x1_unscaled = x1/hs
+        z2_unscaled = z2/hs
+        x2_unscaled = x2/hs
+        
+        
+        
+        if z1<0 or x1<0 or not w.valid_floor(int(z1_unscaled),int(x1_unscaled)):return None
+        
+        
         return self.world.add_fixed_quad(
-            [x1,w.get_elevation_continuous(z1/hs,x1/hs)*vs+shadow_margin,z1],
-            [x2,w.get_elevation_continuous(z1/hs,x2/hs)*vs+shadow_margin,z1],
-            [x2,w.get_elevation_continuous(z2/hs,x2/hs)*vs+shadow_margin,z2],
-            [x1,w.get_elevation_continuous(z2/hs,x1/hs)*vs+shadow_margin,z2],
+            [x1,self.get_elevation_continuous(z1_unscaled,x1_unscaled)*vs+shadow_margin,z1],
+            [x2,self.get_elevation_continuous(z1_unscaled,x2_unscaled)*vs+shadow_margin,z1],
+            [x2,self.get_elevation_continuous(z2_unscaled,x2_unscaled)*vs+shadow_margin,z2],
+            [x1,self.get_elevation_continuous(z2_unscaled,x1_unscaled)*vs+shadow_margin,z2],
             self.get_shadow_color(z,x),
-            int(z1/hs),
-            int(x1/hs))
+            int(z1_unscaled),
+            int(x1_unscaled))
     
     def add_one_shadow(self, z, x, object):
         if (z,x) not in self.shadow_map:
             key = self.add_one_shadow_quad(z, x)
+            if key == None: return
             self.shadow_map[(z,x)] = (key,[object])
         else:
             if object not in self.shadow_map[z,x][1]:
@@ -98,10 +144,41 @@ class ShadowMap:
             hs = self.world.properties["horizontal_stretch"]
             self.world.remove_fixed_quad(self.shadow_map[z,x][0], (z/D)/hs, (x/D)/hs)
             del self.shadow_map[z,x]
+            
+    ################################
+    #slope checking
+    def check_slopes_under_points_similar(self,zs,xs,threshold=math.pi/10):
+        if len(zs) != len(xs): raise Exception()
+        if len(zs) == 0: return True
+        
+        benchmark_hr, benchmark_vr = self.get_slope_under_point(zs[0], xs[0])#hr,vr
+        
+        
+        
+        for i in range(1, len(zs)):
+            hr,vr = self.get_slope_under_point(zs[i], xs[i])
+            if angle_distance(hr,benchmark_hr) > threshold: return False
+            if angle_distance(vr,benchmark_vr) > threshold: return False
+        return True
     
+    #input shadow coords
+    def get_slope_under_point(self, z, x):
+        z = z/D/self.world.properties["horizontal_stretch"]# convert to unscaled
+        x = x/D/self.world.properties["horizontal_stretch"]
+        z = int(z)
+        x = int(x)
+        
+        hr,vr = self.world.get_rotation(z,x)
+        
+        return hr,vr
+        
+    ################################
+        
     def add_triangle_shadow(self, z1, x1, z2, x2, z3, x3, object, cut_outside = False):
         zs = [z1,z2,z3]
         xs = [x1,x2,x3]
+        
+        
         
         if cut_outside:
             min_z = int(min(zs))
@@ -116,13 +193,10 @@ class ShadowMap:
         
 
         
-        ret = []
-        
         for z in range(min_z, max_z):
             for x in range(min_x, max_x):
                 if is_inside(z,x,z1,x1,z2,x2,z3,x3):
-                    ret.append(self.add_one_shadow(z,x,object))
-        return ret
+                    self.add_one_shadow(z,x,object)
     def remove_triangle_shadow(self, z1, x1, z2, x2, z3, x3, object):
         zs = [z1,z2,z3]
         xs = [x1,x2,x3]
@@ -162,9 +236,14 @@ class ShadowMap:
             if z1<0 or x1<0 or not w.valid_floor(anchor_z, anchor_x):continue
             
             chunk_z, chunk_x = self.world.convert_to_chunk_coords(anchor_z, anchor_x)
-            v = self.world.chunks[chunk_z][chunk_x].vh.vertices
-            c = self.world.chunks[chunk_z][chunk_x].vh.vertex_colors
+            vh = self.world.chunks[chunk_z][chunk_x].vh
+            
+            #v = self.world.chunks[chunk_z][chunk_x].vh.vertices
+            #c = self.world.chunks[chunk_z][chunk_x].vh.vertex_colors
             key = self.shadow_map[z,x][0]
+            
+            
+            color = self.get_shadow_color(z,x)
             
             """
             v[key] = [x1,w.get_elevation_continuous(z1/hs,x1/hs)*vs+shadow_margin,z1]
@@ -173,13 +252,20 @@ class ShadowMap:
             v[key+3] = [x1,w.get_elevation_continuous(z2/hs,x1/hs)*vs+shadow_margin,z2]
             """
             
-            
+            """
             v0y = w.get_elevation_continuous(z1/hs,x1/hs)*vs+shadow_margin
             v1y = w.get_elevation_continuous(z1/hs,x2/hs)*vs+shadow_margin
             v2y = w.get_elevation_continuous(z2/hs,x2/hs)*vs+shadow_margin
             v3y = w.get_elevation_continuous(z2/hs,x1/hs)*vs+shadow_margin
+            """
             
             
+            vh.update_vertex(key, [x1,self.get_elevation_continuous(z1/hs,x1/hs)*vs+shadow_margin,z1], color)
+            vh.update_vertex(key+1, [x2,self.get_elevation_continuous(z1/hs,x2/hs)*vs+shadow_margin,z1], color)
+            vh.update_vertex(key+2, [x2,self.get_elevation_continuous(z2/hs,x2/hs)*vs+shadow_margin,z2], color)
+            vh.update_vertex(key+3, [x1,self.get_elevation_continuous(z2/hs,x1/hs)*vs+shadow_margin,z2], color)
+            
+            """
             changed = False
             if v[key+0][1] != v0y: 
                 v[key+0][1] = v0y
@@ -196,7 +282,7 @@ class ShadowMap:
             
             
             if changed:
-                color = self.get_shadow_color(z,x)
+                
                 c[key][0] = color[0]
                 c[key][1] = color[1]
                 c[key][2] = color[2]
@@ -209,7 +295,7 @@ class ShadowMap:
                 c[key+3][0] = color[0]
                 c[key+3][1] = color[1]
                 c[key+3][2] = color[2]
-            
+            """
             
             if i % 1000 == 0: loading.update(i/len(self.shadow_map)*100)
             

@@ -229,6 +229,7 @@ def settings(menu):
     setting["Scenery Lower Bound"] = menu.ui.world.properties["scenery_lower_stretch"]
     setting["Line of Sight"] = menu.ui.world.view.line_of_sight
     setting["Line of Sight 2"] = menu.ui.world.properties["line_of_sight2"]
+    setting["Tree Shadow Updates per Frame"] = menu.ui.world.properties["tree_shadow_updates_per_frame"]
     #setting["Line of Sight 3"] = menu.ui.world.properties["line_of_sight3"]
     setting["Movement Speed"] = menu.ui.world.view.speed
     setting["Rotation Speed"] = menu.ui.world.view.rot_spd
@@ -239,6 +240,7 @@ def settings(menu):
     setting["Map Editor: Line Thickness"] = menu.ui.world.properties["line_thickness(map_editor)"]
     setting["Map Editor: Terrain Mod Step Size"] = menu.ui.world.properties["terrain_mod_step_size(map_editor)"]
     setting["Map Editor: Bump Placement Chance"] = menu.ui.world.properties["bump_placement_chance(map_editor)"]
+    
     
 
     
@@ -315,6 +317,7 @@ def settings(menu):
             menu.ui.world.properties["build_chair_pole_distance(map_editor)"] = float(new_settings["Map Editor: Lift Build Pole Distance"])
             menu.ui.world.properties["bump_placement_chance(map_editor)"] = float(new_settings["Map Editor: Bump Placement Chance"])
             menu.ui.world.properties["line_of_sight2"] = float(new_settings["Line of Sight 2"])
+            menu.ui.world.properties["tree_shadow_updates_per_frame"] = float(new_settings["Tree Shadow Updates per Frame"])
             #menu.ui.world.properties["line_of_sight3"] = float(new_settings["Line of Sight 3"])
             menu.ui.world.properties["scenery_angle"] = float(new_settings["Scenery Angle"])
             menu.ui.world.properties["scenery_height"] = float(new_settings["Scenery Height"])

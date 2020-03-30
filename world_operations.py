@@ -117,6 +117,7 @@ def remove_bumps(world, z1, x1, z2, x2):
 
 
 def fill_trees(world, z1, x1, z2, x2, chance = 1):
+    
     for z in range(min([z1,z2]), max([z1,z2])+1):
         for x in range(min([x1,x2]), max([x1,x2])+1):
             if chance == 1:
@@ -124,7 +125,7 @@ def fill_trees(world, z1, x1, z2, x2, chance = 1):
             else:
                 if random() < chance:
                     Tree(z=z, x=x, world=world)
-            
+    
 def chainsaw(world, z1, x1, z2, x2):
     for z in range(min([z1,z2]), max([z1,z2])+1):
         for x in range(min([x1,x2]), max([x1,x2])+1):
@@ -156,7 +157,6 @@ def fill_trees_circular(world, z1, x1, z2, x2, chance = 1):
                 else:
                     if random() < chance:
                         Tree(z=z, x=x, world=world)
-                
 def chainsaw_circular(world, z1, x1, z2, x2, chance = 1):
     middle_z = int((z1+z2)/2)
     middle_x = int((x1+x2)/2)
