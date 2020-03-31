@@ -409,8 +409,9 @@ class Lift(LooiObject, Selectable):
                     
                     hs = self.world.properties["horizontal_stretch"]
                     chunk_z, chunk_x = self.world.convert_to_chunk_coords(chair_i_position[2]/hs, chair_i_position[0]/hs)
-                    if self.world.valid_chunk(chunk_z, chunk_x):
-                        if self.world.chunk_load_grid[chunk_z][chunk_x] >= 1:
+                    if chunk_z < len(self.world.chunk_load_grid) and chunk_x < len(self.world.chunk_load_grid[0]):
+                        chunk_load_value = self.world.chunk_load_grid[chunk_z][chunk_x]
+                        if chunk_load_value >= 1:
                     
                             '''#now, you dont have to be in the line of sight, but you do have to be in front of the player'''
                             #Yes you do have to be in line of sight, and you have to be in front of player.

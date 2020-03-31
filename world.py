@@ -2049,6 +2049,7 @@ class World(LooiObject):
         
         self.game_ui.restart_shadow_search = True
         
+        self.pan_chunk_squares_changed = True
     def reset_objects(self, objects_list, trees_dont_remove_shadow = False):
         
         do_loading = len(objects_list) > 150
