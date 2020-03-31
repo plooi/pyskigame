@@ -216,7 +216,7 @@ def data_gen16():
         pyautogui.moveTo(dropdown_menu_location[0], dropdown_menu_location[1])
         pyautogui.click()
         sleep(.01)
-        os.system("python capture.py %s %d %d %d %d" % ("screenshots/"+world_name + "___" + str(elevation) + ".png", screenshot_box[0], screenshot_box[1], screenshot_box[2], screenshot_box[3]))
+        os.system("python capture.py \"%s\" %d %d %d %d" % ("screenshots/"+world_name + "___" + str(elevation) + ".png", screenshot_box[0], screenshot_box[1], screenshot_box[2], screenshot_box[3]))
         
         
     grid = None
