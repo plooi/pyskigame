@@ -1991,13 +1991,19 @@ class World(LooiObject):
             ray[0] += step_size*self.properties["horizontal_stretch"] * math.cos(hr) * math.cos(vr)
             ray[2] += step_size*self.properties["horizontal_stretch"] * -math.sin(hr) * math.cos(vr)
             ray[1] += step_size*self.properties["horizontal_stretch"] * math.sin(vr)
-    def reset(self, new_chunk_size = None):
+    def reset(self, new_chunk_size = None, new_vertical_stretch = None):
         self.list_mode()
         
         if new_chunk_size == None: new_chunk_size = self.properties["chunk_size"]
-        old_chunk_size = self.properties["chunk_size"]
-        self.properties["chunk_size"] = new_chunk_size
+        if new_vertical_stretch == None: new_vertical_stretch = self.properties["vertical_stretch"]
         
+        
+        old_chunk_size = self.properties["chunk_size"]
+        old_vertical_stretch = self.properties["vertical_stretch"]
+        
+        
+        self.properties["chunk_size"] = new_chunk_size
+        self.properties["vertical_stretch"] = new_vertical_stretch
         
         
         
@@ -2010,13 +2016,17 @@ class World(LooiObject):
                         all_contained_objects.append(obj)
                         
                         
+                        
+                        
         world2 = World()
         world2.properties = dict(self.properties)
         #print("Starting init")
         
+        self.properties["vertical_stretch"] = old_vertical_stretch
         self.properties["chunk_size"] = old_chunk_size
         world2.init(self.properties["name"], self.properties["width"], self.properties["height"], view=self.view, elevation_function=lambda z,x:self.get_elevation(z,x),natural_bumps=False)
         self.properties["chunk_size"] = new_chunk_size
+        self.properties["vertical_stretch"] = new_vertical_stretch
         
         
         #print("Finishing init")
@@ -2071,7 +2081,8 @@ class World(LooiObject):
                 if isinstance(obj,Tree): 
                     obj.args["remove_shadow"]=False
                     newobj = obj.reset()
-                    newobj.args["remove_shadow"]=True
+                    if hasattr(newobj,"args"):
+                        newobj.args["remove_shadow"]=True
                 else:
                     obj.reset()
                 

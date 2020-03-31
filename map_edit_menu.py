@@ -385,8 +385,7 @@ def settings(menu):
             if event=="Ok+Reset":
                 menu.ui.world.properties["sun_angle"] = float(new_settings["Sun Angle*"])
                 menu.ui.world.properties["horizontal_stretch"] = float(new_settings["Horizontal Stretch*"])
-                menu.ui.world.properties["vertical_stretch"] = float(new_settings["Vertical Stretch*"])
-                menu.ui.world.reset(new_chunk_size = int(new_settings["Chunk Size*"]))
+                menu.ui.world.reset(new_chunk_size = int(new_settings["Chunk Size*"]), new_vertical_stretch=float(new_settings["Vertical Stretch*"]))
                 world_save.write(menu.ui.world)
                 
                 
