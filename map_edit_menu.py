@@ -124,6 +124,10 @@ class Menu(LooiObject):
         self.btn9.set_layer(-2)
         self.add(self.btn9)
         
+        self.btn999 = Button(x = 1080, y=760, width=70, height=70, font_size=10, text="", image=image("Sound.png"), action=volume, action_parameter=self)
+        self.btn999.set_layer(-2)
+        self.add(self.btn999)
+        
         
         self.btn16 = Button(x = 520, y=280, width=70, height=70, font_size=10, text="", image=image("Mountain Icon.png"), action=HillMod, action_parameter=self)
         self.btn16.set_layer(-2)
@@ -193,7 +197,17 @@ class Menu(LooiObject):
         
     def paint(self):
         self.draw_rect(self.x1, self.y1, self.x2, self.y2, self.menu_color)
-        
+def volume(menu):
+    layout = [[sg.Text("Select Volume")],
+    [sg.Slider(range=(1,100), default_value=int(menu.ui.master_volume*100),size=(20,15),orientation="horizontal")],
+    [sg.OK()]]
+    
+    window = sg.Window('', layout, size = (400,300))
+    event, values = window.Read()
+    if event == "OK":
+        menu.ui.set_master_volume(int(values[0]))
+    window.close()
+    
 def top_button(menu):
     if menu.btn32.text == "topend":
         menu.btn32.text = "topmid"

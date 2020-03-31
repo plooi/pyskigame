@@ -113,20 +113,14 @@ class UI(LooiObject):
         self.lift_vol = 0
         self.swish_timer = 0
         
-        self.wind_sound = self.new_sound("sounds/Wind.ogg",volume=0)
-        self.wind_sound.play(loops = 9999999) #9999 loops is 20 days straight. I think nobody is going to play for 20 days straight so it's basically forever eh
         
+        self.wind_sound = None
+        self.lift_sound = None
+        self.swish_sound = None
+        self.fall_sound = None
+        self.pole_sound_obj = None
         
-        self.lift_sound = self.new_sound("sounds/ChairliftTerminal.ogg",volume=0)
-        self.lift_sound.play(loops = 9999999)#63 years about. We should be okay
-        
-        
-        self.swish_sound = self.new_sound("sounds/SkiSwish4.ogg", volume=.65)
-        
-        
-        self.fall_sound = self.new_sound("sounds/Fall.ogg",volume=.365)
-        
-        self.pole_sound_obj = self.new_sound("sounds/PoleBump1.ogg",volume=.35)
+        self.set_master_volume(100)
         
         self.draw_black_screen = False
         self.die_fall_speed = 0
@@ -164,6 +158,26 @@ class UI(LooiObject):
         self.shadow_update_center_x = 0
         self.shadow_updates_allowed = 0
         self.restart_shadow_search = False
+        
+    def set_master_volume(self, vol):
+        self.master_volume = vol/100
+        m = self.master_volume
+        
+        if self.wind_sound != None: self.wind_sound.stop()
+        self.wind_sound = self.new_sound("sounds/Wind.ogg",volume=0)
+        self.wind_sound.play(loops = 9999999) #9999 loops is 20 days straight. I think nobody is going to play for 20 days straight so it's basically forever eh
+        
+        if self.lift_sound != None: self.lift_sound.stop()
+        self.lift_sound = self.new_sound("sounds/ChairliftTerminal.ogg",volume=0)
+        self.lift_sound.play(loops = 9999999)#63 years about. We should be okay
+        
+        
+        self.swish_sound = self.new_sound("sounds/SkiSwish4.ogg", volume=.65*m)
+        
+        
+        self.fall_sound = self.new_sound("sounds/Fall.ogg",volume=.365*m)
+        
+        self.pole_sound_obj = self.new_sound("sounds/PoleBump1.ogg",volume=.35*m)
         
     def stop_sounds(self):
         self.wind_sound.stop()
@@ -342,7 +356,7 @@ class UI(LooiObject):
             vol = self.world.properties["momentum"] / .85
         if vol>1:vol=1
         if vol < .17: vol=.17
-        self.wind_sound.set_volume(vol)
+        self.wind_sound.set_volume(vol * self.master_volume)
         
         
         #lift
@@ -372,7 +386,7 @@ class UI(LooiObject):
                 
             
     def set_lift_vol(self, vol):
-        self.lift_vol = vol
+        self.lift_vol = vol*self.master_volume
         self.lift_sound.set_volume(self.lift_vol)
         
         
