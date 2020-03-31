@@ -116,6 +116,6 @@ class Tree(WorldObject):
     def delete(self):
         super().delete()
         
-        if self.args["remove_shadow"]: self.remove_shadow()
+        if "remove_shadow" in self.args and self.args["remove_shadow"]: self.remove_shadow()
         
         
