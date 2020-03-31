@@ -137,7 +137,7 @@ class View:
         self.vert_rot = 0
         self.speed = 4
         self.rot_spd = .001
-        self.line_of_sight = 3 #IN NUMBER OF CHUNKS (not opengl space) #the radius
+        self.line_of_sight = 2 #IN NUMBER OF CHUNKS (not opengl space) #the radius
         self.max_vert_rot = math.pi/2.3
         
 
@@ -180,6 +180,11 @@ class Chunk:
         ul_z = chunk_z * cs
         ul_x = chunk_x * cs
         s = self.world.properties["horizontal_stretch"]
+        
+        
+        
+        chunk_spanning_square = {}
+        
         
         if self.colors_changed or not isinstance(self.pan_chunk_squares, dict):
             
@@ -354,19 +359,27 @@ class Chunk:
                     
                     
                     #without trees
-                    self.pan_chunk_squares["without"].add_vertex(ul,color1254)
-                    self.pan_chunk_squares["without"].add_vertex(ur,color2365)
-                    self.pan_chunk_squares["without"].add_vertex(lr,color5689)
-                    self.pan_chunk_squares["without"].add_vertex(ll,color4587)
+                    #THIS IS JUST FANCY CODE TO MAKE THE "without" vertex handler have just one 
+                    #single quad that covers the whole chunk
+                    if scr == 0 and scc == 0:#upper left
+                        chunk_spanning_square["ul"] = (ul,color1254)
+                    if scr == side_length_in_sub_chunks-1 and scc == 0:
+                        chunk_spanning_square["ll"] = (ll,color4587)
+                    if scr == side_length_in_sub_chunks-1 and scc == side_length_in_sub_chunks-1:
+                        chunk_spanning_square["lr"] = (lr,color5689)
+                    if scr == 0 and scc == side_length_in_sub_chunks-1:
+                        chunk_spanning_square["ur"] = (ur,color2365)
                     
                     #with trees
-                    #self.pan_chunk_squares["trees"].add_vertex(ul,color1254)
-                    #self.pan_chunk_squares["trees"].add_vertex(ur,color2365)
-                    #self.pan_chunk_squares["trees"].add_vertex(lr,color5689)
-                    #self.pan_chunk_squares["trees"].add_vertex(ll,color4587)
-                    #remove those lines because the trees pan chunk squares should not contain the floor
+                    self.pan_chunk_squares["trees"].add_vertex(ul,color1254)
+                    self.pan_chunk_squares["trees"].add_vertex(ur,color2365)
+                    self.pan_chunk_squares["trees"].add_vertex(lr,color5689)
+                    self.pan_chunk_squares["trees"].add_vertex(ll,color4587)
                     
-                    """ NO SKY COVERUP NEEDED because the pan chunk squares always draw
+                    ##remove those lines because the trees pan chunk squares should not contain the floor
+                    #no, now we do need them because trees pan chunk squares now contain the MORE DETAILED slope
+                    
+                    #""" NO SKY COVERUP NEEDED because the pan chunk squares always draw
                     #add the sky coverup squares
                     def cmd(point):#short for copy move down. Takes a point (list x,y,z) and copies it and moves it down the y axis a specific amount
                         ret = list(point)
@@ -407,8 +420,16 @@ class Chunk:
                     elif scc == side_length_in_sub_chunks-1:#right side
                         sky_cover_square(ur, lr)
                     
-                    """
+                    #"""
                     
+        
+        
+            self.pan_chunk_squares["without"].add_vertex(chunk_spanning_square["ul"][0],chunk_spanning_square["ul"][1])
+            self.pan_chunk_squares["without"].add_vertex(chunk_spanning_square["ur"][0],chunk_spanning_square["ur"][1])
+            self.pan_chunk_squares["without"].add_vertex(chunk_spanning_square["lr"][0],chunk_spanning_square["lr"][1])
+            self.pan_chunk_squares["without"].add_vertex(chunk_spanning_square["ll"][0],chunk_spanning_square["ll"][1])
+        
+        
         
         #print("pcs",self.pan_chunk_squares.vertices,"colors",self.pan_chunk_squares.vertex_colors)
         if trees:
@@ -437,19 +458,19 @@ class World(LooiObject):
             "name" : "unnamed",
             #"chunk_size" : 8,
             "chunk_size" : 16,
-            "sub_chunk_squares" : 4,
+            "sub_chunk_squares" : 16,
             "width" : -1,
             "height" : -1,
             "width_chunks" : -1,
             "height_chunks" : -1,
-            "line_of_sight2" : 7,#how many chunks away before the trees start to disappear
+            "line_of_sight2" : 5,#how many chunks away before the trees start to disappear
             "line_of_sight3" : -1,#how many chunks away before no pan chunk squares are rendered
             "horizontal_stretch" : 4,
             "vertical_stretch" : .15,
             
             "world_image_pix_per_floor" : 1,
             
-            "tree_shadow_updates_per_frame" : .6,
+            "tree_shadow_updates_per_frame" : 1,
             
             "sun_angle" : 0,
             "scenery_angle" : 0,
@@ -743,7 +764,21 @@ class World(LooiObject):
         return setup_3d
     def get_setup_3d_chunk_draw(self):
         def setup_3d():
-            gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), self.view.line_of_sight*.7*self.properties["chunk_size"]*self.properties["horizontal_stretch"], constants["max_los"] )
+            #gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), self.view.line_of_sight*.7*self.properties["chunk_size"]*self.properties["horizontal_stretch"], constants["max_los"] )
+            gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), self.view.line_of_sight*.5*self.properties["chunk_size"]*self.properties["horizontal_stretch"], constants["max_los"] )
+            try:
+                glRotate(rad_to_deg(-(self.view.hor_rot-math.pi/2)), 0, 1, 0)
+                glRotate(rad_to_deg(-self.view.vert_rot), math.cos(self.view.hor_rot - math.pi/2), 0, -math.sin(self.view.hor_rot - math.pi/2))
+                glTranslate(-self.view.x, -self.view.y, -self.view.z)
+            except Exception as e:
+                pass
+        return setup_3d
+    def get_setup_3d_super_far_chunk_draw(self):
+        if self.game_ui.game_mode == "map editor":
+            return self.get_setup_3d_far()
+        def setup_3d():
+            
+            gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), self.properties["line_of_sight2"]*.5*self.properties["chunk_size"]*self.properties["horizontal_stretch"], constants["max_los"] )
             try:
                 glRotate(rad_to_deg(-(self.view.hor_rot-math.pi/2)), 0, 1, 0)
                 glRotate(rad_to_deg(-self.view.vert_rot), math.cos(self.view.hor_rot - math.pi/2), 0, -math.sin(self.view.hor_rot - math.pi/2))
@@ -1655,10 +1690,10 @@ class World(LooiObject):
         tex_vertices_draw_far = []
         tex_coords_draw_far = []
         
-        pan_chunk_vertices = [self.pan_chunk_squares["verts"]]
-        pan_chunk_colors = [self.pan_chunk_squares["colors"]]
-        
-        
+        #pan_chunk_vertices = [self.pan_chunk_squares["verts"]]
+        #pan_chunk_colors = [self.pan_chunk_squares["colors"]]
+        pan_chunk_vertices = []
+        pan_chunk_colors = []
         
         
         
@@ -1719,10 +1754,18 @@ class World(LooiObject):
         
         
         
-        
+        #FAR DRAW
         
         #CHUNK DRAW
-        if len(pan_chunk_vertices) > 0:
+        
+        if True:#draw pan chunk floors
+            glDisable(GL_ALPHA_TEST);
+            self.draw_quad_array_3d(self.pan_chunk_squares["verts"], self.pan_chunk_squares["colors"], setup_3d=self.get_setup_3d_super_far_chunk_draw())
+            glEnable(GL_ALPHA_TEST);
+            
+        glClear(GL_DEPTH_BUFFER_BIT)
+        
+        if len(pan_chunk_vertices) > 0:#draw pan chunk everything else
             glDisable(GL_ALPHA_TEST);
             pan_chunk_vertices = numpy.vstack(pan_chunk_vertices)
             pan_chunk_colors = numpy.vstack(pan_chunk_colors)
@@ -1731,8 +1774,13 @@ class World(LooiObject):
         
         glClear(GL_DEPTH_BUFFER_BIT)
         
+        #END CHUNK DRAW
         
-        #FAR DRAW
+        
+        
+        
+        
+        
         if len(vertices_draw_far) > 0:
             glDisable(GL_ALPHA_TEST);
             #first draw far stuff, then clear the depth buffer bit so close stuff can draw ontop of it
@@ -1740,6 +1788,7 @@ class World(LooiObject):
             colors_draw_far = numpy.vstack(colors_draw_far)
             self.draw_quad_array_3d(vertices_draw_far, colors_draw_far, setup_3d=self.get_setup_3d_far())
             glEnable(GL_ALPHA_TEST);
+        
         
         
         if len(tex_vertices_draw_far) > 0:
@@ -1753,7 +1802,7 @@ class World(LooiObject):
             #print("Drawing took %f secs" % (time()-_start,))###
         
         
-        
+        #END FAR DRAW
         
         glClear(GL_DEPTH_BUFFER_BIT)
         
@@ -1945,11 +1994,9 @@ class World(LooiObject):
     def reset(self, new_chunk_size = None):
         self.list_mode()
         
-        
         if new_chunk_size == None: new_chunk_size = self.properties["chunk_size"]
         old_chunk_size = self.properties["chunk_size"]
         self.properties["chunk_size"] = new_chunk_size
-        
         
         
         
@@ -1963,11 +2010,9 @@ class World(LooiObject):
                         all_contained_objects.append(obj)
                         
                         
-            
         world2 = World()
         world2.properties = dict(self.properties)
         #print("Starting init")
-        
         
         self.properties["chunk_size"] = old_chunk_size
         world2.init(self.properties["name"], self.properties["width"], self.properties["height"], view=self.view, elevation_function=lambda z,x:self.get_elevation(z,x),natural_bumps=False)
@@ -1976,7 +2021,6 @@ class World(LooiObject):
         
         #print("Finishing init")
         
-        
         self.properties = world2.properties
         
         self.quads = world2.quads
@@ -1984,27 +2028,21 @@ class World(LooiObject):
         self.shadow_map = world2.shadow_map
         
         self.disable_remove_fixed_quads = True#because all the objects' quads have already been removed because we cleaned out everything, so if they try to remove again it'll just error
-        
         world_operations.natural_bumps(self, 0,0,self.get_height_points(), self.get_width_points(), prog_bar=True)#re add the natural bumps here
-        
-        """
-        num_objs = len(all_contained_objects)
-        loading_update = int(num_objs/150)
-        if loading_update < 1:loading_update = 1
-        i=0
-        loading.progress_bar("Loading objects...")
-        for obj in all_contained_objects: 
-            
-            obj.reset()
-            
-            if i%loading_update == 0:
-                loading.update(i/num_objs*100)
-            i+=1
-        loading.update(100)
-        """
+
         self.reset_objects(all_contained_objects, trees_dont_remove_shadow=True)
         
-        for l in list(lift.active_lifts): l.reset()
+        
+        
+        
+        lifts_reset = []#make sure no duplicate lifts get away!
+        
+        for l in list(lift.active_lifts): 
+            if ((l.z1,l.x1,l.z2,l.x2) not in lifts_reset) and ((l.z2,l.x2,l.z1,l.x1) not in lifts_reset):
+                l.reset()
+                lifts_reset.append((l.z1,l.x1,l.z2,l.x2))
+            else:
+                l.delete()
         
         
         self.disable_remove_fixed_quads = False

@@ -99,6 +99,18 @@ class Lift(LooiObject, Selectable):
         self.x1 = chairlift_array[1]
         self.z2 = chairlift_array[3]
         self.x2 = chairlift_array[4]
+        
+        #2nd guard against duplicates
+        lifts_ontop_of_me = []
+        for obj in self.world.quads[self.z1][self.x1].containedObjects + self.world.quads[self.z2][self.x2].containedObjects:
+            if isinstance(obj, Terminal):
+                if obj.chairlift in lifts_ontop_of_me:
+                    #oh no! this probably a duplicate
+                    #Get. Out. Of. Here.
+                    self.deactivate()
+                    return
+                lifts_ontop_of_me.append(obj.chairlift)
+        
         self.center_x = (self.x1+self.x2)/2
         self.center_z = (self.z1+self.z2)/2
         self.distance = ( (self.x1-self.x2)**2 + (self.z1-self.z2)**2 )**.5
@@ -346,9 +358,8 @@ class Lift(LooiObject, Selectable):
                     
         if ( 
             (self.world.view.x/self.world.properties["horizontal_stretch"]-self.center_x)**2 + 
-            (self.world.view.z/self.world.properties["horizontal_stretch"]-self.center_z)**2 )**.5 > 5 + self.distance/2 + self.world.view.line_of_sight*self.world.properties["chunk_size"]:
+            (self.world.view.z/self.world.properties["horizontal_stretch"]-self.center_z)**2 )**.5 > 5 + self.distance/2 + self.world.view.line_of_sight*1.4*self.world.properties["chunk_size"]:
             return
-        
         
         
         
@@ -396,33 +407,39 @@ class Lift(LooiObject, Selectable):
                     #execute the chair drawing
                     #if self.world.in_los(chair_i_position[2], chair_i_position[0], scaled=True):
                     
-                    #now, you dont have to be in the line of sight, but you do have to be in front of the player
-                    #either in front of play, or super duper close
-                    if normal.angle_distance(get_angle(self.world.view.z,self.world.view.x,chair_i_position[2],chair_i_position[0]), self.world.view.hor_rot) < math.pi/4 or (((chair_i_position[0]-self.world.view.x)**2 + (chair_i_position[2]-self.world.view.z)**2)**.5 < 15):
-                        if self.player_riding == i:
-                            model = self.chair_riding_model()
-                            horizontal_rotate_model_around_origin(model, chair_i_angle)
-                            move_model(model, chair_i_position[0], chair_i_position[1], chair_i_position[2])
-                            
-                            add_model_to_world_mobile(model, self.world)
-                        elif self.world.is_close(chair_i_position[2], chair_i_position[0], constants["full_chair_model_distance"]):
-                            model = self.chair_model()
-                            horizontal_rotate_model_around_origin(model, chair_i_angle)
-                            move_model(model, chair_i_position[0], chair_i_position[1], chair_i_position[2])
-                        
-                            add_model_to_world_mobile(model, self.world)
-                        elif self.world.is_close(chair_i_position[2], chair_i_position[0], constants["blurry_chair_model_distance"]):
-                            model = self.blurry_chair_model()
-                            horizontal_rotate_model_around_origin(model, chair_i_angle)
-                            move_model(model, chair_i_position[0], chair_i_position[1], chair_i_position[2])
-                        
-                            add_model_to_world_mobile(model, self.world)
-                        elif self.world.is_close(chair_i_position[2], chair_i_position[0], constants["super_blurry_chair_model_distance"]):
-                            model = self.super_blurry_chair_model()
-                            horizontal_rotate_model_around_origin(model, chair_i_angle)
-                            move_model(model, chair_i_position[0], chair_i_position[1], chair_i_position[2])
-                        
-                            add_model_to_world_mobile(model, self.world)
+                    hs = self.world.properties["horizontal_stretch"]
+                    chunk_z, chunk_x = self.world.convert_to_chunk_coords(chair_i_position[2]/hs, chair_i_position[0]/hs)
+                    if self.world.valid_chunk(chunk_z, chunk_x):
+                        if self.world.chunk_load_grid[chunk_z][chunk_x] >= 1:
+                    
+                            '''#now, you dont have to be in the line of sight, but you do have to be in front of the player'''
+                            #Yes you do have to be in line of sight, and you have to be in front of player.
+                            #either in front of play, or super duper close
+                            if normal.angle_distance(get_angle(self.world.view.z,self.world.view.x,chair_i_position[2],chair_i_position[0]), self.world.view.hor_rot) < math.pi/4 or (((chair_i_position[0]-self.world.view.x)**2 + (chair_i_position[2]-self.world.view.z)**2)**.5 < 15):
+                                if self.player_riding == i:
+                                    model = self.chair_riding_model()
+                                    horizontal_rotate_model_around_origin(model, chair_i_angle)
+                                    move_model(model, chair_i_position[0], chair_i_position[1], chair_i_position[2])
+                                    
+                                    add_model_to_world_mobile(model, self.world)
+                                elif self.world.is_close(chair_i_position[2], chair_i_position[0], constants["full_chair_model_distance"]):
+                                    model = self.chair_model()
+                                    horizontal_rotate_model_around_origin(model, chair_i_angle)
+                                    move_model(model, chair_i_position[0], chair_i_position[1], chair_i_position[2])
+                                
+                                    add_model_to_world_mobile(model, self.world)
+                                elif self.world.is_close(chair_i_position[2], chair_i_position[0], constants["blurry_chair_model_distance"]):
+                                    model = self.blurry_chair_model()
+                                    horizontal_rotate_model_around_origin(model, chair_i_angle)
+                                    move_model(model, chair_i_position[0], chair_i_position[1], chair_i_position[2])
+                                
+                                    add_model_to_world_mobile(model, self.world)
+                                elif self.world.is_close(chair_i_position[2], chair_i_position[0], constants["super_blurry_chair_model_distance"]):
+                                    model = self.super_blurry_chair_model()
+                                    horizontal_rotate_model_around_origin(model, chair_i_angle)
+                                    move_model(model, chair_i_position[0], chair_i_position[1], chair_i_position[2])
+                                
+                                    add_model_to_world_mobile(model, self.world)
                     
                     if not self.broken:
                         if self.world.game_ui.fast_lifts:
@@ -680,7 +697,7 @@ class Terminal:
             point[1] += self.real_z*shadow_map.D
         return shadow[0][1],shadow[0][0],shadow[1][1],shadow[1][0],shadow[2][1],shadow[2][0],shadow[3][1],shadow[3][0]
     def delete(self):
-        self.remove_shadow
+        self.remove_shadow()
         rm_model_from_world_fixed(self.vhkeys, self.chairlift.world, int(self.z), int(self.x), self)
 
 

@@ -96,11 +96,15 @@ class Menu(LooiObject):
         self.btn20.set_layer(-2)
         self.add(self.btn20)
         
-        self.btn6 = Button(x = 520, y=600, width=70, height=70, font_size=10, text="", image=image("Select.png"), action=Select, action_parameter=self)
+        self.btn6 = Button(x = 520, y=680, width=70, height=70, font_size=10, text="", image=image("Select.png"), action=Select, action_parameter=self)
         self.btn6.set_layer(-2)
         self.add(self.btn6)
         
-        self.btn69 = Button(x = 600, y=600, width=70, height=70, font_size=10, text="", image=image("textures/Portal Icon.png"), action=PlacePortal, action_parameter=self)
+        self.btn96 = Button(x = 600, y=680, width=70, height=70, font_size=10, text="", image=image("Reset.png"), action=Reset, action_parameter=self)
+        self.btn96.set_layer(-2)
+        self.add(self.btn96)
+        
+        self.btn69 = Button(x = 520, y=600, width=70, height=70, font_size=10, text="", image=image("textures/Portal Icon.png"), action=PlacePortal, action_parameter=self)
         self.btn69.set_layer(-2)
         self.add(self.btn69)
         
@@ -915,7 +919,32 @@ class Select(TwoPointEdit):
                 window.close()
         else:
             sg.Popup("Cannot select more than 70 objects. Try again.")
-
+class Reset(TwoPointEdit):
+    def __init__(self, menu):
+        super().__init__(menu)
+    def execute(self, p1, p2):
+        z1 = p1[0]
+        x1 = p1[1]
+        
+        z2 = p2[0]
+        x2 = p2[1]
+        
+        midz = (z1+z2)/2
+        midx = (x1+x2)/2
+        
+        radius = ((midz-z1)**2 + (midx-x1)**2)**.5
+        
+        
+        selectables = []
+        for z in range(int(midz-radius), int(midz+radius)+1):
+            for x in range(int(midx-radius), int(midx+radius)+1):
+                if ((z-midz)**2 + (x-midx)**2)**.5 <= radius and self.world().valid_floor(z, x):
+                    objs = self.world().quads[z][x].containedObjects
+                    for obj in objs:
+                        if isinstance(obj, Tree):
+                            obj.reset()
+        self.world().game_ui.restart_shadow_search = True
+        
 """
 terrain edits
 """

@@ -126,7 +126,7 @@ class UI(LooiObject):
         
         self.fall_sound = self.new_sound("sounds/Fall.ogg",volume=.365)
         
-        self.pole_sound_obj = self.new_sound("sounds/PoleBump1.ogg",volume=.4)
+        self.pole_sound_obj = self.new_sound("sounds/PoleBump1.ogg",volume=.35)
         
         self.draw_black_screen = False
         self.die_fall_speed = 0
@@ -441,8 +441,6 @@ class UI(LooiObject):
             i += 1
     def step(self):
         
-        
-        
         self.do_shadow_updates()
         """
         if self.key("v", "pressed"):
@@ -623,6 +621,7 @@ class UI(LooiObject):
             
             return (scale(lr),scale(ur),scale(ll))
     def fall(self):
+        fall_quad_color = [.5,.5,.5]
         if self.falling==1 or self.falling==2:
             self.jumping = 0
             if self.world.properties["health"] > 0:
@@ -655,21 +654,56 @@ class UI(LooiObject):
                     self.world.view.y = self.original_pos[1]*(1-t) + t*(self.world.get_elevation_continuous(destination_z/hs, destination_x/hs)*vs + .18)
                     self.world.view.vert_rot = self.original_pos[4] + t*(-math.pi/2 - self.original_pos[4])
                     self.world.view.hor_rot = self.original_pos[3]
+                    
+                    self.world.add_mobile_quad(
+                    
+                    
+                                                [self.world.view.x-150,self.world.view.y-150,self.world.view.z-150],
+                                                [self.world.view.x+150,self.world.view.y-150,self.world.view.z-150],
+                                                [self.world.view.x+150,self.world.view.y-150,self.world.view.z+150],
+                                                [self.world.view.x-150,self.world.view.y-150,self.world.view.z+150],
+                                                fall_quad_color)
                 elif self.fall_clock <= 120:
                     self.world.view.hor_rot = self.original_pos[3]
                     self.world.view.vert_rot = -math.pi/2
+                    
                     self.world.add_mobile_quad(
-                                                [self.world.view.x-100,self.world.view.y-20,self.world.view.z-100],
-                                                [self.world.view.x+100,self.world.view.y-20,self.world.view.z-100],
-                                                [self.world.view.x+100,self.world.view.y-20,self.world.view.z+100],
-                                                [self.world.view.x-100,self.world.view.y-20,self.world.view.z+100],
-                                                [.5,0,0])
+                    
+                    
+                                                [self.world.view.x-150,self.world.view.y-150,self.world.view.z-150],
+                                                [self.world.view.x+150,self.world.view.y-150,self.world.view.z-150],
+                                                [self.world.view.x+150,self.world.view.y-150,self.world.view.z+150],
+                                                [self.world.view.x-150,self.world.view.y-150,self.world.view.z+150],
+                                                fall_quad_color)
+                        
+                                
+                    #self.draw_quad_3d(-100,-100,-20, 100,-100,-20, 100,100,-20, -100,100,-20, Color(.5,0,0))
+                    #self.draw_quad_3d(-1000,-20,-1000, 1000,-20,-1000, 1000,-20,1000, -1000,-20,1000, Color(.5,0,0))
+                    #self.draw_rect(0,0,self.get_my_window().get_internal_size()[0],self.get_my_window().get_internal_size()[0], Color(.5,0,0))
                 elif self.fall_clock == 121:
                     self.original_pos = (self.world.view.x,self.world.view.y,self.world.view.z,self.world.view.hor_rot,self.world.view.vert_rot)
-                elif self.fall_clock < 180:
-                    t = (self.fall_clock-120)/(180-120)
+                    self.world.add_mobile_quad(
+                    
+                    
+                                                [self.world.view.x-150,self.world.view.y-150,self.world.view.z-150],
+                                                [self.world.view.x+150,self.world.view.y-150,self.world.view.z-150],
+                                                [self.world.view.x+150,self.world.view.y-150,self.world.view.z+150],
+                                                [self.world.view.x-150,self.world.view.y-150,self.world.view.z+150],
+                                                fall_quad_color)
+                elif self.fall_clock < 150:
+                    
+                    self.world.add_mobile_quad(
+                    
+                    
+                                                [self.world.view.x-150,self.world.view.y-150,self.world.view.z-150],
+                                                [self.world.view.x+150,self.world.view.y-150,self.world.view.z-150],
+                                                [self.world.view.x+150,self.world.view.y-150,self.world.view.z+150],
+                                                [self.world.view.x-150,self.world.view.y-150,self.world.view.z+150],
+                                                fall_quad_color)
+                    
+                    t = (self.fall_clock-120)/(150-120)
                     self.world.view.y = self.original_pos[1] + t*(self.world.properties["player_height"]-.1)
-                elif self.fall_clock == 180:
+                elif self.fall_clock == 150:
                     self.falling=False
                     self.fall_clock = 0
                     self.stop_go = False
