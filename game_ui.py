@@ -27,7 +27,7 @@ from util import is_a_left_of_b
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-
+from snow_particle import SnowParticle
 from constants import x as constants
 
 
@@ -454,6 +454,10 @@ class UI(LooiObject):
             self.shadow_update_index += 1
             i += 1
     def step(self):
+        
+        
+        
+        
         
         self.do_shadow_updates()
         """
@@ -1108,25 +1112,29 @@ class UI(LooiObject):
                             self.swish_sound.play(fade_ms=500)
                             self.swish_timer = 40
                 if self.mouse("right","down"):
-                    """
-                    if resistance > math.pi/2 or equivalent_floor_slope < math.pi/10:
-                        break_factor = 1
-                    else:
-                        break_factor = resistance/(math.pi/2)
-                    self.world.properties["momentum"] -= break_factor * .03
-                    """
                     if resistance > math.pi/2 or equivalent_floor_slope < math.pi/10:
                         break_factor = 1
                     else:
                         break_factor = resistance/(math.pi/2) 
-                    if break_factor < .3: break_factor=0
+                    if break_factor < .3: 
+                        break_factor=0
+                    """
+                    else:
+                        if self.world.properties["momentum"] > .35:
+                            for i in range(5):
+                                dist_from_player = random()*1.2#how far along the ski it spawns
+                                #SnowParticle(self.world, self.world.view.x + dist_from_player*math.cos(self.world.view.hor_rot), self.world.view.y-self.world.properties["player_height"], self.world.view.z - dist_from_player*math.sin(self.world.view.hor_rot), self.world.properties["momentum"]*2.5+(1.7)*random(), floor_hr+random()*math.pi/2-math.pi/4, .2*random(),despawn_chance=0)
+                                #SnowParticle(self.world, self.world.view.x + dist_from_player*math.cos(self.world.view.hor_rot), self.world.view.y-self.world.properties["player_height"], self.world.view.z - dist_from_player*math.sin(self.world.view.hor_rot), self.world.properties["momentum"]*2.5+(1.7)*random(), self.world.view.hor_rot + random()*math.pi/3-math.pi/6, .07*random(),despawn_chance=0)
+                    """
                     self.world.properties["momentum"] /= break_factor*.04 + 1#
                 
                 #momentum direction
                 self.world.properties["momentum_direction"] = self.world.properties["ski_direction"]
                 
                 
-                
+                #make snow particles
+                dist_from_player = 1.2#how far along the ski it spawns
+                SnowParticle(self.world, random()-.5 + self.world.view.x + dist_from_player*math.cos(self.world.view.hor_rot), self.world.view.y-self.world.properties["player_height"], random()-.5 + self.world.view.z - dist_from_player*math.sin(self.world.view.hor_rot), self.world.properties["momentum"]+random()*.3, self.world.view.hor_rot + 0*random()*math.pi/10-math.pi/20, .003+.001*random(),despawn_chance=0)
                 
                 
                 #no going backwards
