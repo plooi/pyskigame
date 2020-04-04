@@ -92,11 +92,11 @@ def tree_design_1(shade=.8,scale=1.4, height=10):
     t2 = trunk_width/2
     
     
-    if shade < .75:
+    if shade < .4:
         tex="PineTexture1"
-    elif shade < .83:
+    elif shade < .55:
         tex = "PineTexture2"
-    elif shade < .91:
+    elif shade < .73:
         tex = "PineTexture3"
     else:
         tex="PineTexture4"
