@@ -1727,7 +1727,22 @@ class World(LooiObject):
         #print("drawing took " + str(time()-start) + " seconds")
         #print("drew %d vertices"%(len(tex_vertices_draw)+len(vertices_draw)+len(tex_vertices_draw_far)+len(vertices_draw_far),))    
         
-            
+        """
+        glClear(GL_DEPTH_BUFFER_BIT)
+        glEnable(GL_BLEND)
+        glDisable(GL_ALPHA_TEST)
+        
+        shade = self.get_proper_floor_color(int(self.view.z/self.properties["horizontal_stretch"]),int(self.view.x/self.properties["horizontal_stretch"]))[0]
+        
+        #self.draw_rect(0,0,self.get_my_window().get_internal_size()[0],self.get_my_window().get_internal_size()[1],Color(1,.5,.3,(1-shade)*.15))
+        #self.draw_rect(0,0,self.get_my_window().get_internal_size()[0],self.get_my_window().get_internal_size()[1],Color(1,.7,0,(1-shade)*.044))
+        #self.draw_rect(0,0,self.get_my_window().get_internal_size()[0],self.get_my_window().get_internal_size()[1],Color(1,.85,.5,(1-shade)*.15))
+        self.draw_rect(0,0,self.get_my_window().get_internal_size()[0],self.get_my_window().get_internal_size()[1],Color(1,.9,.7,(1-shade)*.25))
+        
+        
+        glEnable(GL_ALPHA_TEST)
+        glDisable(GL_BLEND)
+        """
         
         return#######################
     def draw_tex(self, vertices, texture_coords, setup_3d):
