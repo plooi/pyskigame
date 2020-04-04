@@ -84,7 +84,7 @@ for blend in range(blends):
 '''
 
 #This is the NEW floor textures that are a bit blue
-'''
+
 name = "./3d_textures/MinecraftSnow"
 extension = "png"
 for blend in range(blends):
@@ -163,7 +163,7 @@ for blend in range(blends):
         img.save("./3d_textures/IceTexture-lighting-" + str(target) + "_"*blend + "." + extension)
         print(target,blend)
 
-
+'''
 
 
 """

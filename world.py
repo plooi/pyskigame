@@ -31,81 +31,13 @@ from time import time
 from lift import Pole
 import lift
 import os
+from shading import *
 
 from shadow_map import ShadowMap
 
 
-#improves performance. 
-def conv_155_255(x):
-    if x > 1 or x < 0: raise Exception()
-    x = int(x*63)*4+3
-    if x < 155:
-        x = 155
-    if x >= 255:
-        x = 251#just please don't return the white square
-    return x
-    
-    
-"""
-def conv_155_255(x):
-    if x > 1 or x < 0: raise Exception()
-    lighting = x * 255
-    def abs(x): return x if x >= 0 else -x
-    closest = None
-    closest_distance = 999999
-    for key in arr_155_255:
-        distance = abs(key-lighting)
-        if distance < closest_distance:
-            closest = key
-            closest_distance = distance
-    
-    return closest
-"""
 
 
-arr_55_255 = [x for x in range(55, 255, 5)]
-arr_55_255.reverse()
-
-def conv_55_255(x):
-    if x > 1 or x < 0: raise Exception()
-    lighting = x * 255
-    def abs(x): return x if x >= 0 else -x
-    closest = None
-    closest_distance = 999999
-    for key in arr_55_255:
-        distance = abs(key-lighting)
-        if distance < closest_distance:
-            closest = key
-            closest_distance = distance
-    
-    return closest
-
-ice_textures = {}
-ice_textures_keys = []
-"""
-for blend in range(1):
-    ice_textures[blend] = {}
-    for target in range(55, 255, 5):
-        ice_textures[blend][target] = image("./3d_textures/IceTexture-lighting-"+str(target)+"_"*blend+".png")
-        if target not in ice_textures_keys:
-            ice_textures_keys.append(target)
-            
-
-ice_textures_keys.reverse()
-"""
-    
-def get_ice_texture(lighting):
-    lighting = lighting * 255
-    def abs(x): return x if x >= 0 else -x
-    closest = None
-    closest_distance = 999999
-    for key in ice_textures_keys:
-        distance = abs(key-lighting)
-        if distance < closest_distance:
-            closest = key
-            closest_distance = distance
-    
-    return ice_textures[0][closest]
 
 
 
@@ -188,8 +120,6 @@ class Chunk:
         
         if self.colors_changed or not isinstance(self.pan_chunk_squares, dict):
             
-        
-        
             self.colors_changed=False
             side_length_in_sub_chunks = int(sub_chunks**.5)#how many sub chunks does this chunk have in each row?
             sub_chunk_side_length = int(cs/side_length_in_sub_chunks)#how many floors does each sub chunk have on each row?
@@ -256,10 +186,12 @@ class Chunk:
                             vr = -vr
                             hr = hr + math.pi
                             
-                        ret = self.world.calculate_floor_color(hr, vr)
-                        #ret[2]*=1.065
-                        ret[2] += -(((ret[2]-155/255)/(256/255-155/255)-.5)*2-1)*7/255#THIS IS THE FORMULA FOR BLUE (blue)(Blue) shading
-                        if ret[2] > 1: ret[2] = 1#make it blue
+                        shade = self.world.calculate_floor_color_single(hr, vr)
+                        shade = conv_87_255(shade)
+                        color = apply_color(shade,scale="0-1")
+                        
+                        ret = color
+                            
                         return ret
                     
                     
@@ -1184,9 +1116,9 @@ class World(LooiObject):
         #floor = self.quads[floor_z][floor_x]
         
         if self.is_ice(floor_z, floor_x):
-            self.set_floor_texture(floor_z, floor_x, "IceTexture-lighting-%d" % (conv_155_255(shade),))
+            self.set_floor_texture(floor_z, floor_x, "IceTexture-lighting-%d" % (conv_87_255(shade),))
         else:
-            self.set_floor_texture(floor_z, floor_x, "MinecraftSnow-lighting-%d" % (conv_155_255(shade),))
+            self.set_floor_texture(floor_z, floor_x, "MinecraftSnow-lighting-%d" % (conv_87_255(shade),))
     
     
     
@@ -1253,43 +1185,8 @@ class World(LooiObject):
     optimized for speed
     """
     def calculate_floor_color_single(self, hr, vr):
-        def stretch(_0_to_1,min, max):
-            return _0_to_1 * (max-min)+min
-        sun = self.properties["sun_angle"]
-        angle_distance_from_sun = normal.angle_distance(hr, sun)/math.pi
-        inverse_angle_distance_from_sun = 1 - angle_distance_from_sun
-        inverse_angle_distance_from_sun_m1_to_p1 = inverse_angle_distance_from_sun*2-1
+        return shade_hill(hr, vr, self.properties["sun_angle"])
         
-        vertical_rotation_0_to_1 = vr/(math.pi/2)
-        inverse_vertical_rotation_0_to_1 = 1 - vertical_rotation_0_to_1
-        """
-        neutral_floor_color = .8
-        extremity = .7
-        """
-        neutral_floor_color = .5
-        #extremity = .5
-        #extremity = 1.5
-        extremity = 2
-        
-        inverse_vertical_rotation_0_to_1 = (util.root(2,inverse_vertical_rotation_0_to_1*2-1)+1)/2
-        
-        color_value = neutral_floor_color + inverse_angle_distance_from_sun_m1_to_p1*inverse_vertical_rotation_0_to_1*extremity#original shader that doesn't give enough contrast
-        #color_value = neutral_floor_color + util.root(2, inverse_angle_distance_from_sun_m1_to_p1)*(inverse_vertical_rotation_0_to_1)**.5*extremity#I fell in love with this shader. extremity .5
-        #another thing that looks cool is doing extremity 2.5. But I feel like the contrast is too much there. it looks like fricking mars
-
-        
-        if color_value > 1: color_value = 1
-        if color_value < 0: color_value = 0
-        
-        
-        
-        color_value = color_value**.5
-        #color_value = stretch(color_value, .6, 1)
-        #color_value = stretch(color_value, .54, 1)
-        color_value = stretch(color_value, .5, 1)
-        #color_value = stretch(color_value, .6, 1)
-        
-        return color_value
     def is_ice(self, z, x, hr=None, vr=None):
         return False#ICE DISABLED
         if not self.valid_floor(z, x):

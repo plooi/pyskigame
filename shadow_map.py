@@ -8,7 +8,7 @@ from time import time
 import math
 from normal import angle_distance
 
-
+from shading import *
 
 
 #triangle functions
@@ -58,35 +58,12 @@ class ShadowMap:
         hs = self.world.properties["horizontal_stretch"]
         try:
             
-            color = self.world.get_proper_floor_color(int(z/D/hs),int(x/D/hs))
+            shade = self.world.get_proper_floor_color(int(z/D/hs),int(x/D/hs))[0]
         except:
             print("bad",z,x)
-            color = [.8,.8,.8]
+            shade = [.8,.8,.8]
         
-        #color[2] += -(((color[2]-155/255)/(256/255-155/255)-.5)*2-1)*7/255
-        #                    |
-        #                    |
-        #                    |
-        #                    V
-        color[2] -= color[2]/7.14 - .14
-        
-        
-        #color[0] -= .25
-        #color[1] -= .25
-        #color[2] -= .25
-        #color[0] *= .73
-        #color[1] *= .73
-        #color[2] *= .73
-        color[0] *= .68
-        color[1] *= .68
-        color[2] *= .68
-        
-        if color[0] < .45: color[0] = .45
-        if color[0] > 1: color[0] = 1
-        if color[1] < .45: color[1] = .45
-        if color[1] > 1: color[1] = 1
-        if color[2] < .5: color[2] = .5
-        if color[2] > 1: color[2] = 1
+        color = hill_shade_to_shadow_color(shade)
         
         
         self.shadow_color_memo[z,x] = color
