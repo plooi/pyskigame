@@ -27,13 +27,10 @@ def apply_color(shade, scale="0-255"):
     b = shade
     
     
-    p = shade
-    if p < 110: p = 110
+    b +=5
+    r -= 5
     
-    g += -(((p-87)/(256-87)-.5)*2)*8#make it a bit orange instead of pure yellow :)
-    b += -(((p-87)/(256-87)-.5)*2-.6)*22#for the yellow-blue transition
-    #b += -(((p-87)/(256-87)-.5)*2-.6)*28#for the yellow-blue transition
-    r -= (255-p)*.04
+    
     
     if r > 255: r = 255
     if r < 0: r = 0
