@@ -1,6 +1,6 @@
 import normal
 import math
-
+def abs(x):return x if x >= 0 else -x
 
 #maps 0-1 to 87-255 in intervals of 4
 #what is the point of this u may ask?
@@ -27,10 +27,20 @@ def apply_color(shade, scale="0-255"):
     b = shade
     
     
-    b +=5
-    r -= 5
     
     
+    """
+    b += 50 * ((255-shade)/255)**2
+    r -= 15 * ((255-shade)/255)**2
+    """
+    """
+    b -= 20 * ((shade)/255)**3
+    b += 42 * ((255-shade)/255)**2
+    r -= 15 * ((255-shade)/255)**2
+    """
+    b -= 20 * ((shade)/255)**3
+    b += 42 * ((255-shade)/255)**3
+    r -= 15 * ((255-shade)/255)**2
     
     if r > 255: r = 255
     if r < 0: r = 0
