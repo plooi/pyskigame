@@ -401,6 +401,7 @@ def settings(menu):
                 menu.ui.world.properties["horizontal_stretch"] = float(new_settings["Horizontal Stretch*"])
                 menu.ui.world.reset(new_chunk_size = int(new_settings["Chunk Size*"]), new_vertical_stretch=float(new_settings["Vertical Stretch*"]))
                 world_save.write(menu.ui.world)
+                #print("save done, game ui is ",menu.ui.world.game_ui)
                 
                 
         except Exception as e:

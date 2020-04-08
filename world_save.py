@@ -1,4 +1,5 @@
 import world as world_module
+
 from pylooiengine import *
 import pylooiengine
 from os import path
@@ -164,7 +165,7 @@ For map editor worlds
 """
 def read(path, new_version = True):
     
-    
+    import gworld
     
     if new_version:
         if "bin" in os.listdir(path):
@@ -177,6 +178,10 @@ def read(path, new_version = True):
             #unpickle everything
             f = open(path+"/bin", "rb")
             the_world = pickle.load(f)
+            
+            
+            
+            
             f.close()
             
             if not hasattr(the_world, "shadow_map"):
@@ -210,7 +215,7 @@ def read(path, new_version = True):
             set_active_variable_false(the_world)
 
             #ensure that this world has all the needed properties, for backward compatibility reasons
-            example_world = world_module.World()
+            example_world = gworld.GWorld()#world_module.World()
             for key in example_world.properties:
                 if key not in the_world.properties:
                     the_world.properties[key] = example_world.properties[key]
@@ -224,7 +229,8 @@ def read(path, new_version = True):
             
             if not hasattr(the_world, "pan_chunk_squares_changed"):
                 the_world.pan_chunk_squares_changed = True
-            
+            if isinstance(the_world, world_module.World):
+                the_world = the_world.convert_to_gworld()
                 
             #end backward compatibility code
             return the_world

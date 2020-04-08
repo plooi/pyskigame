@@ -84,8 +84,8 @@ class Quad:
         self.containedObjects = []#keeps track of all 3d objects that are related to this quadrilateral (like trees)
 class Chunk:
     def __init__(self, world):
-        self.vh = VertexHandler(3)#vertex handler to store all non-moving drawables in this chunk
-        self.tvh = texture.new_texture_handler(initial_capacity=world.properties["chunk_size"]**2+1)
+        self.vh = VertexHandler(3,initial_capacity=world.properties["chunk_size"]**2+1)#vertex handler to store all non-moving drawables in this chunk
+        self.tvh = texture.new_texture_handler(initial_capacity=10)
         
         
         self.world = world
@@ -369,7 +369,7 @@ class Chunk:
         else:
             return self.pan_chunk_squares["without"]
         
-        
+
 class World(LooiObject):
     
 ###################################
@@ -1704,6 +1704,7 @@ class World(LooiObject):
         glClear(GL_DEPTH_BUFFER_BIT)
         
         #NEAR DRAW
+        #print("vertices",len(vertices_draw))
         if len(vertices_draw) > 0:
             vertices_draw = numpy.vstack(tuple(vertices_draw))
             colors_draw = numpy.vstack(tuple(colors_draw))
@@ -1903,6 +1904,56 @@ class World(LooiObject):
             ray[0] += step_size*self.properties["horizontal_stretch"] * math.cos(hr) * math.cos(vr)
             ray[2] += step_size*self.properties["horizontal_stretch"] * -math.sin(hr) * math.cos(vr)
             ray[1] += step_size*self.properties["horizontal_stretch"] * math.sin(vr)
+    def convert_to_gworld(self):
+        self.list_mode()
+        
+        
+        
+        
+        
+        
+        all_contained_objects = []
+        for z in range(self.get_height_floors()):
+            for x in range(self.get_width_floors()):
+                for obj in self.quads[z][x].containedObjects:
+                    if isinstance(obj, WorldObject) and not isinstance(obj, NaturalBump):#copy everything but the natural bumps and lifts
+                        all_contained_objects.append(obj)
+                        
+                        
+                        
+        import gworld
+        world2 = gworld.GWorld()
+        world2.properties = dict(self.properties)
+        #print("Starting init")
+        
+        world2.init(self.properties["name"], self.properties["width"], self.properties["height"], view=self.view, elevation_function=lambda z,x:self.get_elevation(z,x),natural_bumps=False)
+
+        
+        
+        world2.disable_remove_fixed_quads = True#because all the objects' quads have already been removed because we cleaned out everything, so if they try to remove again it'll just error
+        world_operations.natural_bumps(world2, 0,0,world2.get_height_points(), world2.get_width_points(), prog_bar=True)#re add the natural bumps here
+
+        world2.reset_objects(all_contained_objects, trees_dont_remove_shadow=True)
+        
+        
+        
+        
+        lifts_reset = []#make sure no duplicate lifts get away!
+        
+        for l in list(lift.active_lifts): 
+            if ((l.z1,l.x1,l.z2,l.x2) not in lifts_reset) and ((l.z2,l.x2,l.z1,l.x1) not in lifts_reset):
+                l.world=world2
+                l.reset()
+                lifts_reset.append((l.z1,l.x1,l.z2,l.x2))
+            else:
+                l.delete()
+        
+        
+        world2.disable_remove_fixed_quads = False
+        
+        world2.pan_chunk_squares_changed = True
+        
+        return world2
     def reset(self, new_chunk_size = None, new_vertical_stretch = None):
         self.list_mode()
         
@@ -1929,8 +1980,8 @@ class World(LooiObject):
                         
                         
                         
-                        
-        world2 = World()
+        import gworld
+        world2 = gworld.GWorld()
         world2.properties = dict(self.properties)
         #print("Starting init")
         
@@ -1990,6 +2041,7 @@ class World(LooiObject):
         trees = []
         if trees_dont_remove_shadow:    
             for obj in objects_list:
+                obj.args["world"] = self
                 if isinstance(obj,Tree): 
                     obj.args["remove_shadow"]=False
                     newobj = obj.reset()

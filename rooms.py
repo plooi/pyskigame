@@ -4,6 +4,7 @@ import pylooiengine
 import pygame
 import easygui
 import world
+import gworld
 from lift import Lift
 
 from model_3d import *
@@ -279,7 +280,7 @@ def blank_world():
             break
             
     try:
-        the_world = world.World().init(values[0], int(values[1]), int(values[2]))#, elevation_function=lambda z,x:sin(x/30)*300+sin(z/15)*150
+        the_world = gworld.GWorld().init(values[0], int(values[1]), int(values[2]))#, elevation_function=lambda z,x:sin(x/30)*300+sin(z/15)*150
         world_save.write(the_world)
     except Exception as e:
         sleep(1)
@@ -406,7 +407,8 @@ def data_file_world():
     
     
     try:
-        the_world = world.World().init_csv(values[0], "./topographic/" + choice, tree_chance=tree_density)
+        #the_world = world.World().init_csv(values[0], "./topographic/" + choice, tree_chance=tree_density)
+        the_world = gworld.GWorld().init_csv(values[0], "./topographic/" + choice, tree_chance=tree_density)
         world_save.write(the_world)
     except Exception as e:
         sleep(1)
