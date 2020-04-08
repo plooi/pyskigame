@@ -489,6 +489,9 @@ class World(LooiObject):
         self.disable_remove_fixed_quads = False
         
         self.shadow_map = ShadowMap(self)
+        
+        self.sparkle_buffer = None
+        self.last_sparkle_spacing = -999,-999
     
     """
     init_csv
@@ -663,6 +666,7 @@ class World(LooiObject):
         if prog_bar: loading.update(100)
         if natural_bumps:
             world_operations.natural_bumps(self, 0,0,self.get_height_points(), self.get_width_points(), prog_bar=True)
+        
         
         
         return self
@@ -1272,6 +1276,130 @@ class World(LooiObject):
 ###################################
 #STEP AND PAINT STUFF
 ###################################
+    def draw_sparkles(self):
+        spacing = 2.5
+        
+        z_c = int(self.view.z/spacing)*spacing
+        x_c = int(self.view.x/spacing)*spacing
+        
+        
+        if (z_c,x_c) != self.last_sparkle_spacing:
+            self.last_sparkle_spacing = (z_c,x_c)
+            self.sparkle_buffer = VertexHandler(3),VertexHandler(3)
+            self.sparkle_buffer[0].list_mode()
+            self.sparkle_buffer[1].list_mode()
+        
+        
+        
+            
+            
+            try:
+                shade_at_player = self.get_proper_floor_color(int(self.view.z/self.properties["horizontal_stretch"]),int(self.view.x/self.properties["horizontal_stretch"]))[0]
+            except:
+                return
+            
+            #if shade_at_player > .35:
+            if shade_at_player > .55:
+                c = [0,0,0]
+            else:
+                #c = [.4,.6,1]
+                #c = [.7,.85,1]
+                c = [1,1,1]
+            
+            
+            
+            
+            def range_float(start, stop, step):
+                x = start
+                while x < stop:
+                    yield x
+                    x += step
+            
+            
+            
+            
+            
+            
+            
+            radius = 28
+            
+            sparkle_density = 1
+            
+            
+            for z in range_float(-radius+z_c,radius+z_c,spacing):
+                for x in range_float(-radius+x_c,radius+x_c,spacing):
+                    #if not self.valid_point(z, x):continue
+                    #key = z*self.get_width_points()+x
+                    #key *= 10
+                    #key = key ** 2
+                    if 1:#math.sin(key) > 1-sparkle_density*2:
+                        sizekey = z*self.get_width_points()+x
+                        sizekey *= 5
+                        sizekey = sizekey ** 2
+                        
+                        w = .007 + (math.sin(sizekey)*.5+.5)*.019
+                        dist = ((self.view.x-x) ** 2 + (self.view.z-z) ** 2)**.5
+                        theta = get_angle(self.view.z,self.view.x,z,x)
+                        if dist < 3 or (dist < radius  and normal.angle_distance(theta,self.view.hor_rot) < math.pi/5.5):
+                            
+                            
+                            xposkey = int(z)*self.get_width_points()+int(x)
+                            xposkey *= 17
+                            xposkey = xposkey ** 2
+                            xposkey = math.sin(xposkey) * spacing/2
+                            zposkey = int(z)*self.get_width_points()+int(x)
+                            zposkey *= 19
+                            zposkey = zposkey ** 2
+                            zposkey = math.sin(zposkey) * spacing/2
+                            
+                            
+                            x += xposkey
+                            z += zposkey
+                            
+                            unscaled_z = z/self.properties["horizontal_stretch"]
+                            unscaled_x = x/self.properties["horizontal_stretch"]
+                            #print(unscaled_z, unscaled_x)
+                            unscaled_y = self.get_elevation_continuous(unscaled_z, unscaled_x)
+                            y = unscaled_y * self.properties["vertical_stretch"]
+                            
+                            theta += math.pi/2
+                            
+                            #colorkey = z*self.get_width_points()+x
+                            #colorkey *= 18
+                            #colorkey = colorkey ** 2
+                            
+                            
+                            #shade = .1#(math.sin(colorkey)*.5+.5)*.5 +.5
+                            
+                            
+                            
+                            sparkle_chunk_z,sparkle_chunk_x = self.convert_to_chunk_coords(int(z/self.properties["horizontal_stretch"]),int(x/self.properties["horizontal_stretch"]))
+                            if self.chunk_load_grid[sparkle_chunk_z][sparkle_chunk_x] == 2:
+                                #add to near sparkle buffer (0)
+                                self.sparkle_buffer[0].add_vertex([x,y+w*2,z],c)
+                                self.sparkle_buffer[0].add_vertex([x+w*math.cos(theta),y+w,z-w*math.sin(theta)],c)
+                                self.sparkle_buffer[0].add_vertex([x,y,z],c)
+                                self.sparkle_buffer[0].add_vertex([x-w*math.cos(theta),y+w,z+w*math.sin(theta)],c)
+                            else:
+                                #add to far sparkle buffer (1)
+                                self.sparkle_buffer[1].add_vertex([x,y+w*2,z],c)
+                                self.sparkle_buffer[1].add_vertex([x+w*math.cos(theta),y+w,z-w*math.sin(theta)],c)
+                                self.sparkle_buffer[1].add_vertex([x,y,z],c)
+                                self.sparkle_buffer[1].add_vertex([x-w*math.cos(theta),y+w,z+w*math.sin(theta)],c)
+                            
+                            """
+                            self.add_mobile_quad(
+                                [x,y+w*2,z],
+                                [x+w*math.cos(theta),y+w,z-w*math.sin(theta)],
+                                [x,y,z],
+                                [x-w*math.cos(theta),y+w,z+w*math.sin(theta)],
+                                c)
+                            """
+                            x -= xposkey
+                            z -= zposkey
+            self.sparkle_buffer[0].numpy_mode()
+            self.sparkle_buffer[1].numpy_mode()
+    
     
     def delete_shadow_map_memos(self):
         self.shadow_map.get_elev_memo = {}
@@ -1314,6 +1442,7 @@ class World(LooiObject):
         self.draw_quad_array_3d(vertices, vertex_colors, self.get_setup_3d_far())
         
     def step(self):
+        
         #every step delete the shadow map's memos
         self.delete_shadow_map_memos()
         
@@ -1323,6 +1452,7 @@ class World(LooiObject):
         self.calculate_pan_chunk_vertex_handler()
         
         self.chunk_load_grid = self.get_chunk_load_grid()
+        self.draw_sparkles()
         #print("chunk load grid took " + str(time()-start) + " seconds")
         
     
@@ -1687,6 +1817,8 @@ class World(LooiObject):
         
         
         
+        if 1:
+            self.draw_quad_array_3d(self.sparkle_buffer[1].vertices, self.sparkle_buffer[1].vertex_colors, setup_3d=self.get_setup_3d_far())
         
         if len(shadow_vertices_draw_far) > 0:
             shadow_vertices_draw_far = numpy.vstack(tuple(shadow_vertices_draw_far))
@@ -1719,6 +1851,9 @@ class World(LooiObject):
         glClear(GL_DEPTH_BUFFER_BIT)
         
         #NEAR DRAW
+        
+        if 1:
+            self.draw_quad_array_3d(self.sparkle_buffer[0].vertices, self.sparkle_buffer[0].vertex_colors, setup_3d=self.get_setup_3d_close())
         
         if len(shadow_vertices_draw) > 0:
             shadow_vertices_draw = numpy.vstack(tuple(shadow_vertices_draw))
