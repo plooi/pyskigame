@@ -86,7 +86,7 @@ class Chunk:
     def __init__(self, world):
         self.vh = VertexHandler(3,initial_capacity=world.properties["chunk_size"]**2+1)#vertex handler to store all non-moving drawables in this chunk
         self.tvh = texture.new_texture_handler(initial_capacity=10)
-        
+        self.svh = VertexHandler(3)#shadow vertex handler
         
         self.world = world
         
@@ -1577,18 +1577,24 @@ class World(LooiObject):
         
         #add all the chunks' vertexes and colors here (if the chunk load grid is a 1)
         
+        
+        #NEAR DRAW
         vertices_draw = [mobile_vertices_close]
         colors_draw = [mobile_colors_close]
         tex_vertices_draw = []
         tex_coords_draw = []
+        shadow_vertices_draw = []
+        shadow_colors_draw = []
         
+        
+        #FAR DRAW
         vertices_draw_far = [mobile_vertices_far]
         colors_draw_far = [mobile_colors_far]
         tex_vertices_draw_far = []
         tex_coords_draw_far = []
+        shadow_vertices_draw_far = []
+        shadow_colors_draw_far = []
         
-        #pan_chunk_vertices = [self.pan_chunk_squares["verts"]]
-        #pan_chunk_colors = [self.pan_chunk_squares["colors"]]
         pan_chunk_vertices = []
         pan_chunk_colors = []
         
@@ -1614,7 +1620,9 @@ class World(LooiObject):
                     
                     #print("chunk",z,x,"num occupied",self.chunks[z][x].tvh.num_occupied(), "capacity", self.chunks[z][x].tvh.capacity())
                     
-                    
+                    if hasattr(self.chunks[z][x],"svh"):
+                        shadow_vertices_draw.append(self.chunks[z][x].svh.vertices)
+                        shadow_colors_draw.append(self.chunks[z][x].svh.vertex_colors)
                     
                 elif chunk_load_grid[z][x] == 1:
                     #add this chunk's vertices and colors to the stuff that's gonna be drawn
@@ -1623,6 +1631,10 @@ class World(LooiObject):
                     
                     tex_vertices_draw_far.append(self.chunks[z][x].tvh.vertices)
                     tex_coords_draw_far.append(self.chunks[z][x].tvh.vertex_colors)
+                    
+                    if hasattr(self.chunks[z][x],"svh"):
+                        shadow_vertices_draw_far.append(self.chunks[z][x].svh.vertices)
+                        shadow_colors_draw_far.append(self.chunks[z][x].svh.vertex_colors)
                 elif chunk_load_grid[z][x] == 0:
                     pcsquares = self.chunks[z][x].get_pan_chunk_squares(z, x)
                     #vertices_draw_far.append(pcsquares.vertices)
@@ -1676,7 +1688,10 @@ class World(LooiObject):
         
         
         
-        
+        if len(shadow_vertices_draw_far) > 0:
+            shadow_vertices_draw_far = numpy.vstack(tuple(shadow_vertices_draw_far))
+            shadow_colors_draw_far = numpy.vstack(tuple(shadow_colors_draw_far))
+            self.draw_quad_array_3d(shadow_vertices_draw_far, shadow_colors_draw_far, setup_3d=self.get_setup_3d_far())
         
         if len(vertices_draw_far) > 0:
             glDisable(GL_ALPHA_TEST);
@@ -1704,6 +1719,13 @@ class World(LooiObject):
         glClear(GL_DEPTH_BUFFER_BIT)
         
         #NEAR DRAW
+        
+        if len(shadow_vertices_draw) > 0:
+            shadow_vertices_draw = numpy.vstack(tuple(shadow_vertices_draw))
+            shadow_colors_draw = numpy.vstack(tuple(shadow_colors_draw))
+            self.draw_quad_array_3d(shadow_vertices_draw, shadow_colors_draw, setup_3d=self.get_setup_3d_close())
+        
+        
         #print("vertices",len(vertices_draw))
         if len(vertices_draw) > 0:
             vertices_draw = numpy.vstack(tuple(vertices_draw))
@@ -1873,7 +1895,41 @@ class World(LooiObject):
         
         if object != None:
             self.quads[anchor_z][anchor_x].containedObjects.remove(object)
+    def add_shadow(self, vertex1, vertex2, vertex3, vertex4, color, anchor_z, anchor_x, object=None):
+        
+        chunk_z, chunk_x = self.convert_to_chunk_coords(anchor_z, anchor_x)
+        
+        if isinstance(color, list):
+            ret = self.chunks[chunk_z][chunk_x].svh.add_vertex(vertex1, color)
+            self.chunks[chunk_z][chunk_x].svh.add_vertex(vertex2, color)
+            self.chunks[chunk_z][chunk_x].svh.add_vertex(vertex3, color)
+            self.chunks[chunk_z][chunk_x].svh.add_vertex(vertex4, color)
+        elif isinstance(color, tuple):
+            ret = self.chunks[chunk_z][chunk_x].svh.add_vertex(vertex1, color[0])
+            self.chunks[chunk_z][chunk_x].svh.add_vertex(vertex2, color[1])
+            self.chunks[chunk_z][chunk_x].svh.add_vertex(vertex3, color[2])
+            self.chunks[chunk_z][chunk_x].svh.add_vertex(vertex4, color[3])
+        
+        self.chunks[chunk_z][chunk_x].colors_changed = True
+        
+        if object != None:
+            self.quads[anchor_z][anchor_x].containedObjects.append(object)
 
+        return ret
+        
+    def remove_shadow(self, quad_id, anchor_z, anchor_x, object=None):
+        if self.disable_remove_fixed_quads: return
+        chunk_z, chunk_x = self.convert_to_chunk_coords(anchor_z, anchor_x)
+        
+        self.chunks[chunk_z][chunk_x].svh.rm_vertex(quad_id)
+        self.chunks[chunk_z][chunk_x].svh.rm_vertex(quad_id+1)
+        self.chunks[chunk_z][chunk_x].svh.rm_vertex(quad_id+2)
+        self.chunks[chunk_z][chunk_x].svh.rm_vertex(quad_id+3)
+        
+        self.chunks[chunk_z][chunk_x].colors_changed = True
+        
+        if object != None:
+            self.quads[anchor_z][anchor_x].containedObjects.remove(object)
     def get_view_pointing(self):
         view = self.view
         hr = view.hor_rot
@@ -1913,11 +1969,15 @@ class World(LooiObject):
         
         
         all_contained_objects = []
+        all_lifts = []
         for z in range(self.get_height_floors()):
             for x in range(self.get_width_floors()):
                 for obj in self.quads[z][x].containedObjects:
                     if isinstance(obj, WorldObject) and not isinstance(obj, NaturalBump):#copy everything but the natural bumps and lifts
                         all_contained_objects.append(obj)
+                    elif isinstance(obj, lift.Terminal):
+                        if obj.chairlift not in all_lifts:
+                            all_lifts.append(obj.chairlift)
                         
                         
                         
@@ -1940,7 +2000,7 @@ class World(LooiObject):
         
         lifts_reset = []#make sure no duplicate lifts get away!
         
-        for l in list(lift.active_lifts): 
+        for l in list(all_lifts): 
             if ((l.z1,l.x1,l.z2,l.x2) not in lifts_reset) and ((l.z2,l.x2,l.z1,l.x1) not in lifts_reset):
                 l.world=world2
                 l.reset()
@@ -2056,6 +2116,7 @@ class World(LooiObject):
                 i+=1
         else:
             for obj in objects_list:
+                obj.args["world"] = self
                 obj.reset()
                 
                 if do_loading:

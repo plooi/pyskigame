@@ -17,6 +17,7 @@ import pickle
 import dill
 from time import time
 from shadow_map import ShadowMap
+from pylooiengine.misc.graphics import VertexHandler
 
 from lift import Lift,Terminal#,chair_model_1,chair_model_2,chair_model_3,chair_model_4,rope_model_1,terminal_design_1,pole_design_1
 
@@ -195,6 +196,13 @@ def read(path, new_version = True):
             if not hasattr(the_world, "disable_remove_fixed_quads"):
                 the_world.disable_remove_fixed_quads = False
             
+            """
+            for z in range(the_world.get_height_chunks()):
+                for x in range(the_world.get_width_chunks()):
+                    if not hasattr(the_world.chunks[z][x], "svh"):
+                        the_world.chunks[z][x].svh = VertexHandler(3)
+            """
+            
             for z in range(the_world.get_height_floors()):
                 for x in range(the_world.get_width_floors()):
                     for obj in list(the_world.quads[z][x].containedObjects):
@@ -202,7 +210,8 @@ def read(path, new_version = True):
                         if isinstance(obj, Terminal):
                             if obj.top_or_bot == "bot":
                                 set_active_variable_false(obj.chairlift)
-                                obj.chairlift.reset()
+                                if the_world.__class__ == gworld.GWorld:
+                                    obj.chairlift.reset()
                                 
                         elif isinstance(obj, LooiObject):
                             if obj.active:
@@ -229,9 +238,21 @@ def read(path, new_version = True):
             
             if not hasattr(the_world, "pan_chunk_squares_changed"):
                 the_world.pan_chunk_squares_changed = True
-            if isinstance(the_world, world_module.World):
+            if the_world.__class__ == world_module.World:
                 the_world = the_world.convert_to_gworld()
-                
+                for z in range(the_world.get_height_floors()):
+                    for x in range(the_world.get_width_floors()):
+                        for obj in list(the_world.quads[z][x].containedObjects):
+                            
+                            if isinstance(obj, Terminal):
+                                if obj.top_or_bot == "bot":
+                                    set_active_variable_false(obj.chairlift)
+                                    obj.chairlift.reset()
+            
+            
+            
+            
+            
             #end backward compatibility code
             return the_world
     

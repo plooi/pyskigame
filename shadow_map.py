@@ -93,7 +93,7 @@ class ShadowMap:
         if z1<0 or x1<0 or not w.valid_floor(int(z1_unscaled),int(x1_unscaled)):return None
         
         
-        return self.world.add_fixed_quad(
+        return self.world.add_shadow(
             [x1,self.get_elevation_continuous(z1_unscaled,x1_unscaled)*vs+shadow_margin,z1],
             [x2,self.get_elevation_continuous(z1_unscaled,x2_unscaled)*vs+shadow_margin,z1],
             [x2,self.get_elevation_continuous(z2_unscaled,x2_unscaled)*vs+shadow_margin,z2],
@@ -119,7 +119,7 @@ class ShadowMap:
         self.shadow_map[z,x][1].remove(object)
         if len(self.shadow_map[z,x][1]) == 0:
             hs = self.world.properties["horizontal_stretch"]
-            self.world.remove_fixed_quad(self.shadow_map[z,x][0], (z/D)/hs, (x/D)/hs)
+            self.world.remove_shadow(self.shadow_map[z,x][0], (z/D)/hs, (x/D)/hs)
             del self.shadow_map[z,x]
             
     ################################
