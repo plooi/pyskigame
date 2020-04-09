@@ -74,6 +74,9 @@ x = {
     "distance_before_the_shadow_reset_center_goes_straight_to_you" : 3,
     "max_number_of_spots_checked_for_shadow_add_per_step" : 300,
     
+    
+    "ray_tracing_memo_refresh_every_n_ticks" : 10,
+    
 
 
 }

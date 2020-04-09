@@ -22,18 +22,20 @@ class Menu(LooiObject):
         self.ui = ui
         
         if self.ui.game_mode == "ski":
-            self.btn7 = Button(x = 1240, y=760, width=80, height=80, font_size=10, text="", image=image("Save Icon.png"), action=save, action_parameter=self)
+            self.btn7 = Button(x = 1240, y=760, width=70, height=70, font_size=10, text="", image=image("Save Icon.png"), action=save, action_parameter=self)
             self.btn7.set_layer(-2)
             self.add(self.btn7)
             
-            self.btn8 = Button(x = 1320, y=760, width=80, height=80, font_size=10, text="", image=image("Exit Icon.png"), action=exit, action_parameter=self)
+            self.btn8 = Button(x = 1320, y=760, width=70, height=70, font_size=10, text="", image=image("Exit Icon.png"), action=exit, action_parameter=self)
             self.btn8.set_layer(-2)
             self.add(self.btn8)
         
-        self.btn9 = Button(x = 1160, y=760, width=80, height=80, font_size=10, text="", image=image("Settings Icon.png"), action=settings, action_parameter=self)
+        self.btn9 = Button(x = 1160, y=760, width=70, height=70, font_size=10, text="", image=image("Settings Icon.png"), action=settings, action_parameter=self)
         self.btn9.set_layer(-2)
         self.add(self.btn9)
-        
+        self.btn999 = Button(x = 1080, y=760, width=70, height=70, font_size=10, text="", image=image("Sound.png"), action=volume, action_parameter=self)
+        self.btn999.set_layer(-2)
+        self.add(self.btn999)
        
         
         self.x1 = 500
@@ -47,6 +49,16 @@ class Menu(LooiObject):
         
     def paint(self):
         self.draw_rect(self.x1, self.y1, self.x2, self.y2, self.menu_color)
+def volume(menu):
+    layout = [[sg.Text("Select Volume")],
+    [sg.Slider(range=(1,100), default_value=int(menu.ui.master_volume*100),size=(20,15),orientation="horizontal")],
+    [sg.OK()]]
+    
+    window = sg.Window('', layout, size = (400,300))
+    event, values = window.Read()
+    if event == "OK":
+        menu.ui.set_master_volume(int(values[0]))
+    window.close()
 def settings(menu):
 
     setting = OrderedDict()

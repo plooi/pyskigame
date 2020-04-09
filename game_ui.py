@@ -1316,7 +1316,9 @@ class UI(LooiObject):
             self.draw_rect(bar_x, bar_y, bar_x+full_part_width, bar_y+bar_height, front)
             self.draw_rect(bar_x, bar_y, bar_x+bar_width, bar_y+bar_height, back)
             
-            self.draw_text(0,13,str(self.fps), font_size=13)
+            self.draw_text(0,20,str(self.fps), font_size=20)
+            if hasattr(self.world, "chunks_out_of_sight"):
+                self.draw_text(50,20,str(self.world.chunks_out_of_sight), font_size=20, color=Color(0,.4,0))
         #self.draw_text(0,13,str(self.world.view.y), font_size=13)
         """
         if self.game_mode.startswith("ski"):

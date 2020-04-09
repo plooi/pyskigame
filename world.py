@@ -492,6 +492,7 @@ class World(LooiObject):
         
         self.sparkle_buffer = None
         self.last_sparkle_spacing = -999,-999
+        self.chunks_in_sight_memo = {}
     
     """
     init_csv
@@ -1277,13 +1278,19 @@ class World(LooiObject):
 #STEP AND PAINT STUFF
 ###################################
     def draw_sparkles(self):
-        spacing = 2.5
+        spacing = 3
+        
+        spaces_passed_until_reset = 3#5
         
         z_c = int(self.view.z/spacing)*spacing
         x_c = int(self.view.x/spacing)*spacing
         
         
-        if (z_c,x_c) != self.last_sparkle_spacing:
+        #if (z_c,x_c) != self.last_sparkle_spacing:
+        #if ( (self.last_sparkle_spacing[0] - z_c)**2 + (self.last_sparkle_spacing[1] - x_c)**2 ) ** .5 > spacing * spaces_passed_until_reset:
+        
+        
+        if self.game_ui.clock %7 == 0:
             self.last_sparkle_spacing = (z_c,x_c)
             self.sparkle_buffer = VertexHandler(3),VertexHandler(3)
             self.sparkle_buffer[0].list_mode()
@@ -1309,11 +1316,6 @@ class World(LooiObject):
             
             
             
-            def range_float(start, stop, step):
-                x = start
-                while x < stop:
-                    yield x
-                    x += step
             
             
             
@@ -1321,7 +1323,10 @@ class World(LooiObject):
             
             
             
-            radius = 28
+            
+            radius = 30#28
+            radius_sq = radius**2
+            
             
             sparkle_density = 1
             
@@ -1338,23 +1343,54 @@ class World(LooiObject):
                         sizekey = sizekey ** 2
                         
                         w = .007 + (math.sin(sizekey)*.5+.5)*.019
-                        dist = ((self.view.x-x) ** 2 + (self.view.z-z) ** 2)**.5
+                        
+                        
+                        
+                        
+                        #dist = ((self.view.x-x) ** 2 + (self.view.z-z) ** 2)**.5
+                        dist = ((self.view.x-x) ** 2 + (self.view.z-z) ** 2)
+                        
+                        
+                        #makes some sparkles only appear when very close, but others start to appear even far away
+                        appeardistkey = z*self.get_width_points()+x
+                        appeardistkey *= 8.5
+                        appeardistkey *= appeardistkey
+                        appeardistkey = math.sin(appeardistkey)
+                        appeardistkey = (appeardistkey*.5+.5)*9+1
+                        dist *= appeardistkey
+                        
+                        
+                        
+                        
+                        xposkey = int(z)*self.get_width_points()+int(x)
+                        xposkey *= 17
+                        xposkey = xposkey ** 2
+                        xposkey = math.sin(xposkey) * spacing/2
+                        zposkey = int(z)*self.get_width_points()+int(x)
+                        zposkey *= 19
+                        zposkey = zposkey ** 2
+                        zposkey = math.sin(zposkey) * spacing/2
+                        
+                        
+                        x += xposkey
+                        z += zposkey
+                        
+                        
+                        
+                        
                         theta = get_angle(self.view.z,self.view.x,z,x)
-                        if dist < 3 or (dist < radius  and normal.angle_distance(theta,self.view.hor_rot) < math.pi/5.5):
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        if dist < 3**2 or (dist < radius_sq  and normal.angle_distance(theta,self.view.hor_rot) < math.pi/5):
+                        #if dist < radius_sq:
                             
                             
-                            xposkey = int(z)*self.get_width_points()+int(x)
-                            xposkey *= 17
-                            xposkey = xposkey ** 2
-                            xposkey = math.sin(xposkey) * spacing/2
-                            zposkey = int(z)*self.get_width_points()+int(x)
-                            zposkey *= 19
-                            zposkey = zposkey ** 2
-                            zposkey = math.sin(zposkey) * spacing/2
                             
-                            
-                            x += xposkey
-                            z += zposkey
                             
                             unscaled_z = z/self.properties["horizontal_stretch"]
                             unscaled_x = x/self.properties["horizontal_stretch"]
@@ -1374,18 +1410,19 @@ class World(LooiObject):
                             
                             
                             sparkle_chunk_z,sparkle_chunk_x = self.convert_to_chunk_coords(int(z/self.properties["horizontal_stretch"]),int(x/self.properties["horizontal_stretch"]))
-                            if self.chunk_load_grid[sparkle_chunk_z][sparkle_chunk_x] == 2:
-                                #add to near sparkle buffer (0)
-                                self.sparkle_buffer[0].add_vertex([x,y+w*2,z],c)
-                                self.sparkle_buffer[0].add_vertex([x+w*math.cos(theta),y+w,z-w*math.sin(theta)],c)
-                                self.sparkle_buffer[0].add_vertex([x,y,z],c)
-                                self.sparkle_buffer[0].add_vertex([x-w*math.cos(theta),y+w,z+w*math.sin(theta)],c)
-                            else:
-                                #add to far sparkle buffer (1)
-                                self.sparkle_buffer[1].add_vertex([x,y+w*2,z],c)
-                                self.sparkle_buffer[1].add_vertex([x+w*math.cos(theta),y+w,z-w*math.sin(theta)],c)
-                                self.sparkle_buffer[1].add_vertex([x,y,z],c)
-                                self.sparkle_buffer[1].add_vertex([x-w*math.cos(theta),y+w,z+w*math.sin(theta)],c)
+                            if sparkle_chunk_z >= 0 and sparkle_chunk_z < len(self.chunk_load_grid) and sparkle_chunk_x >= 0 and sparkle_chunk_x < len(self.chunk_load_grid[0]):
+                                if self.chunk_load_grid[sparkle_chunk_z][sparkle_chunk_x] == 2:
+                                    #add to near sparkle buffer (0)
+                                    self.sparkle_buffer[0].add_vertex([x,y+w*2,z],c)
+                                    self.sparkle_buffer[0].add_vertex([x+w*math.cos(theta),y+w,z-w*math.sin(theta)],c)
+                                    self.sparkle_buffer[0].add_vertex([x,y,z],c)
+                                    self.sparkle_buffer[0].add_vertex([x-w*math.cos(theta),y+w,z+w*math.sin(theta)],c)
+                                else:
+                                    #add to far sparkle buffer (1)
+                                    self.sparkle_buffer[1].add_vertex([x,y+w*2,z],c)
+                                    self.sparkle_buffer[1].add_vertex([x+w*math.cos(theta),y+w,z-w*math.sin(theta)],c)
+                                    self.sparkle_buffer[1].add_vertex([x,y,z],c)
+                                    self.sparkle_buffer[1].add_vertex([x-w*math.cos(theta),y+w,z+w*math.sin(theta)],c)
                             
                             """
                             self.add_mobile_quad(
@@ -1395,10 +1432,11 @@ class World(LooiObject):
                                 [x-w*math.cos(theta),y+w,z+w*math.sin(theta)],
                                 c)
                             """
-                            x -= xposkey
-                            z -= zposkey
+                        x -= xposkey
+                        z -= zposkey
             self.sparkle_buffer[0].numpy_mode()
             self.sparkle_buffer[1].numpy_mode()
+            #print(self.sparkle_buffer[0].num_occupied() + self.sparkle_buffer[1].num_occupied())
     
     
     def delete_shadow_map_memos(self):
@@ -1441,10 +1479,27 @@ class World(LooiObject):
             numpy_index += 4
         self.draw_quad_array_3d(vertices, vertex_colors, self.get_setup_3d_far())
         
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
     def step(self):
         
         #every step delete the shadow map's memos
         self.delete_shadow_map_memos()
+        
+        
+        if self.game_ui.clock % constants["ray_tracing_memo_refresh_every_n_ticks"] == 0: self.chunks_in_sight_memo = {} #get rid of the chunks_in_sight memo every 30 secs so when you move, it will, after a short while, recalculate which chunks you can see
+        #this variable allows you to memoize the ray tracing, but it will only work properly if we recalculate it every so often
+        
         
         self.numpy_mode()
         start = time()
@@ -1542,6 +1597,16 @@ class World(LooiObject):
             
             self.draw_image_array_3d(vertices, tex_coords, self.pan_background[0], self.pan_background[1],setup_3d=setup)
             glClear(GL_DEPTH_BUFFER_BIT)
+            
+    """
+    for each spot in the grid
+    
+    if it's 
+        -2 or -1 chunk is unloaded... only the most blurry background shall be drawn
+        0 chunk is "blurry" so you can see trees, lift poles, and rough estimate of ground
+        1 chunk is loaded
+        2 chunk is loaded and close to player, so draw it in the "near draw
+    """
     def get_chunk_load_grid(self):
         los =self.view.line_of_sight
         los2 =self.properties["line_of_sight2"]
@@ -1573,6 +1638,10 @@ class World(LooiObject):
         #far_view_angle = math.pi/6
         far_view_angle = math.pi/4
         
+        chunks_out_of_sight = set()
+        
+        
+        
         if los3 != -1:
             for z in range(nearest_multiple(unscaled_view_z - los3*cs, cs), nearest_multiple(unscaled_view_z + los3*cs, cs)+1, cs):
                 for x in range(nearest_multiple(unscaled_view_x - los3*cs, cs), nearest_multiple(unscaled_view_x + los3*cs, cs)+1, cs):
@@ -1590,6 +1659,8 @@ class World(LooiObject):
                             if self.valid_chunk(cz-1, cx-1): chunk_load_grid[cz-1][cx-1] = -1
                             if self.valid_chunk(cz, cx-1): chunk_load_grid[cz][cx-1] = -1
                             if self.valid_chunk(cz-1, cx): chunk_load_grid[cz-1][cx] = -1
+                            
+        num = 0
         for z in range(nearest_multiple(unscaled_view_z - los2*cs, cs), nearest_multiple(unscaled_view_z + los2*cs, cs)+1, cs):
             for x in range(nearest_multiple(unscaled_view_x - los2*cs, cs), nearest_multiple(unscaled_view_x + los2*cs, cs)+1, cs):
                 if not self.valid_point(z, x): continue
@@ -1597,22 +1668,34 @@ class World(LooiObject):
                 #here we are testing whether the chunk at least has trees or not
                 if ( (z-unscaled_view_z)**2 + (x-unscaled_view_x)**2 )**.5 <= self.properties["line_of_sight2"]*cs:
                     if far_view_angle > normal.angle_distance(self.view.hor_rot, util.get_angle(unscaled_view_z, unscaled_view_x, z, x)):
+                        num += 1
                         #then all four neighboring chunks have trees
                         cz = int(z/cs)
                         cx = int(x/cs)
                         
-                        if self.valid_chunk(cz, cx): chunk_load_grid[cz][cx] = 0
-                        if self.valid_chunk(cz-1, cx-1): chunk_load_grid[cz-1][cx-1] = 0
-                        if self.valid_chunk(cz, cx-1): chunk_load_grid[cz][cx-1] = 0
-                        if self.valid_chunk(cz-1, cx): chunk_load_grid[cz-1][cx] = 0
+                        if self.valid_chunk(cz, cx) and chunk_load_grid[cz][cx]<0:
+                            if self.in_sight(cz, cx): chunk_load_grid[cz][cx] = 0
+                            else: chunks_out_of_sight.add((cz,cx))
+                        if self.valid_chunk(cz-1, cx-1) and chunk_load_grid[cz-1][cx-1] < 0: 
+                            if self.in_sight(cz-1, cx-1): chunk_load_grid[cz-1][cx-1] = 0
+                            else: chunks_out_of_sight.add((cz-1, cx-1))
+                        if self.valid_chunk(cz, cx-1) and chunk_load_grid[cz][cx-1] < 0:
+                            if self.in_sight(cz, cx-1): chunk_load_grid[cz][cx-1] = 0
+                            else: chunks_out_of_sight.add((cz, cx-1))
+                        if self.valid_chunk(cz-1, cx) and chunk_load_grid[cz-1][cx] < 0:
+                            if self.in_sight(cz-1, cx): chunk_load_grid[cz-1][cx] = 0
+                            else: chunks_out_of_sight.add((cz-1, cx))
                        
-                
+        #print("checked",num,"points")
                 
         for z in range(nearest_multiple(unscaled_view_z - los2*cs, cs), nearest_multiple(unscaled_view_z + los2*cs, cs)+1, cs):
             for x in range(nearest_multiple(unscaled_view_x - los2*cs, cs), nearest_multiple(unscaled_view_x + los2*cs, cs)+1, cs):
                 
                 #here we are testing whether the chunk is active or not 
                 #this has precedence over chunks with trees, so it is executed last
+                
+                
+                
                 if ( (z-unscaled_view_z)**2 + (x-unscaled_view_x)**2 )**.5 <= los*cs:#check if this chunk intersection point is within the los of player
                     
                     
@@ -1621,13 +1704,21 @@ class World(LooiObject):
                             or 
                             view_angle > normal.angle_distance(self.view.hor_rot, util.get_angle(unscaled_view_z, unscaled_view_x, z, x))  ):#!!!or the player must be looking at the chunk
                         #then all four neighboring chunks are active
+                        
                         cz = int(z/cs)
                         cx = int(x/cs)
                         
-                        if self.valid_chunk(cz, cx): chunk_load_grid[cz][cx] = 1
-                        if self.valid_chunk(cz-1, cx-1): chunk_load_grid[cz-1][cx-1] = 1
-                        if self.valid_chunk(cz, cx-1): chunk_load_grid[cz][cx-1] = 1
-                        if self.valid_chunk(cz-1, cx): chunk_load_grid[cz-1][cx] = 1
+                        if self.valid_chunk(cz, cx) and chunk_load_grid[cz][cx] == 0:
+                            chunk_load_grid[cz][cx] = 1
+                        if self.valid_chunk(cz-1, cx-1) and chunk_load_grid[cz-1][cx-1] == 0:
+                            chunk_load_grid[cz-1][cx-1] = 1
+                        if self.valid_chunk(cz, cx-1) and chunk_load_grid[cz][cx-1] == 0:
+                            chunk_load_grid[cz][cx-1] = 1
+                        if self.valid_chunk(cz-1, cx) and chunk_load_grid[cz-1][cx] == 0:
+                            chunk_load_grid[cz-1][cx] = 1
+                        
+                        
+                        
         
         #here we are testing to see whether the chunk is "Front row" or not
         
@@ -1659,10 +1750,132 @@ class World(LooiObject):
                 """
                         
         #otherwise, the chunk is -1, which is no trees.
-                
+        
+        
+        #print(self.in_sight(0,0,True))
+        self.chunks_out_of_sight = len(chunks_out_of_sight)
         return chunk_load_grid
     
-    
+    """
+    uses ray tracing to check if a chunk is in sight or not
+    """
+    def in_sight(self, chunk_z, chunk_x, verbose=False):
+        if (chunk_z,chunk_x) in self.chunks_in_sight_memo:
+            return self.chunks_in_sight_memo[chunk_z,chunk_x]#dont calculate it AGAIN if we already calculated it
+        
+        
+        hs = self.properties["horizontal_stretch"]
+        vs = self.properties["vertical_stretch"]
+        
+        
+        
+        #calculate the hr and vr to that chunk
+        c_z = (chunk_z+.5) * self.properties["chunk_size"] * hs
+        c_x = (chunk_x+.5) * self.properties["chunk_size"] * hs
+        c_y = self.get_elevation(int((chunk_z+.5) * self.properties["chunk_size"]), int((chunk_x+.5) * self.properties["chunk_size"]))*vs
+        horizontal_dist = ( (self.view.z-c_z)**2 + (self.view.x-c_x)**2 )**.5
+        
+        aim_higher_than_the_chunk_actually_is = 20#cuz then we can just simply ask:
+            #if the ray hit somthing, then the chunk isn't visible
+            #if the ray didn't hit something, then the chunk is visible
+        start_higher_than_you_actually_are = 12    
+            
+        
+        
+        
+        hr = util.get_angle(self.view.z,self.view.x,c_z,c_x)
+        vr = normal.get_angle(0,0,horizontal_dist,c_y-(self.view.y+start_higher_than_you_actually_are) + aim_higher_than_the_chunk_actually_is)
+        
+        
+        
+        
+        
+        
+        
+        #CAST RAY
+        
+        total_dist = ( (self.view.z-c_z)**2 + (self.view.x-c_x)**2 + (c_y-(self.view.y+start_higher_than_you_actually_are)+aim_higher_than_the_chunk_actually_is)**2 )**.5
+        #so if the ray can travel the total_dist, then that means we hit the chunk
+        
+        
+        x=self.view.x
+        y=self.view.y+start_higher_than_you_actually_are
+        z=self.view.z
+        hr=hr
+        vr=vr
+        max_dist = total_dist
+        step_size=self.properties["chunk_size"]*.8#IN UNITS,unscaled (not scaled distance)
+        
+        
+        max_dist_sq = max_dist**2
+        
+        
+        
+        view = self.view
+        ray = [x,y,z]
+        hs = self.properties["horizontal_stretch"]
+        
+        
+        ray_step_x = step_size*hs * math.cos(hr) * math.cos(vr)
+        ray_step_y = step_size*hs * math.sin(vr)
+        ray_step_z = step_size*hs * -math.sin(hr) * math.cos(vr)#this is a step
+        num_steps = 1
+        while True:
+            #if ( (ray[0]-view.x)**2 + (ray[2]-view.z)**2 + (ray[1]-view.y)**2) > max_dist_sq:#if ray travelled max distance
+            if num_steps*step_size*hs > max_dist:#if ray travelled max distance
+                self.chunks_in_sight_memo[chunk_z,chunk_x] = True
+                return True
+            grid_x = int(ray[0] / hs)
+            grid_z = int(ray[2] / hs)
+            
+            if grid_x >= self.get_width_floors()-1 or grid_z >= self.get_height_floors()-1 or grid_x < 0 or grid_z < 0:
+                pass#not inside world
+            else:
+                if ray[1] < self.get_elevation(grid_z, grid_x, scaled=True):
+                    if verbose:print("hit",grid_z,grid_x)
+                    self.chunks_in_sight_memo[chunk_z,chunk_x] = False
+                    return False
+                
+                
+            ray[0] += ray_step_x
+            ray[2] += ray_step_z
+            ray[1] += ray_step_y
+            
+            num_steps += 1
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        #END CAST RAY
+        
+        res = ray
+        
+        #print(hr,vr,res)
+        
+        if res == None:
+            return False
+        grid_z,grid_x = res
+        hit_chunk_z,hit_chunk_x = self.convert_to_chunk_coords(grid_z,grid_x)
+        
+        if (chunk_z,chunk_x) == (hit_chunk_z,hit_chunk_x):
+            return True
+        return False
+        
+        
+        
+        
+        
+        
     """
     draw(chunk_load_grid)
             
@@ -1781,7 +1994,7 @@ class World(LooiObject):
                     pass
                     
                 
-                
+        
         #print("setting up took " + str(time()-start) + " seconds")
         
         #glAlphaFunc(GL_GREATER, 0.4);
@@ -1816,7 +2029,7 @@ class World(LooiObject):
         #END CHUNK DRAW
         
         
-        
+        """
         if 1:
             self.draw_quad_array_3d(self.sparkle_buffer[1].vertices, self.sparkle_buffer[1].vertex_colors, setup_3d=self.get_setup_3d_far())
         
@@ -1832,7 +2045,11 @@ class World(LooiObject):
             colors_draw_far = numpy.vstack(colors_draw_far)
             self.draw_quad_array_3d(vertices_draw_far, colors_draw_far, setup_3d=self.get_setup_3d_far())
             glEnable(GL_ALPHA_TEST);
+        """
         
+        vertices_draw_far = numpy.vstack([self.sparkle_buffer[1].vertices] + shadow_vertices_draw_far + vertices_draw_far)
+        colors_draw_far = numpy.vstack([self.sparkle_buffer[1].vertex_colors] + shadow_colors_draw_far + colors_draw_far)
+        self.draw_quad_array_3d(vertices_draw_far, colors_draw_far, setup_3d=self.get_setup_3d_far())
         
         
         if len(tex_vertices_draw_far) > 0:
@@ -1851,7 +2068,7 @@ class World(LooiObject):
         glClear(GL_DEPTH_BUFFER_BIT)
         
         #NEAR DRAW
-        
+        """
         if 1:
             self.draw_quad_array_3d(self.sparkle_buffer[0].vertices, self.sparkle_buffer[0].vertex_colors, setup_3d=self.get_setup_3d_close())
         
@@ -1866,7 +2083,11 @@ class World(LooiObject):
             vertices_draw = numpy.vstack(tuple(vertices_draw))
             colors_draw = numpy.vstack(tuple(colors_draw))
             self.draw_quad_array_3d(vertices_draw, colors_draw, setup_3d=self.get_setup_3d_close())
+        """
         
+        vertices_draw = numpy.vstack(tuple([self.sparkle_buffer[0].vertices] + shadow_vertices_draw + vertices_draw))
+        colors_draw = numpy.vstack(tuple([self.sparkle_buffer[0].vertex_colors] + shadow_colors_draw + colors_draw))
+        self.draw_quad_array_3d(vertices_draw, colors_draw, setup_3d=self.get_setup_3d_close())
         
         if len(tex_vertices_draw) > 0:
             _start=time()###
@@ -2066,13 +2287,12 @@ class World(LooiObject):
         if object != None:
             self.quads[anchor_z][anchor_x].containedObjects.remove(object)
     def get_view_pointing(self):
+        return self.cast_ray(self.view.x, self.view.y, self.view.z, self.view.hor_rot, self.view.vert_rot, self.view.line_of_sight*self.properties["chunk_size"]*self.properties["horizontal_stretch"] + 2)
+    def cast_ray(self, x,y,z,hr,vr,max_dist,step_size=.5):
         view = self.view
-        hr = view.hor_rot
-        vr = view.vert_rot
-        step_size = .5
-        ray = [view.x, view.y, view.z]
+        ray = [x,y,z]
         while True:
-            if ( (ray[0]-view.x)**2 + (ray[2]-view.z)**2 ) ** .5 > view.line_of_sight*self.properties["chunk_size"]*self.properties["horizontal_stretch"] + 2:
+            if ( (ray[0]-view.x)**2 + (ray[2]-view.z)**2 ) ** .5 > max_dist:
                 return None
             grid_x = int(ray[0] / self.properties["horizontal_stretch"])
             grid_z = int(ray[2] / self.properties["horizontal_stretch"])
@@ -2084,12 +2304,11 @@ class World(LooiObject):
                     self.get_elevation(grid_z+1, grid_x, scaled=True), 
                     self.get_elevation(grid_z+1, grid_x+1, scaled=True), 
                     self.get_elevation(grid_z, grid_x+1, scaled=True)]
-                highest = max(four_corners) + step_size*self.properties["horizontal_stretch"]
-                lowest = min(four_corners) - step_size*self.properties["horizontal_stretch"]*3
-                if ray[1] <= highest and ray[1] >= lowest: 
-                    #if self.grid[grid_z][grid_x].floor_vert_handler_index == None:
-                    #    return None
-                    #else:
+                #highest = max(four_corners) + step_size*self.properties["horizontal_stretch"]
+                highest = max(four_corners) 
+                #lowest = min(four_corners) - step_size*self.properties["horizontal_stretch"]*3
+                #if ray[1] <= highest and ray[1] >= lowest: 
+                if ray[1] <= highest:
                     return grid_z, grid_x
                 
             ray[0] += step_size*self.properties["horizontal_stretch"] * math.cos(hr) * math.cos(vr)
@@ -2337,6 +2556,10 @@ def calculate_floor_color_single(self, hr, vr):
 '''
 
 
-
+def range_float(start, stop, step):
+                x = start
+                while x < stop:
+                    yield x
+                    x += step
 
 
