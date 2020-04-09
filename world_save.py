@@ -184,10 +184,8 @@ def read(path, new_version = True):
             
             
             f.close()
-            if not hasattr(the_world, "sparkle_buffer"):
-                the_world.sparkle_buffer = None
-            if not hasattr(the_world, "last_sparkle_spacing"):
-                the_world.last_sparkle_spacing = -999,-999
+            the_world.sparkle_buffer = VertexHandler(3),VertexHandler(3)
+            the_world.last_sparkle_spacing = {}
             if not hasattr(the_world, "shadow_map"):
                 the_world.shadow_map = ShadowMap(the_world)
             if not hasattr(the_world.shadow_map, "get_elev_memo"):
