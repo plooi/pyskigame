@@ -1279,11 +1279,11 @@ class World(LooiObject):
 ###################################
 #STEP AND PAINT STUFF
 ###################################
-    
+    '''
     def draw_sparkles(self):
         if not isinstance(self.last_sparkle_spacing, dict):
             self.last_sparkle_spacing = {}
-        spacing = 1.5
+        spacing = 2.2
         
         spaces_passed_until_reset = 3#5
         
@@ -1297,6 +1297,9 @@ class World(LooiObject):
         
         if self.game_ui.clock % constants["refresh_sparkle_buffer_every_n_ticks"] == 0:
             #self.sparkle_buffer = VertexHandler(3),VertexHandler(3)
+            self.sparkle_buffer[0].list_mode()
+            self.sparkle_buffer[1].list_mode()
+            
         
         
         
@@ -1316,7 +1319,7 @@ class World(LooiObject):
                 c = [1,1,1]
             
             
-            radius = 25#28
+            radius = 20#28
             radius_sq = radius**2
             
             
@@ -1440,7 +1443,8 @@ class World(LooiObject):
                 
                 del self.last_sparkle_spacing[z,x]
             
-            
+            self.sparkle_buffer[0].numpy_mode()
+            self.sparkle_buffer[1].numpy_mode()
             #print(self.sparkle_buffer[0].num_occupied() + self.sparkle_buffer[1].num_occupied())
     
     
