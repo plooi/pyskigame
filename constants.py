@@ -77,9 +77,6 @@ x = {
     
     "ray_tracing_memo_refresh_every_n_ticks" : 10,
     
-    
-    "refresh_sparkle_buffer_every_n_ticks" : 5,
-    
 
 
 }
