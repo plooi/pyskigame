@@ -1278,7 +1278,7 @@ class World(LooiObject):
 #STEP AND PAINT STUFF
 ###################################
     def draw_sparkles(self):
-        spacing = 2.7
+        spacing = 3.5
         
         spaces_passed_until_reset = 3#5
         
@@ -1314,17 +1314,7 @@ class World(LooiObject):
                 c = [1,1,1]
             
             
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            radius = 24#28
+            radius = 34#28
             radius_sq = radius**2
             
             
@@ -1342,7 +1332,7 @@ class World(LooiObject):
                         sizekey *= 5
                         sizekey = sizekey ** 2
                         
-                        w = .007 + (math.sin(sizekey)*.5+.5)*.019
+                        w = .03 + (math.sin(sizekey)*.5+.5)*.01
                         
                         
                         
@@ -1350,17 +1340,17 @@ class World(LooiObject):
                         #dist = ((self.view.x-x) ** 2 + (self.view.z-z) ** 2)**.5
                         dist = ((self.view.x-x) ** 2 + (self.view.z-z) ** 2)
                         
-                        """
+                        
                         #makes some sparkles only appear when very close, but others start to appear even far away
                         appeardistkey = z*self.get_width_points()+x
                         appeardistkey *= 8.5
                         appeardistkey *= appeardistkey
                         appeardistkey = math.sin(appeardistkey)
-                        appeardistkey = (appeardistkey*.5+.5)*9+1
+                        appeardistkey = (appeardistkey*.5+.5)*6+1
                         dist *= appeardistkey
                         
                         
-                        """
+                        
                         
                         xposkey = int(z)*self.get_width_points()+int(x)
                         xposkey *= 17
