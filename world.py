@@ -1278,7 +1278,7 @@ class World(LooiObject):
 #STEP AND PAINT STUFF
 ###################################
     def draw_sparkles(self):
-        spacing = 3.5
+        spacing = 1.5
         
         spaces_passed_until_reset = 3#5
         
@@ -1290,7 +1290,7 @@ class World(LooiObject):
         #if ( (self.last_sparkle_spacing[0] - z_c)**2 + (self.last_sparkle_spacing[1] - x_c)**2 ) ** .5 > spacing * spaces_passed_until_reset:
         
         
-        if self.game_ui.clock %7 == 0:
+        if self.game_ui.clock %50 == 0:
             self.last_sparkle_spacing = (z_c,x_c)
             self.sparkle_buffer = VertexHandler(3),VertexHandler(3)
             self.sparkle_buffer[0].list_mode()
@@ -1314,7 +1314,7 @@ class World(LooiObject):
                 c = [1,1,1]
             
             
-            radius = 34#28
+            radius = 55#28
             radius_sq = radius**2
             
             
@@ -1332,7 +1332,7 @@ class World(LooiObject):
                         sizekey *= 5
                         sizekey = sizekey ** 2
                         
-                        w = .03 + (math.sin(sizekey)*.5+.5)*.01
+                        w = .02 + (math.sin(sizekey)*.5+.5)*.01
                         
                         
                         
@@ -1340,7 +1340,7 @@ class World(LooiObject):
                         #dist = ((self.view.x-x) ** 2 + (self.view.z-z) ** 2)**.5
                         dist = ((self.view.x-x) ** 2 + (self.view.z-z) ** 2)
                         
-                        
+                        """
                         #makes some sparkles only appear when very close, but others start to appear even far away
                         appeardistkey = z*self.get_width_points()+x
                         appeardistkey *= 8.5
@@ -1348,7 +1348,7 @@ class World(LooiObject):
                         appeardistkey = math.sin(appeardistkey)
                         appeardistkey = (appeardistkey*.5+.5)*6+1
                         dist *= appeardistkey
-                        
+                        """
                         
                         
                         
@@ -1376,8 +1376,8 @@ class World(LooiObject):
                         
                         
                         
-                        if dist < 3**2 or (dist < radius_sq  and normal.angle_distance(theta,self.view.hor_rot) < math.pi/5):
-                        #if dist < radius_sq:
+                        #if dist < 3**2 or (dist < radius_sq  and normal.angle_distance(theta,self.view.hor_rot) < math.pi/5):
+                        if dist < radius_sq:
                             
                             
                             
