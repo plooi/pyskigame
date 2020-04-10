@@ -1336,7 +1336,7 @@ class World(LooiObject):
                         sizekey *= 5
                         sizekey = sizekey ** 2
                         
-                        w = .006 + (math.sin(sizekey)*.5+.5)*.006
+                        w = .0085 + (math.sin(sizekey)*.5+.5)*.0085
                         
                         
                         
