@@ -27,7 +27,7 @@ x = {
     "ski_speed" : 1.1,#.55,
     "scroll_speed": math.pi/20000,#math.pi/40,
     "scroll_speed_lift" : math.pi/40,
-    "turn_limit" : math.pi/20,
+    "turn_limit" : math.pi/9,
     "min_vr_margin" : math.pi/45,
     
     "swish_angle" : math.pi/20, 
