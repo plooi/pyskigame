@@ -325,7 +325,6 @@ class Lift(LooiObject, Selectable):
     def update(self):
         self.track.generate_segments()
     def step(self):
-        
         #this is so that there is one frame between when I press r and when the lift is fixed
         if self.fixing:
             self.world.properties["active_missions"] = []

@@ -56,15 +56,6 @@ player_centered_search = outward_search(120)
 
 
 
-
-
-
-
-
-
-
-
-
 class UI(LooiObject):
     def __init__(self, world, game_mode):
         super().__init__(active=False)
@@ -158,7 +149,7 @@ class UI(LooiObject):
         self.shadow_update_center_x = 0
         self.shadow_updates_allowed = 0
         self.restart_shadow_search = False
-        
+ 
     def set_master_volume(self, vol):
         self.master_volume = vol/100
         m = self.master_volume
@@ -400,11 +391,11 @@ class UI(LooiObject):
     def do_shadow_updates(self):
         #make this not do too too many distance calculations
         if self.world.properties["tree_shadow_updates_per_frame"] >= 1:
-            self.shadow_updates_allowed = self.world.properties["tree_shadow_updates_per_frame"]
+            self.shadow_updates_allowed = self.world.properties["tree_shadow_updates_per_frame"]#I don't get why we can't do an addition here too... 4/9/2020 i wrote this code a month ago
         else:
             self.shadow_updates_allowed += self.world.properties["tree_shadow_updates_per_frame"]
             if self.shadow_updates_allowed > 1:
-                self.shadow_updates_allowed = 1
+                self.shadow_updates_allowed = 1#why??? also 4/9
         
         
         
@@ -422,6 +413,9 @@ class UI(LooiObject):
         
         while i < constants["max_number_of_spots_checked_for_shadow_add_per_step"]:
             
+            
+            
+            
             if self.shadow_update_index >= len(player_centered_search):
                 self.shadow_update_index = 0
                 self.shadow_update_center_x = player_x
@@ -432,6 +426,13 @@ class UI(LooiObject):
                 
                 
             z,x = player_centered_search[self.shadow_update_index]
+            
+            
+            if x > self.world.view.line_of_sight * self.world.properties["chunk_size"]:
+                #print("Stop. no more lag.")
+                return
+            
+            
             
             
             z += self.shadow_update_center_z
@@ -456,22 +457,21 @@ class UI(LooiObject):
     def step(self):
         
         self.do_shadow_updates()
-        """
-        if self.key("v", "pressed"):
-            self.world.shadow_map.add_triangle_shadow(0,0,10,10,0,10,"obj")
-        if self.key("x", "pressed"):
-            self.world.shadow_map.add_triangle_shadow(0,0,10,10,0,10,None)
-        if self.key("z", "pressed"):
-            self.world.shadow_map.remove_triangle_shadow(0,0,10,10,0,10,None)
-        """
+        
+        
+        
         
         self.fps_calc()
         #if self.key(constants["scenery key"], "pressed"):self.scenery = not self.scenery
         
         
+        
+        
+        
         self.sounds()
                     
         self.do_health_step()
+        
         
         if not self.skis_changing:
             self.look_around()
@@ -479,6 +479,10 @@ class UI(LooiObject):
             self.put_on_or_take_off_skis()
         if not self.skis_changing:
             self.e_key()
+        
+        
+        
+        
         
         if (not self.chairlift_ride()) and (not self.skis_changing):
             
@@ -494,7 +498,11 @@ class UI(LooiObject):
                     self.collision_check()
                     self.walk()
                     
-            
+        
+        
+        
+        
+        
                     
         if self.game_mode.startswith("ski") and not self.falling: 
             if self.skis == "on":
@@ -516,7 +524,12 @@ class UI(LooiObject):
         if self.world.properties["health"] <= 0:
             self.falling = True
             self.skis = "on"
-    
+        
+        
+        
+        
+        
+        
     def draw_sun(self):
         model = models.sun_model_1()
         
@@ -1205,21 +1218,6 @@ class UI(LooiObject):
                 self.correct_vr_angle = correct_vr_angle_target
                 self.vr_margin = vr_margin_target
                 
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                    
-            
-                
-                
                          
             
     def look_around(self):
@@ -1316,11 +1314,19 @@ class UI(LooiObject):
             self.draw_rect(bar_x, bar_y, bar_x+full_part_width, bar_y+bar_height, front)
             self.draw_rect(bar_x, bar_y, bar_x+bar_width, bar_y+bar_height, back)
             
-            self.draw_text(0,20,str(self.fps), font_size=20)
-            if hasattr(self.world, "chunks_out_of_sight"):
-                self.draw_text(50,20,str(self.world.chunks_out_of_sight), font_size=20, color=Color(0,.4,0))
+            
+            
+            
+            
+            txt = "FPS: " + str(self.fps) + "; Hidden Chunks: " + (str(self.world.chunks_out_of_sight) if hasattr(self.world, "chunks_out_of_sight") else "?") + "; Vertices: " + (str(self.world.num_vertices_drawn) if hasattr(self.world, "num_vertices_drawn") else "?")
+            
+            
+            self.draw_text(0,20,txt, font_size=20)
         #self.draw_text(0,13,str(self.world.view.y), font_size=13)
+        if self.game_mode == ("ski test"):
+            self.draw_text(800,70,"SKI TEST", font_size=70)
         """
+        
         if self.game_mode.startswith("ski"):
             
             

@@ -196,7 +196,8 @@ def read(path, new_version = True):
                 the_world.shadow_map.shadow_color_memo = {}
             if not hasattr(the_world, "chunks_in_sight_memo"):
                 the_world.chunks_in_sight_memo = {}
-            
+            if not hasattr(the_world, "far_shadows"):
+                the_world.far_shadows = True
             
             if not hasattr(the_world, "disable_remove_fixed_quads"):
                 the_world.disable_remove_fixed_quads = False

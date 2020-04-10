@@ -493,7 +493,9 @@ class World(LooiObject):
         self.sparkle_buffer = None
         self.last_sparkle_spacing = -999,-999
         self.chunks_in_sight_memo = {}
-    
+        
+        self.far_shadows = True #if true, all shadows will draw
+                                #if false, only shadows close by will draw
     """
     init_csv
     """
@@ -1278,7 +1280,7 @@ class World(LooiObject):
 #STEP AND PAINT STUFF
 ###################################
     def draw_sparkles(self):
-        spacing = 3.5
+        spacing = 2.2
         
         spaces_passed_until_reset = 3#5
         
@@ -1314,7 +1316,7 @@ class World(LooiObject):
                 c = [1,1,1]
             
             
-            radius = 34#28
+            radius = 18#28
             radius_sq = radius**2
             
             
@@ -1332,7 +1334,7 @@ class World(LooiObject):
                         sizekey *= 5
                         sizekey = sizekey ** 2
                         
-                        w = .03 + (math.sin(sizekey)*.5+.5)*.01
+                        w = .006 + (math.sin(sizekey)*.5+.5)*.006
                         
                         
                         
@@ -1340,7 +1342,7 @@ class World(LooiObject):
                         #dist = ((self.view.x-x) ** 2 + (self.view.z-z) ** 2)**.5
                         dist = ((self.view.x-x) ** 2 + (self.view.z-z) ** 2)
                         
-                        
+                        """
                         #makes some sparkles only appear when very close, but others start to appear even far away
                         appeardistkey = z*self.get_width_points()+x
                         appeardistkey *= 8.5
@@ -1348,7 +1350,7 @@ class World(LooiObject):
                         appeardistkey = math.sin(appeardistkey)
                         appeardistkey = (appeardistkey*.5+.5)*6+1
                         dist *= appeardistkey
-                        
+                        """
                         
                         
                         
@@ -1426,9 +1428,6 @@ class World(LooiObject):
                         z -= zposkey
             self.sparkle_buffer[0].numpy_mode()
             self.sparkle_buffer[1].numpy_mode()
-            #print(self.sparkle_buffer[0].num_occupied() + self.sparkle_buffer[1].num_occupied())
-    
-    
     def delete_shadow_map_memos(self):
         self.shadow_map.get_elev_memo = {}
         self.shadow_map.shadow_color_memo = {}
@@ -1482,7 +1481,6 @@ class World(LooiObject):
         
         
     def step(self):
-        
         #every step delete the shadow map's memos
         self.delete_shadow_map_memos()
         
@@ -1494,9 +1492,16 @@ class World(LooiObject):
         self.numpy_mode()
         start = time()
         
+        
+        
         self.calculate_pan_chunk_vertex_handler()
         
+        
+        
         self.chunk_load_grid = self.get_chunk_load_grid()
+        
+        
+        
         self.draw_sparkles()
         #print("chunk load grid took " + str(time()-start) + " seconds")
         
@@ -1677,7 +1682,9 @@ class World(LooiObject):
                             else: chunks_out_of_sight.add((cz-1, cx))
                        
         #print("checked",num,"points")
-                
+        
+        
+        
         for z in range(nearest_multiple(unscaled_view_z - los2*cs, cs), nearest_multiple(unscaled_view_z + los2*cs, cs)+1, cs):
             for x in range(nearest_multiple(unscaled_view_x - los2*cs, cs), nearest_multiple(unscaled_view_x + los2*cs, cs)+1, cs):
                 
@@ -1889,6 +1896,8 @@ class World(LooiObject):
             
     """
     def draw(self, chunk_load_grid):
+        
+        
         mobile_vertices_close = numpy.array(self.mobile_vertices_close)
         mobile_colors_close = numpy.array(self.mobile_colors_close)
         mobile_vertices_far = numpy.array(self.mobile_vertices_far)
@@ -1934,16 +1943,12 @@ class World(LooiObject):
         
         
         
-        
-        
-        
         #iterate through every single chunk
         #and collect the drawable objects
         for z in range(height):
             for x in range(width):
                 #if the chunk load grid says that the chunk should be loaded
                 if chunk_load_grid[z][x] == 2:
-                    
                     #add this chunk's vertices and colors to the stuff that's gonna be drawn
                     vertices_draw.append(self.chunks[z][x].vh.vertices)
                     colors_draw.append(self.chunks[z][x].vh.vertex_colors)
@@ -1956,7 +1961,6 @@ class World(LooiObject):
                     if hasattr(self.chunks[z][x],"svh"):
                         shadow_vertices_draw.append(self.chunks[z][x].svh.vertices)
                         shadow_colors_draw.append(self.chunks[z][x].svh.vertex_colors)
-                    
                 elif chunk_load_grid[z][x] == 1:
                     #add this chunk's vertices and colors to the stuff that's gonna be drawn
                     vertices_draw_far.append(self.chunks[z][x].vh.vertices)
@@ -1968,6 +1972,7 @@ class World(LooiObject):
                     if hasattr(self.chunks[z][x],"svh"):
                         shadow_vertices_draw_far.append(self.chunks[z][x].svh.vertices)
                         shadow_colors_draw_far.append(self.chunks[z][x].svh.vertex_colors)
+                    
                 elif chunk_load_grid[z][x] == 0:
                     pcsquares = self.chunks[z][x].get_pan_chunk_squares(z, x)
                     #vertices_draw_far.append(pcsquares.vertices)
@@ -1983,7 +1988,7 @@ class World(LooiObject):
                 elif chunk_load_grid[z][x] == -2:
                     pass
                     
-                
+        
         
         #print("setting up took " + str(time()-start) + " seconds")
         
@@ -1994,6 +1999,43 @@ class World(LooiObject):
         
         #now here's where we do all the drawing (and stacking)
         
+        [self.sparkle_buffer[1].vertices] + shadow_vertices_draw_far + vertices_draw_far
+        
+        self.num_vertices_drawn = (
+        
+        len(self.pan_chunk_squares["verts"]) + 
+        sum([len(x) for x in pan_chunk_vertices]) +
+        sum([len(x) for x in shadow_vertices_draw_far]) + 
+        sum([len(x) for x in vertices_draw_far]) + 
+        len(self.sparkle_buffer[1].vertices) + 
+        sum([len(x) for x in shadow_vertices_draw]) + 
+        sum([len(x) for x in vertices_draw]) + 
+        len(self.sparkle_buffer[0].vertices) +
+        sum([len(x) for x in tex_vertices_draw]) + 
+        sum([len(x) for x in tex_vertices_draw_far])
+        
+        )
+        if self.far_shadows == True and self.num_vertices_drawn > constants["turn_shadows_off_threshold"]:
+            self.far_shadows = False
+        elif self.far_shadows == False and self.num_vertices_drawn < constants["turn_shadows_on_threshold"]:
+            self.far_shadows = True
+        
+        if self.far_shadows == False:
+            self.num_vertices_drawn = (#recalculate without far shadows
+    
+            
+            len(self.pan_chunk_squares["verts"]) + 
+            sum([len(x) for x in pan_chunk_vertices]) +
+            
+            sum([len(x) for x in vertices_draw_far]) + 
+            len(self.sparkle_buffer[1].vertices) + 
+            sum([len(x) for x in shadow_vertices_draw]) + 
+            sum([len(x) for x in vertices_draw]) + 
+            len(self.sparkle_buffer[0].vertices) +
+            sum([len(x) for x in tex_vertices_draw]) + 
+            sum([len(x) for x in tex_vertices_draw_far])
+            
+            )
         
         
         #FAR DRAW
@@ -2006,7 +2048,6 @@ class World(LooiObject):
             glEnable(GL_ALPHA_TEST);
             
         glClear(GL_DEPTH_BUFFER_BIT)
-        
         if len(pan_chunk_vertices) > 0:#draw pan chunk everything else
             glDisable(GL_ALPHA_TEST);
             pan_chunk_vertices = numpy.vstack(pan_chunk_vertices)
@@ -2019,27 +2060,14 @@ class World(LooiObject):
         #END CHUNK DRAW
         
         
-        """
-        if 1:
-            self.draw_quad_array_3d(self.sparkle_buffer[1].vertices, self.sparkle_buffer[1].vertex_colors, setup_3d=self.get_setup_3d_far())
-        
-        if len(shadow_vertices_draw_far) > 0:
-            shadow_vertices_draw_far = numpy.vstack(tuple(shadow_vertices_draw_far))
-            shadow_colors_draw_far = numpy.vstack(tuple(shadow_colors_draw_far))
-            self.draw_quad_array_3d(shadow_vertices_draw_far, shadow_colors_draw_far, setup_3d=self.get_setup_3d_far())
-        
-        if len(vertices_draw_far) > 0:
-            glDisable(GL_ALPHA_TEST);
-            #first draw far stuff, then clear the depth buffer bit so close stuff can draw ontop of it
-            vertices_draw_far = numpy.vstack(vertices_draw_far)
-            colors_draw_far = numpy.vstack(colors_draw_far)
+        if self.far_shadows:
+            vertices_draw_far = numpy.vstack([self.sparkle_buffer[1].vertices] + shadow_vertices_draw_far + vertices_draw_far)
+            colors_draw_far = numpy.vstack([self.sparkle_buffer[1].vertex_colors] + shadow_colors_draw_far + colors_draw_far)
             self.draw_quad_array_3d(vertices_draw_far, colors_draw_far, setup_3d=self.get_setup_3d_far())
-            glEnable(GL_ALPHA_TEST);
-        """
-        
-        vertices_draw_far = numpy.vstack([self.sparkle_buffer[1].vertices] + shadow_vertices_draw_far + vertices_draw_far)
-        colors_draw_far = numpy.vstack([self.sparkle_buffer[1].vertex_colors] + shadow_colors_draw_far + colors_draw_far)
-        self.draw_quad_array_3d(vertices_draw_far, colors_draw_far, setup_3d=self.get_setup_3d_far())
+        else:
+            vertices_draw_far = numpy.vstack([self.sparkle_buffer[1].vertices] + vertices_draw_far)
+            colors_draw_far = numpy.vstack([self.sparkle_buffer[1].vertex_colors] + colors_draw_far)
+            self.draw_quad_array_3d(vertices_draw_far, colors_draw_far, setup_3d=self.get_setup_3d_far())
         
         
         if len(tex_vertices_draw_far) > 0:
@@ -2058,22 +2086,6 @@ class World(LooiObject):
         glClear(GL_DEPTH_BUFFER_BIT)
         
         #NEAR DRAW
-        """
-        if 1:
-            self.draw_quad_array_3d(self.sparkle_buffer[0].vertices, self.sparkle_buffer[0].vertex_colors, setup_3d=self.get_setup_3d_close())
-        
-        if len(shadow_vertices_draw) > 0:
-            shadow_vertices_draw = numpy.vstack(tuple(shadow_vertices_draw))
-            shadow_colors_draw = numpy.vstack(tuple(shadow_colors_draw))
-            self.draw_quad_array_3d(shadow_vertices_draw, shadow_colors_draw, setup_3d=self.get_setup_3d_close())
-        
-        
-        #print("vertices",len(vertices_draw))
-        if len(vertices_draw) > 0:
-            vertices_draw = numpy.vstack(tuple(vertices_draw))
-            colors_draw = numpy.vstack(tuple(colors_draw))
-            self.draw_quad_array_3d(vertices_draw, colors_draw, setup_3d=self.get_setup_3d_close())
-        """
         
         vertices_draw = numpy.vstack(tuple([self.sparkle_buffer[0].vertices] + shadow_vertices_draw + vertices_draw))
         colors_draw = numpy.vstack(tuple([self.sparkle_buffer[0].vertex_colors] + shadow_colors_draw + colors_draw))
@@ -2094,25 +2106,13 @@ class World(LooiObject):
         
         
         #print("drawing took " + str(time()-start) + " seconds")
-        #print("drew %d vertices"%(len(tex_vertices_draw)+len(vertices_draw)+len(tex_vertices_draw_far)+len(vertices_draw_far),))    
-        
-        """
-        glClear(GL_DEPTH_BUFFER_BIT)
-        glEnable(GL_BLEND)
-        glDisable(GL_ALPHA_TEST)
-        
-        shade = self.get_proper_floor_color(int(self.view.z/self.properties["horizontal_stretch"]),int(self.view.x/self.properties["horizontal_stretch"]))[0]
-        
-        #self.draw_rect(0,0,self.get_my_window().get_internal_size()[0],self.get_my_window().get_internal_size()[1],Color(1,.5,.3,(1-shade)*.15))
-        #self.draw_rect(0,0,self.get_my_window().get_internal_size()[0],self.get_my_window().get_internal_size()[1],Color(1,.7,0,(1-shade)*.044))
-        #self.draw_rect(0,0,self.get_my_window().get_internal_size()[0],self.get_my_window().get_internal_size()[1],Color(1,.85,.5,(1-shade)*.15))
-        self.draw_rect(0,0,self.get_my_window().get_internal_size()[0],self.get_my_window().get_internal_size()[1],Color(1,.9,.7,(1-shade)*.25))
+        num_vertices_drawn_check = len(tex_vertices_draw)+len(vertices_draw)+len(tex_vertices_draw_far)+len(vertices_draw_far)+len(pan_chunk_vertices)+len(self.pan_chunk_squares["verts"])
         
         
-        glEnable(GL_ALPHA_TEST)
-        glDisable(GL_BLEND)
-        """
+        if self.num_vertices_drawn != num_vertices_drawn_check:
+            print("Incorrect!",self.num_vertices_drawn,"!=",num_vertices_drawn_check)
         
+        #print(self.get_my_window().layered_looi_objects)
         return#######################
     def draw_tex(self, vertices, texture_coords, setup_3d):
         glPushMatrix()
@@ -2552,4 +2552,49 @@ def range_float(start, stop, step):
                     yield x
                     x += step
 
-
+'''Old chunk load grid loop before debug
+for z in range(height):
+            for x in range(width):
+                #if the chunk load grid says that the chunk should be loaded
+                if chunk_load_grid[z][x] == 2:
+                    
+                    #add this chunk's vertices and colors to the stuff that's gonna be drawn
+                    vertices_draw.append(self.chunks[z][x].vh.vertices)
+                    colors_draw.append(self.chunks[z][x].vh.vertex_colors)
+                    
+                    tex_vertices_draw.append(self.chunks[z][x].tvh.vertices)
+                    tex_coords_draw.append(self.chunks[z][x].tvh.vertex_colors)
+                    
+                    #print("chunk",z,x,"num occupied",self.chunks[z][x].tvh.num_occupied(), "capacity", self.chunks[z][x].tvh.capacity())
+                    
+                    if hasattr(self.chunks[z][x],"svh"):
+                        shadow_vertices_draw.append(self.chunks[z][x].svh.vertices)
+                        shadow_colors_draw.append(self.chunks[z][x].svh.vertex_colors)
+                    
+                elif chunk_load_grid[z][x] == 1:
+                    #add this chunk's vertices and colors to the stuff that's gonna be drawn
+                    vertices_draw_far.append(self.chunks[z][x].vh.vertices)
+                    colors_draw_far.append(self.chunks[z][x].vh.vertex_colors)
+                    
+                    tex_vertices_draw_far.append(self.chunks[z][x].tvh.vertices)
+                    tex_coords_draw_far.append(self.chunks[z][x].tvh.vertex_colors)
+                    
+                    if hasattr(self.chunks[z][x],"svh"):
+                        shadow_vertices_draw_far.append(self.chunks[z][x].svh.vertices)
+                        shadow_colors_draw_far.append(self.chunks[z][x].svh.vertex_colors)
+                    
+                elif chunk_load_grid[z][x] == 0:
+                    pcsquares = self.chunks[z][x].get_pan_chunk_squares(z, x)
+                    #vertices_draw_far.append(pcsquares.vertices)
+                    #colors_draw_far.append(pcsquares.vertex_colors)
+                    pan_chunk_vertices.append(pcsquares.vertices)
+                    pan_chunk_colors.append(pcsquares.vertex_colors)
+                elif chunk_load_grid[z][x] == -1:
+                    #pcsquares = self.chunks[z][x].get_pan_chunk_squares(z, x, trees=False)
+                    #vertices_draw_far.append(pcsquares.vertices)
+                    #colors_draw_far.append(pcsquares.vertex_colors)
+                    #dont need these because all pan chunk squares are already all drawn all together
+                    pass
+                elif chunk_load_grid[z][x] == -2:
+                    pass
+'''

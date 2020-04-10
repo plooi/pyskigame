@@ -1,6 +1,10 @@
 import pylooiengine
 from pylooiengine import *
-w = Window(internal_size = (2000,1080), fps=30)
+from constants import x as constants
+
+
+
+w = Window(internal_size = (2000,1080), fps=constants["fps"])
 #import mash_textures
 import os
 import pygame

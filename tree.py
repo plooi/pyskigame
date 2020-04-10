@@ -10,6 +10,7 @@ import PySimpleGUI as sg
 from world_object import *
 from constants import x as constants
 import shadow_map
+import shading
 
 
 
@@ -46,7 +47,10 @@ class Tree(WorldObject):
         self.args["has_shadow"] = False
         #self.add_shadow()
         
-        
+#        color = shading.hill_shade_to_shadow_color(args["world"].get_proper_floor_color(int(args["z"]),int(args["x"]))[0])
+        #self.args["world"].set_floor_texture(int(args["z"]),int(args["x"]),shading.hill_shade_to_shadow_color(args["world"].get_proper_floor_color(int(args["z"]),int(args["x"]))[0]))
+        #self.args["world"].set_floor_texture(int(args["z"])+1,int(args["x"]),shading.hill_shade_to_shadow_color(args["world"].get_proper_floor_color(int(args["z"])+1,int(args["x"]))[0]))
+        #self.args["world"].set_floor_texture(int(args["z"])+2,int(args["x"]),shading.hill_shade_to_shadow_color(args["world"].get_proper_floor_color(int(args["z"])+2,int(args["x"]))[0]))
     
     def get_shadow_pos(self):
         if "height" not in self.args["model_args"]: self.args["model_args"]["height"] = 10#for backwared compatibility
@@ -88,6 +92,18 @@ class Tree(WorldObject):
     def remove_shadow(self):
         z1,x1,z2,x2,z3,x3=self.get_shadow_pos()
         self.world.shadow_map.remove_triangle_shadow(z1,x1,z2,x2,z3,x3,self)
+        
+    ###
+    """
+    def add_shadow(self):
+        return
+    def remove_shadow(self):
+        return
+    """
+    ###
+
+
+    
     def touching(self, x, y, z): return (((x-self.args["model_x"])**2 + (z-self.args["model_z"])**2) ** .5 < 1.4) and y<self.args["model_y"]+6
     def touching_player_consequence(self): 
         if self.world.properties["momentum"] >= constants["crash_speed"]:
@@ -114,6 +130,8 @@ class Tree(WorldObject):
             raise StopSelectingException()
         window.close()
     def delete(self):
+    
+        #self.args["world"].reset_floor_texture(int(self.args["z"]),int(self.args["x"]))
         super().delete()
         
         if "remove_shadow" in self.args and self.args["remove_shadow"]: self.remove_shadow()

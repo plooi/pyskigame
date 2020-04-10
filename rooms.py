@@ -19,6 +19,7 @@ from math import sin,cos
 from tree import Tree
 import world_save
 import shutil
+from constants import x as constants
 
 class Launcher(LooiObject):
     def step(self):
@@ -47,11 +48,11 @@ def kill_all():
 def main_menu():
     kill_all()
     BackgroundPic()
-    map_editor = Button(800, 200, 400, 85, "Map Editor", new_world_1, Color(.6,.6,.6), black, 64)
+    map_editor = Button(800, 300, 400, 85, "Map Editor", new_world_1, Color(.6,.6,.6), black, 64)
     map_editor.button_depth = 10
     map_editor.set_layer(0)
     
-    ski_mode = Button(800, 300, 400, 85, "Ski", ski_room, Color(.6,.6,.6), black, 64)
+    ski_mode = Button(800, 200, 400, 85, "Ski", ski_room, Color(.6,.6,.6), black, 64)
     ski_mode.button_depth = 10
     ski_mode.set_layer(0)
     
@@ -435,14 +436,14 @@ def new_world():
 """
 def init_game_room(world):
     game_ui.set_mouse_mode("3D")
-    pylooiengine.main_window.set_fps(30)#REDUNDANT but i'm too scared to remove it lol
+    pylooiengine.main_window.set_fps(constants["fps"])#REDUNDANT but i'm too scared to remove it lol
     kill_all()
     world.activate()
     game_ui.UI(world, "map editor").activate()
     
 def init_ski_room(world):
     game_ui.set_mouse_mode("3D")
-    pylooiengine.main_window.set_fps(30)#REDUNDANT but i'm too scared to remove it lol
+    pylooiengine.main_window.set_fps(constants["fps"])#REDUNDANT but i'm too scared to remove it lol
     kill_all()
     world.activate()
     game_ui.UI(world, "ski").activate()
