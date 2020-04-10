@@ -76,7 +76,7 @@ x = {
     
     
     "ray_tracing_memo_refresh_every_n_ticks" : 60,#10,
-    "fps" : 60,#30,
+    "fps" : 30,
     
     
     "turn_shadows_on_threshold" : 95000,
