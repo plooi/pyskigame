@@ -79,8 +79,8 @@ x = {
     "fps" : 30,
     
     
-    "turn_shadows_on_threshold" : 95000,
-    "turn_shadows_off_threshold" : 110000,
+    "turn_shadows_on_threshold" : 119000,#95000,
+    "turn_shadows_off_threshold" : 120000,#110000,
 
 
 }

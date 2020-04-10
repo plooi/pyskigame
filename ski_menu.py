@@ -70,7 +70,7 @@ def settings(menu):
     setting["Chair Time Interval Gondola"] = menu.ui.world.properties["chair_time_distance_gondola"]
     setting["Chair Time Interval Fixed Grip"] = menu.ui.world.properties["chair_time_distance_fixed"]
     setting["Tree Shadow Updates per Frame"] = menu.ui.world.properties["tree_shadow_updates_per_frame"]
-    
+    setting["Allow Shadow Hiding (y/n)"] = "y" if menu.ui.world.properties["allow_shadow_hiding"] else "n"
     
     col = []
     for key in setting:
@@ -112,7 +112,7 @@ def settings(menu):
             menu.ui.world.properties["line_of_sight2"] = float(new_settings["Line of Sight 2"])
             #menu.ui.world.properties["line_of_sight3"] = float(new_settings["Line of Sight 3"])
             menu.ui.world.properties["tree_shadow_updates_per_frame"] = float(new_settings["Tree Shadow Updates per Frame"])
-            
+            menu.ui.world.properties["allow_shadow_hiding"] = True if new_settings["Allow Shadow Hiding (y/n)"]=="y" else False
             
             #then do the settings that require lifts to redo chairs
             if nsame("Chair Time Interval Detachable") or nsame("Chair Time Interval Gondola") or nsame("Chair Time Interval Fixed Grip"):

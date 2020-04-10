@@ -247,6 +247,7 @@ def settings(menu):
     setting["Scenery Lower Bound"] = menu.ui.world.properties["scenery_lower_stretch"]
     setting["Line of Sight"] = menu.ui.world.view.line_of_sight
     setting["Line of Sight 2"] = menu.ui.world.properties["line_of_sight2"]
+    setting["Allow Shadow Hiding (y/n)"] = "y" if menu.ui.world.properties["allow_shadow_hiding"] else "n"
     setting["Tree Shadow Updates per Frame"] = menu.ui.world.properties["tree_shadow_updates_per_frame"]
     #setting["Line of Sight 3"] = menu.ui.world.properties["line_of_sight3"]
     setting["Movement Speed"] = menu.ui.world.view.speed
@@ -342,7 +343,7 @@ def settings(menu):
             menu.ui.world.properties["scenery_radius"] = float(new_settings["Scenery Radius"])
             menu.ui.world.properties["scenery_segments"] = float(new_settings["Scenery Segments"])
             menu.ui.world.properties["scenery_lower_stretch"] = float(new_settings["Scenery Lower Bound"])
-            
+            menu.ui.world.properties["allow_shadow_hiding"] = True if new_settings["Allow Shadow Hiding (y/n)"]=="y" else False
             
             #hs terminal model
             #FOR ADDING NEW TERMINALS, CHANGE HERE

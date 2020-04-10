@@ -400,6 +400,8 @@ class World(LooiObject):
             "horizontal_stretch" : 4,
             "vertical_stretch" : .15,
             
+            "allow_shadow_hiding" : True,
+            
             "world_image_pix_per_floor" : 1,
             
             "tree_shadow_updates_per_frame" : 1,
@@ -2015,7 +2017,7 @@ class World(LooiObject):
         sum([len(x) for x in tex_vertices_draw_far])
         
         )
-        if self.far_shadows == True and self.num_vertices_drawn > constants["turn_shadows_off_threshold"]:
+        if self.properties["allow_shadow_hiding"] and (self.far_shadows == True) and self.num_vertices_drawn > constants["turn_shadows_off_threshold"]:
             self.far_shadows = False
         elif self.far_shadows == False and self.num_vertices_drawn < constants["turn_shadows_on_threshold"]:
             self.far_shadows = True
