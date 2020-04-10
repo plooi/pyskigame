@@ -1318,7 +1318,7 @@ class World(LooiObject):
                 c = [1,1,1]
             
             
-            radius = 18#28
+            radius = 21#28
             radius_sq = radius**2
             
             
