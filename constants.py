@@ -15,7 +15,7 @@ x = {
     "midpoint_hop_distance" : 3.5,
     "midpoint_hop_cooldown" : 240,
     "chair_sit_under_distance" : .5,
-    "faster_lift_speed" : 8,
+    "faster_lift_speed" : 2.5,#8,
     
     
     "fall_speed" : .7,#how fast do you have to go on a "steep" slope to have a chance of falling
