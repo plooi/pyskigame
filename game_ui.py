@@ -268,6 +268,13 @@ class UI(LooiObject):
                     self.my_lift.player_riding = None
                     self.my_lift = None
                     self.my_chair = None
+            
+            
+            v = self.world.view
+            minelev = self.get_elevation_continuous(v.z, v.x)*self.world.properties["vertical_stretch"] + self.world.properties["player_height"]
+            if v.y < minelev: v.y = minelev
+            
+            
             return True
         self.world.properties["do_floor_textures"] = True
         return False
