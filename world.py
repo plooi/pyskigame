@@ -485,8 +485,9 @@ class World(LooiObject):
         
         self.game_ui = None
         
-        self.pan_background = image("Panorama.png")
-        self.pan_background = self.pan_background,self.pan_background.tobytes("raw", "RGBA", 0, -1)
+        #self.pan_background = image("Panorama.png")
+        #self.pan_background = self.pan_background,self.pan_background.tobytes("raw", "RGBA", 0, -1)
+        self.pan_background = None
         
         self.disable_remove_fixed_quads = False
         
