@@ -1599,9 +1599,29 @@ class World(LooiObject):
         #print("draw took " + str(time()-start) + " seconds")
         
         
-        glClear(GL_DEPTH_BUFFER_BIT)#clear the depth buffer bit so that the 2d stuff renders on top
-        pylooiengine.main_window.draw_borders()
+        glClear(GL_DEPTH_BUFFER_BIT)
         
+        
+        #self.shader1()
+        
+        
+        glClear(GL_DEPTH_BUFFER_BIT)#clear the depth buffer bit so that the 2d stuff renders on top
+        
+        pylooiengine.main_window.draw_borders()
+    def shader1(self):
+        glEnable(GL_BLEND)
+        glDisable(GL_ALPHA_TEST)
+        glBlendEquation(GL_FUNC_REVERSE_SUBTRACT)
+        self.draw_rect(0,0,self.get_my_window().get_internal_size()[0],self.get_my_window().get_internal_size()[1], Color(0,1,1,.1))
+        glEnable(GL_ALPHA_TEST)
+        glDisable(GL_BLEND)
+    def shader2(self):
+        glEnable(GL_BLEND)
+        glDisable(GL_ALPHA_TEST)
+        #glBlendEquation(GL_FUNC_SUBTRACT)
+        self.draw_rect(0,0,self.get_my_window().get_internal_size()[0],self.get_my_window().get_internal_size()[1], Color(1,1,0,.2))
+        glEnable(GL_ALPHA_TEST)
+        glDisable(GL_BLEND)
     def draw_scenery(self):
         glClearColor(.3,.42,.63, 1)
         glClear(GL_COLOR_BUFFER_BIT)
@@ -2195,6 +2215,11 @@ class World(LooiObject):
             print("Incorrect!",self.num_vertices_drawn,"!=",num_vertices_drawn_check)
         
         #print(self.get_my_window().layered_looi_objects)
+        
+        
+        
+        
+        
         return#######################
     def draw_tex(self, vertices, texture_coords, setup_3d, mipmap=True, blend = False):
         glPushMatrix()

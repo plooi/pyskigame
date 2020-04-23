@@ -526,6 +526,10 @@ def hs_terminal_design_blue(**args):
 def hs_terminal_design_gray(**args):
     return terminal_design_1(**args)
 
+
+
+
+
 def terminal_design_1(
     pole_length = 1,
     pole_width = .6,
