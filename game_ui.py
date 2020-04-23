@@ -1325,10 +1325,10 @@ class UI(LooiObject):
             
             
             
-            #txt = "FPS: " + str(self.fps) + "; Hidden Chunks: " + (str(self.world.chunks_out_of_sight) if hasattr(self.world, "chunks_out_of_sight") else "?") + "; Vertices: " + (str(self.world.num_vertices_drawn) if hasattr(self.world, "num_vertices_drawn") else "?")
+            txt = "FPS: " + str(self.fps) + "; Hidden Chunks: " + (str(self.world.chunks_out_of_sight) if hasattr(self.world, "chunks_out_of_sight") else "?") + "; Vertices: " + (str(self.world.num_vertices_drawn) if hasattr(self.world, "num_vertices_drawn") else "?")
             
             
-            #self.draw_text(0,20,txt, font_size=20)
+            self.draw_text(0,20,txt, font_size=20)
         #self.draw_text(0,13,str(self.world.view.y), font_size=13)
         if self.game_mode == ("ski test"):
             self.draw_text(800,70,"SKI TEST", font_size=70)

@@ -1282,6 +1282,79 @@ class World(LooiObject):
 ###################################
 #STEP AND PAINT STUFF
 ###################################
+    def draw_snow_tex(self):
+        def get_texture(dist0to1):
+            dist0to1 = dist0to1 ** .5
+            """
+            if dist0to1 > .9: return "SnowTex05Blurry"
+            if dist0to1 > .85: return "SnowTex10Blurry"
+            if dist0to1 > .8: return "SnowTex20Blurry"
+            if dist0to1 > .75: return "SnowTex30Blurry"
+            if dist0to1 > .65: return "SnowTex40Blurry"
+            """
+            if dist0to1 > .85: return "SnowTex05Blurry"
+            if dist0to1 > .825: return "SnowTex10Blurry"
+            if dist0to1 > .8: return "SnowTex15Blurry"
+            if dist0to1 > .775: return "SnowTex20Blurry"
+            if dist0to1 > .75: return "SnowTex25Blurry"
+            if dist0to1 > .725: return "SnowTex30Blurry"
+            if dist0to1 > .7: return "SnowTex35Blurry"
+            if dist0to1 > .6: return "SnowTex40Blurry"
+            
+            return "SnowTex40Clear"
+        
+        
+        up = .05
+        
+        
+        hs = self.properties["horizontal_stretch"]
+        vs = self.properties["vertical_stretch"]
+        
+        
+        
+        radius = int(70/hs)
+        radius_sq = radius**2
+        
+        
+        
+        tvh = texture.new_texture_handler()
+        
+        
+        
+        
+        
+        zc = self.view.z/hs
+        xc = self.view.x/hs
+        
+        hr = self.view.hor_rot
+        step_back = 20/hs
+        zc -= step_back*math.sin(hr+math.pi)
+        xc += step_back*math.cos(hr+math.pi)
+        zcfloat = zc
+        xcfloat = xc
+        
+        zc=int(zc)
+        xc=int(xc)
+        
+        
+        for z in range(zc - radius-1, zc + radius+1):
+            for x in range(xc - radius-1, xc + radius+1):
+                distance_sq = (z+.5-zcfloat)**2 + (x+.5-xcfloat)**2
+                if not self.valid_floor(z,x):
+                    continue
+                
+                if normal.angle_distance(get_angle(zc, xc, z, x), self.view.hor_rot) < math.pi/3.9:
+                    if distance_sq < radius_sq:
+                        texture.add_image_to_vertex_handler(
+                                    tvh, 
+                                    [x*hs,self.get_elevation(z,x)*vs+up, z*hs],
+                                    [(x+1)*hs,self.get_elevation(z,x+1)*vs+up, z*hs],
+                                    [(x+1)*hs,self.get_elevation(z+1,x+1)*vs+up, (z+1)*hs],
+                                    [(x)*hs,self.get_elevation(z+1,x)*vs+up, (z+1)*hs],
+                                    get_texture(distance_sq/radius_sq)
+                                    )
+        self.draw_tex(tvh.vertices, tvh.vertex_colors, self.get_setup_3d_close(), mipmap=False, blend=True)
+                        
     def draw_sparkles(self):
         spacing = 2.2
         
@@ -1504,8 +1577,9 @@ class World(LooiObject):
         self.chunk_load_grid = self.get_chunk_load_grid()
         
         
+        self.sparkle_buffer = VertexHandler(3),VertexHandler(3)#self.draw_sparkles()
         
-        self.draw_sparkles()
+        
         #print("chunk load grid took " + str(time()-start) + " seconds")
         
     
@@ -2090,6 +2164,10 @@ class World(LooiObject):
         
         #NEAR DRAW
         
+        
+        
+        
+        
         vertices_draw = numpy.vstack(tuple([self.sparkle_buffer[0].vertices] + shadow_vertices_draw + vertices_draw))
         colors_draw = numpy.vstack(tuple([self.sparkle_buffer[0].vertex_colors] + shadow_colors_draw + colors_draw))
         self.draw_quad_array_3d(vertices_draw, colors_draw, setup_3d=self.get_setup_3d_close())
@@ -2106,7 +2184,8 @@ class World(LooiObject):
 
 
             
-        
+        self.draw_snow_tex()
+        self.draw_tex([],[],self.get_setup_3d_close())
         
         #print("drawing took " + str(time()-start) + " seconds")
         num_vertices_drawn_check = len(tex_vertices_draw)+len(vertices_draw)+len(tex_vertices_draw_far)+len(vertices_draw_far)+len(pan_chunk_vertices)+len(self.pan_chunk_squares["verts"])
@@ -2117,7 +2196,7 @@ class World(LooiObject):
         
         #print(self.get_my_window().layered_looi_objects)
         return#######################
-    def draw_tex(self, vertices, texture_coords, setup_3d):
+    def draw_tex(self, vertices, texture_coords, setup_3d, mipmap=True, blend = False):
         glPushMatrix()
         
         image = texture.tex
@@ -2130,11 +2209,15 @@ class World(LooiObject):
         
         
         glEnable(GL_TEXTURE_2D)
+        if blend: glEnable(GL_BLEND)
+        if blend: glDisable(GL_ALPHA_TEST)
         
+        if mipmap or True: glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, self.get_my_window().mipmap_max_level)
         
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)#USED TO BE GL_NEAREST
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST)#USED TO BE GL_NEAREST
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, self.get_my_window().mipmap_max_level)
+        if mipmap: glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST)#USED TO BE GL_NEAREST 
+        else: glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+        
         
         glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE)
         
@@ -2142,8 +2225,8 @@ class World(LooiObject):
         
         
         setup_3d()
-        
-        glGenerateMipmap(GL_TEXTURE_2D)
+        if mipmap or True:
+            glGenerateMipmap(GL_TEXTURE_2D)
         
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -2155,7 +2238,8 @@ class World(LooiObject):
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         
-        
+        if blend: glDisable(GL_BLEND)
+        if blend: glEnable(GL_ALPHA_TEST)
         glDisable(GL_TEXTURE_2D)
         glPopMatrix()
         
