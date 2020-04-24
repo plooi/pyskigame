@@ -462,6 +462,11 @@ def fg_terminal_design_red(**args):
     args["terminal_roof_length"] = 4
     args["bullwheel_distance_from_pole"] = .5
     
+    args["terminal_roof_height"] = 1.1
+    args["windows"] = False
+    args["poles_separation"] = 0
+    args["pole_slant"] = 0
+    
     return terminal_design_1(**args)
 
 def fg_terminal_design_green(**args):
@@ -474,6 +479,12 @@ def fg_terminal_design_green(**args):
     args["terminal_track_indent"] = 0
     args["terminal_roof_length"] = 4
     args["bullwheel_distance_from_pole"] = .5
+    
+    args["terminal_roof_height"] = 1.1
+    args["windows"] = False
+    args["poles_separation"] = 0
+    args["pole_slant"] = 0
+    
     return terminal_design_1(**args)
 def fg_terminal_design_blue(**args):
     args["terminal_roof_color"] = [.2,.4,.6]
@@ -485,6 +496,12 @@ def fg_terminal_design_blue(**args):
     args["terminal_track_indent"] = 0
     args["terminal_roof_length"] = 4
     args["bullwheel_distance_from_pole"] = .5
+    
+    args["terminal_roof_height"] = 1.1
+    args["windows"] = False
+    args["poles_separation"] = 0
+    args["pole_slant"] = 0
+    
     return terminal_design_1(**args)
 def fg_terminal_design_gray(**args):
     args["terminal_roof_height"] = 1.85
@@ -493,6 +510,12 @@ def fg_terminal_design_gray(**args):
     args["terminal_track_indent"] = 0
     args["terminal_roof_length"] = 4
     args["bullwheel_distance_from_pole"] = .5
+    
+    args["terminal_roof_height"] = 1.1
+    args["windows"] = False
+    args["poles_separation"] = 0
+    args["pole_slant"] = 0
+    
     return terminal_design_1(**args)
 def fg_terminal_design_black(**args):
     args["terminal_roof_color"] = [.22,.22,.22]
@@ -504,6 +527,12 @@ def fg_terminal_design_black(**args):
     args["terminal_track_indent"] = 0
     args["terminal_roof_length"] = 4
     args["bullwheel_distance_from_pole"] = .5
+    
+    args["terminal_roof_height"] = 1.1
+    args["windows"] = False
+    args["poles_separation"] = 0
+    args["pole_slant"] = 0
+    
     return terminal_design_1(**args)
 
 
@@ -534,12 +563,17 @@ def terminal_design_1(
     pole_length = 1,
     pole_width = .6,
     pole_height = 2,
+    
     pole_color = [.3,.3,.3],
+    pole_color2 = [.33,.33,.33],
+    pole_slant = 1.3,
+    poles_separation = 2,
     
     terminal_roof_width = 4,
-    terminal_roof_length = 7,
+    terminal_roof_length = 9,
     terminal_track_indent = .5,
     terminal_belly_color = [.8,.7,.5],
+    terminal_belly_color2 = [.81,.71,.51],
     terminal_roof_color = [.74,.74,.74],#[.4,.4,.8],
     terminal_side_color = [.65,.65,.65],
     terminal_wall_color = [.34,.38,.43],
@@ -551,11 +585,36 @@ def terminal_design_1(
     slow_down_segments = 15,
     bullwheel_segments = 55,
     
-    terminal_roof_height = 1.5,
+    terminal_roof_height = 1.2,
     terminal_roof_height2 = .75,
     
+    
+    window_color=[0,0,.1],
+    windows = True,
     is_midpoint_terminal = False
+    
     ):
+    
+    def lerp(p1, p2, f):
+        return [p1[0]*(1-f)+p2[0]*f, p1[1]*(1-f)+p2[1]*f, p1[2]*(1-f)+p2[2]*f]
+    def rectangles(p1,p2,p3,p4,segments,segment_color_fun,rectran=lambda x,i:x):
+        
+        ret = []
+        for i in range(segments):
+            f1 = i/segments
+            f2 = (i+1)/segments
+            newquad = [lerp(p1,p2,f1),lerp(p1,p2,f2),lerp(p4,p3,f2),lerp(p4,p3,f1),segment_color_fun(i)]
+            
+            newquad = rectran(newquad, i)
+            
+            ret += newquad
+            
+            
+        return ret
+    
+    
+    
+    
     if is_midpoint_terminal:
         #slow_terminal_speed = terminal_speed/3.5
         terminal_speed = terminal_speed/3.5
@@ -598,7 +657,107 @@ def terminal_design_1(
         if x == slow_down_segments-1:
             vel = rope_speed
         track.add_point(lift_util.Point(x_pos, pole_height, terminal_roof_width/2-terminal_track_indent, vel))
-
+        
+    def abs(x):return x if x >= 0 else -x
+    def roof_fun(rect, i):
+        def height_fun(x):return (1 - (abs(x-8))**2.5/(8**2.5)) * terminal_roof_height
+        rect[0][1] += height_fun(i)
+        rect[1][1] += height_fun(i+1)
+        rect[2][1] += height_fun(i+1)
+        rect[3][1] += height_fun(i)
+        return rect
+        
+    def side_fun(rect, i):
+        def height_fun(x):return (1 - (abs(x-8))**2.5/(8**2.5)) * terminal_roof_height
+        rect[0][1] += height_fun(i)
+        rect[1][1] += height_fun(i+1)
+        return rect
+    def roof_color_fun(x):
+        ret = list(terminal_roof_color)
+        for j in range(3):
+            ret[j] -= ((abs(x-8))**2.5/(8**2.5))*.04
+        return ret
+        
+        
+        
+    if windows:
+        windows = [
+        [-terminal_roof_length/2-.05,pole_height+1,-.85],[-terminal_roof_length/2-.05,pole_height+1,-1.44],[-terminal_roof_length/2-.05,pole_height+1.5,-1],[-terminal_roof_length/2-.05,pole_height+1.5,-.85],window_color,
+        [-terminal_roof_length/2-.05,pole_height+1,.85],[-terminal_roof_length/2-.05,pole_height+1,1.44],[-terminal_roof_length/2-.05,pole_height+1.5,1],[-terminal_roof_length/2-.05,pole_height+1.5,.85],window_color,
+        
+        [-terminal_roof_length/2-.05,pole_height+.2,-.35],[-terminal_roof_length/2-.05,pole_height+.2,-.15],[-terminal_roof_length/2-.05,pole_height+1.7,-.15],[-terminal_roof_length/2-.05,pole_height+1.7,-.35],window_color,
+        [-terminal_roof_length/2-.05,pole_height+.2,-.6],[-terminal_roof_length/2-.05,pole_height+.2,-.4],[-terminal_roof_length/2-.05,pole_height+1.7,-.4],[-terminal_roof_length/2-.05,pole_height+1.7,-.6],window_color,
+        
+        [-terminal_roof_length/2-.05,pole_height+.2,.35],[-terminal_roof_length/2-.05,pole_height+.2,.15],[-terminal_roof_length/2-.05,pole_height+1.7,.15],[-terminal_roof_length/2-.05,pole_height+1.7,.35],window_color,
+        [-terminal_roof_length/2-.05,pole_height+.2,.6],[-terminal_roof_length/2-.05,pole_height+.2,.4],[-terminal_roof_length/2-.05,pole_height+1.7,.4],[-terminal_roof_length/2-.05,pole_height+1.7,.6],window_color,
+        
+        
+        [terminal_roof_length/2+.10,pole_height+1,-.85],[terminal_roof_length/2+.10,pole_height+1,-1.44],[terminal_roof_length/2+.10,pole_height+1.5,-1],[terminal_roof_length/2+.10,pole_height+1.5,-.85],window_color,
+        [terminal_roof_length/2+.10,pole_height+1,.85],[terminal_roof_length/2+.10,pole_height+1,1.44],[terminal_roof_length/2+.10,pole_height+1.5,1],[terminal_roof_length/2+.10,pole_height+1.5,.85],window_color,
+        ]
+    else:
+        windows = []
+    ret=[
+        
+    [-pole_length/2,0,-pole_width/2], [pole_length/2,0,-pole_width/2], [pole_length/2-pole_slant,pole_height,-pole_width/2], [-pole_length/2-pole_slant,pole_height,-pole_width/2], pole_color,
+    [-pole_length/2,0,pole_width/2], [pole_length/2,0,pole_width/2], [pole_length/2-pole_slant,pole_height,pole_width/2], [-pole_length/2-pole_slant,pole_height,pole_width/2], pole_color,
+    [-pole_length/2,0,-pole_width/2], [-pole_length/2,0,pole_width/2], [-pole_length/2-pole_slant,pole_height,pole_width/2], [-pole_length/2-pole_slant,pole_height,-pole_width/2], pole_color2,
+    [pole_length/2,0,-pole_width/2], [pole_length/2,0,pole_width/2], [pole_length/2-pole_slant,pole_height,pole_width/2], [pole_length/2-pole_slant,pole_height,-pole_width/2], pole_color2,
+    
+    [-pole_length/2+poles_separation,0,-pole_width/2], [pole_length/2+poles_separation,0,-pole_width/2], [pole_length/2+poles_separation,pole_height,-pole_width/2], [-pole_length/2+poles_separation,pole_height,-pole_width/2], pole_color,
+    [-pole_length/2+poles_separation,0,pole_width/2], [pole_length/2+poles_separation,0,pole_width/2], [pole_length/2+poles_separation,pole_height,pole_width/2], [-pole_length/2+poles_separation,pole_height,pole_width/2], pole_color,
+    [-pole_length/2+poles_separation,0,-pole_width/2], [-pole_length/2+poles_separation,0,pole_width/2], [-pole_length/2+poles_separation,pole_height,pole_width/2], [-pole_length/2+poles_separation,pole_height,-pole_width/2], pole_color2,
+    [pole_length/2+poles_separation,0,-pole_width/2], [pole_length/2+poles_separation,0,pole_width/2], [pole_length/2+poles_separation,pole_height,pole_width/2], [pole_length/2+poles_separation,pole_height,-pole_width/2], pole_color2,
+    
+    [-terminal_roof_length/2, pole_height, -terminal_roof_width/2], [terminal_roof_length/2, pole_height, -terminal_roof_width/2], [terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2-terminal_roof_bulge],[-terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2-terminal_roof_bulge], terminal_side_color,
+    [-terminal_roof_length/2, pole_height, terminal_roof_width/2], [terminal_roof_length/2, pole_height, terminal_roof_width/2], [terminal_roof_length/2, pole_height+terminal_roof_height2, terminal_roof_width/2+terminal_roof_bulge],[-terminal_roof_length/2, pole_height+terminal_roof_height2, terminal_roof_width/2+terminal_roof_bulge], terminal_side_color,
+    
+    
+    
+    
+    ]+windows+rectangles(
+        [terminal_roof_length/2, pole_height, -terminal_roof_width/2], 
+        [terminal_roof_length/2, pole_height, terminal_roof_width/2], 
+        [-terminal_roof_length/2, pole_height, terminal_roof_width/2],
+        [-terminal_roof_length/2, pole_height, -terminal_roof_width/2], 
+        15,lambda x: terminal_belly_color if x%2==0 else terminal_belly_color2) + rectangles(
+        
+        
+        [-terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2-terminal_roof_bulge],
+        [-terminal_roof_length/2, pole_height+terminal_roof_height2, terminal_roof_width/2+terminal_roof_bulge],
+        [terminal_roof_length/2, pole_height+terminal_roof_height2, terminal_roof_width/2+terminal_roof_bulge],
+        [terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2-terminal_roof_bulge],
+        16,
+        roof_color_fun,
+        roof_fun
+        
+        )+rectangles(
+        [terminal_roof_length/2, pole_height+terminal_roof_height2, terminal_roof_width/2+terminal_roof_bulge],
+        [terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2-terminal_roof_bulge],
+        [terminal_roof_length/2, pole_height, -terminal_roof_width/2],
+        [terminal_roof_length/2, pole_height, terminal_roof_width/2],
+        
+        
+        16,
+        lambda x: terminal_wall_color, 
+        side_fun
+        
+        
+        )+rectangles(
+        [-terminal_roof_length/2, pole_height+terminal_roof_height2, terminal_roof_width/2+terminal_roof_bulge],
+        [-terminal_roof_length/2, pole_height+terminal_roof_height2, -terminal_roof_width/2-terminal_roof_bulge],
+        [-terminal_roof_length/2, pole_height, -terminal_roof_width/2],
+        [-terminal_roof_length/2, pole_height, terminal_roof_width/2],
+        
+        
+        16,
+        lambda x: terminal_wall_color, 
+        side_fun
+        
+        
+        )
+        
+    return ret,track
     return [
     [-pole_length/2,0,-pole_width/2], [pole_length/2,0,-pole_width/2], [pole_length/2,pole_height,-pole_width/2], [-pole_length/2,pole_height,-pole_width/2], pole_color,
     [-pole_length/2,0,pole_width/2], [pole_length/2,0,pole_width/2], [pole_length/2,pole_height,pole_width/2], [-pole_length/2,pole_height,pole_width/2], pole_color,

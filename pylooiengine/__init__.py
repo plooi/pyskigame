@@ -233,7 +233,6 @@ class Window():
             
             
             
-            
             strict_remove_all(self.transfer_to_unlayered_looi_objects, self.layered_looi_objects)
             strict_remove_all(self.transfer_to_layered_looi_objects, self.unlayered_looi_objects)
             self.layered_looi_objects += self.transfer_to_layered_looi_objects
@@ -619,8 +618,12 @@ class LooiObject:
         glPixelStorei(GL_UNPACK_ALIGNMENT,1)
         
         
-        glTexImage2D(
+        """glTexImage2D(
             GL_TEXTURE_2D, 0, 3, ix, iy, 0,
+            GL_RGBA, GL_UNSIGNED_BYTE, image
+        )"""
+        glTexImage2D(
+            GL_TEXTURE_2D, 0, 4, ix, iy, 0,
             GL_RGBA, GL_UNSIGNED_BYTE, image
         )
         

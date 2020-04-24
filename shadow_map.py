@@ -1,5 +1,5 @@
 import loading
-shadow_margin = .09
+shadow_margin = .03#.09
 
 #every real unit of length is equal to D shadow units of length
 D = 1

@@ -11,6 +11,11 @@ from constants import x as constants
 
 eat_icon = image("textures/Eat Icon.png")
 
+pixels = eat_icon.load()
+
+
+print(pixels[0,0])
+
 class Lodge(WorldObject):
     def __init__(self, **args):
         default(args, "model", building_with_slanted_roof_tex)
@@ -21,7 +26,7 @@ class Lodge(WorldObject):
         default(args, "y", args["world"].get_elevation_continuous(args["z"], args["x"]) + .2)
         super().__init__(**args)
         self.draw_icon = False
-        self.set_layer(None)
+        self.set_layer(-1)
     def step(self):
         pass
     def paint(self):
