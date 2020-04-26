@@ -101,7 +101,13 @@ class ShadowMap:
             self.get_shadow_color(z,x),
             int(z1_unscaled),
             int(x1_unscaled))
-    
+    def add_one_shadow_quad_premade(self,z,x,object,args):
+        try:
+            key = self.world.add_shadow(*args)
+        except Exception as e:
+            raise e
+        if key != None:
+            self.shadow_map[(z,x)] = (key,[object])
     def add_one_shadow(self, z, x, object):
         if (z,x) not in self.shadow_map:
             key = self.add_one_shadow_quad(z, x)
@@ -167,8 +173,6 @@ class ShadowMap:
             min_x = int(min(xs))-1
             max_z = int(max(zs))+1
             max_x = int(max(xs))+1
-        
-
         
         for z in range(min_z, max_z):
             for x in range(min_x, max_x):

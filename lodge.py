@@ -11,10 +11,6 @@ from constants import x as constants
 
 eat_icon = image("textures/Eat Icon.png")
 
-pixels = eat_icon.load()
-
-
-print(pixels[0,0])
 
 class Lodge(WorldObject):
     def __init__(self, **args):

@@ -369,12 +369,14 @@ def settings(menu):
             except:
                 pass
             
-            
+            def about(a,b):
+                return a - .1 < b and a + .1 > b
             
             #then do the settings that require lifts to redo chairs
             if nsame("Chair Time Interval Detachable") or nsame("Chair Time Interval Gondola") or nsame("Chair Time Interval Fixed Grip"):
                 for chairlift in lift.active_lifts:
-                    if chairlift.rope_speed != chairlift.terminal_speed:#if detachable
+                    #if chairlift.rope_speed != chairlift.terminal_speed:#if detachable
+                    if not about(constants[chairlift.rope_speed], constants[chairlift.terminal_speed]):#if detachable
                         if chairlift.super_blurry_chair_model == gondola_model_4:#if gondola
                             chairlift.set_chair_time_distance(menu.ui.world.properties["chair_time_distance_gondola"])
                         else:

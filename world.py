@@ -33,8 +33,10 @@ import lift
 import os
 from shading import *
 
-from shadow_map import ShadowMap
+import fast_shadows
 
+from shadow_map import ShadowMap
+import particle
 
 
 
@@ -92,7 +94,13 @@ class Chunk:
         
         self.colors_changed = True
         self.pan_chunk_squares = None
-    
+        
+        self.tree_shadows_loaded = False
+        
+        
+    def changed(self):
+        #self.tree_shadows_loaded = False
+        self.colors_changed = True
             
     """
     get_pan_chunk_square
@@ -493,12 +501,17 @@ class World(LooiObject):
         
         self.shadow_map = ShadowMap(self)
         
-        self.sparkle_buffer = None
+        self.particle_handler = VertexHandler(2)
         self.last_sparkle_spacing = -999,-999
         self.chunks_in_sight_memo = {}
         
         self.far_shadows = True #if true, all shadows will draw
                                 #if false, only shadows close by will draw
+        self.lastx = None
+        self.lasty = None
+        self.lastz = None
+        self.lasthr = None
+        self.lastvr = None
     """
     init_csv
     """
@@ -1074,46 +1087,9 @@ class World(LooiObject):
             chunk.tvh.vertex_colors[floor.floor_pointer+1] = [ulx+pixels_w,uly]
             chunk.tvh.vertex_colors[floor.floor_pointer+2] = [ulx+pixels_w,uly-pixels_h]
             chunk.tvh.vertex_colors[floor.floor_pointer+3] = [ulx,uly-pixels_h]
-        chunk.colors_changed = True
+        chunk.changed()
         self.pan_chunk_squares_changed = True
         
-        """
-        
-        if floor_z == self.get_height_floors()-1:
-            floor = self.quads[floor_z][floor_x]
-            chunk = self.chunks[floor.my_chunk_z][floor.my_chunk_x]
-            chunk.vh.vertex_colors[floor.floor_pointer+2] = color
-            chunk.vh.vertex_colors[floor.floor_pointer+3] = color
-            chunk.colors_changed = True
-        if floor_x == self.get_width_floors()-1:
-            floor = self.quads[floor_z][floor_x]
-            chunk = self.chunks[floor.my_chunk_z][floor.my_chunk_x]
-            chunk.vh.vertex_colors[floor.floor_pointer+1] = color
-            chunk.vh.vertex_colors[floor.floor_pointer+2] = color
-            chunk.colors_changed = True
-        
-        if self.valid_floor(floor_z, floor_x):
-            floor = self.quads[floor_z][floor_x]
-            chunk = self.chunks[floor.my_chunk_z][floor.my_chunk_x]
-            chunk.vh.vertex_colors[floor.floor_pointer] = color
-            chunk.colors_changed = True
-        if self.valid_floor(floor_z-1, floor_x):
-            floor = self.quads[floor_z-1][floor_x]
-            chunk = self.chunks[floor.my_chunk_z][floor.my_chunk_x]
-            chunk.vh.vertex_colors[floor.floor_pointer+3] = color
-            chunk.colors_changed = True
-        if self.valid_floor(floor_z-1, floor_x-1):
-            floor = self.quads[floor_z-1][floor_x-1]
-            chunk = self.chunks[floor.my_chunk_z][floor.my_chunk_x]
-            chunk.vh.vertex_colors[floor.floor_pointer+2] = color
-            chunk.colors_changed = True
-        if self.valid_floor(floor_z, floor_x-1):
-            floor = self.quads[floor_z][floor_x-1]
-            chunk = self.chunks[floor.my_chunk_z][floor.my_chunk_x]
-            chunk.vh.vertex_colors[floor.floor_pointer+1] = color
-            chunk.colors_changed = True
-        
-        """
     """
     reset_floor_texture
     
@@ -1283,6 +1259,7 @@ class World(LooiObject):
 #STEP AND PAINT STUFF
 ###################################
     def draw_snow_tex(self):
+        start = time()
         def get_texture(dist0to1):
             dist0to1 = dist0to1 ** .5
             """
@@ -1300,8 +1277,9 @@ class World(LooiObject):
             if dist0to1 > .725: return "SnowTex30Blurry"
             if dist0to1 > .7: return "SnowTex35Blurry"
             if dist0to1 > .6: return "SnowTex40Blurry"
+            #if dist0to1 > .5: return "SnowTex40Blurry"
             
-            return "SnowTex40Clear"
+            return "SnowTex40Blurry"#"SnowTex40Clear"
         
         
         up = .05
@@ -1318,7 +1296,7 @@ class World(LooiObject):
         
         
         tvh = texture.new_texture_handler()
-        
+        #tvh.list_mode()
         
         
         
@@ -1336,7 +1314,6 @@ class World(LooiObject):
         zc=int(zc)
         xc=int(xc)
         
-        
         for z in range(zc - radius-1, zc + radius+1):
             for x in range(xc - radius-1, xc + radius+1):
                 distance_sq = (z+.5-zcfloat)**2 + (x+.5-xcfloat)**2
@@ -1353,7 +1330,11 @@ class World(LooiObject):
                                     [(x)*hs,self.get_elevation(z+1,x)*vs+up, (z+1)*hs],
                                     get_texture(distance_sq/radius_sq)
                                     )
+        #print("setup took", time()-start)
+        #tvh.numpy_mode()
+        start = time()
         self.draw_tex(tvh.vertices, tvh.vertex_colors, self.get_setup_3d_close(), mipmap=False, blend=True)
+        #print("draw took", time()-start)
                         
     def draw_sparkles(self):
         spacing = 2.2
@@ -1551,12 +1532,67 @@ class World(LooiObject):
         
         
         
+    def particle_response(self):
+        if self.lastx == None or self.lasty == None or self.lastz == None or self.lasthr == None or self.lastvr == None:
+            pass
+        else:
+            sign = 1 if util.is_a_left_of_b(self.lasthr,self.view.hor_rot) else -1
+            
+            particle.left(sign*normal.angle_distance(self.lasthr,self.view.hor_rot)*2000)
+            
+            
+            
+            
+            
+            dir_moving = util.get_angle(self.lastz, self.lastx, self.view.z, self.view.x)
+            mag = ( (self.lastz-self.view.z)**2 + (self.lastx-self.view.x)**2 )**.5
+            
+            dir_moving_minus_hr = normal.angle_distance(self.view.hor_rot,dir_moving)
+            
+            if util.is_a_left_of_b(self.view.hor_rot,dir_moving):
+                dir_moving_minus_hr *= -1
+                
+                
+            x_move = -mag*math.sin(dir_moving_minus_hr)*20
+            z_move = mag*math.cos(dir_moving_minus_hr)*20
+            
+            particle.forward(z_move)
+            particle.left(x_move)
+            
+            
+            y_move = self.view.y - self.lasty
+            particle.up(y_move*20)
+            
+            
+            vr_move = self.view.vert_rot - self.lastvr
+            particle.up(vr_move*2000)
         
         
         
         
+        self.lastx = self.view.x
+        self.lasty = self.view.y
+        self.lastz = self.view.z
+        self.lasthr = self.view.hor_rot
+        self.lastvr = self.view.vert_rot
         
+        
+        
+    def snowing(self, intensity, size= .016):
+        while len(particle.snowfall_particles) < intensity:
+            particle.SnowFall(self)
+        while len(particle.snowfall_particles) > intensity:
+            particle.snowfall_particles[0].deactivate()
+        
+             
     def step(self):
+    
+    
+        
+        self.snowing(30)
+        self.particle_response()
+    
+        
         #every step delete the shadow map's memos
         self.delete_shadow_map_memos()
         
@@ -1577,8 +1613,6 @@ class World(LooiObject):
         self.chunk_load_grid = self.get_chunk_load_grid()
         
         
-        self.sparkle_buffer = VertexHandler(3),VertexHandler(3)#self.draw_sparkles()
-        
         
         #print("chunk load grid took " + str(time()-start) + " seconds")
         
@@ -1594,9 +1628,9 @@ class World(LooiObject):
         
         
         
-        start = time()
         self.draw(self.chunk_load_grid)
-        #print("draw took " + str(time()-start) + " seconds")
+        self.particle_handler = VertexHandler(2)
+        
         
         
         glClear(GL_DEPTH_BUFFER_BIT)
@@ -1689,7 +1723,64 @@ class World(LooiObject):
             
             self.draw_image_array_3d(vertices, tex_coords, self.pan_background[0], self.pan_background[1],setup_3d=setup)
             glClear(GL_DEPTH_BUFFER_BIT)
+    
+    
+    
+    def altitude_sickness(self):
+        if not constants["do_shadow_updates"]:
+            return
+        hr = self.properties["horizontal_stretch"]
+        cz = int(self.view.z/hr/self.properties["chunk_size"])#center chunk z
+        cx = int(self.view.x/hr/self.properties["chunk_size"])#center chunk x
+        
+        shadow_load_radius = int(constants["tree_shadow_load_radius"]*self.view.line_of_sight)
+        
+        
+        
+        
+        """
+        for chunk_z in range(cz-shadow_load_radius, cz+shadow_load_radius):
+            for chunk_x in range(cx-shadow_load_radius, cx+shadow_load_radius):
+                if not self.valid_chunk(chunk_z,chunk_x):continue
+                self.chunks[chunk_z][chunk_x].svh.list_mode()
+        """
+        to_update = []
+        
+        
+        for chunk_z in range(cz-shadow_load_radius, cz+shadow_load_radius):
+            for chunk_x in range(cx-shadow_load_radius, cx+shadow_load_radius):
+                if not self.valid_chunk(chunk_z,chunk_x):
+                    continue
+                c = self.chunks[chunk_z][chunk_x]
+                if not c.tree_shadows_loaded :
+                    c.tree_shadows_loaded = True
+                    x1 = chunk_x * self.properties["chunk_size"]
+                    z1 = chunk_z * self.properties["chunk_size"]
+                    x2 = x1 + self.properties["chunk_size"]
+                    z2 = z1 + self.properties["chunk_size"]
+                    
+                    for z in range(z1,z2):
+                        for x in range(x1,x2):
+                            q = self.quads[z][x]
+                            for containedobj in list(q.containedObjects):
+                                if isinstance(containedobj, Tree):
+                                    if hasattr(containedobj,"shadow_pointers") and containedobj.shadow_pointers == None:
+                                        to_update.append(containedobj)
             
+        fast_shadows.add_shadows(self, to_update)
+        
+        
+        
+        """
+        for chunk_z in range(cz-shadow_load_radius, cz+shadow_load_radius):
+            for chunk_x in range(cx-shadow_load_radius, cx+shadow_load_radius):
+                if not self.valid_chunk(chunk_z,chunk_x):continue
+                self.chunks[chunk_z][chunk_x].svh.numpy_mode()
+        """
+        
+                                    
+                    
+        
     """
     for each spot in the grid
     
@@ -1698,6 +1789,11 @@ class World(LooiObject):
         0 chunk is "blurry" so you can see trees, lift poles, and rough estimate of ground
         1 chunk is loaded
         2 chunk is loaded and close to player, so draw it in the "near draw
+    
+    
+    
+    
+    WILL INVOKE SHADOW LOADER if it finds a nearby (status 1 or 2) chunk without shadows
     """
     def get_chunk_load_grid(self):
         los =self.view.line_of_sight
@@ -1811,6 +1907,16 @@ class World(LooiObject):
                         if self.valid_chunk(cz-1, cx) and chunk_load_grid[cz-1][cx] == 0:
                             chunk_load_grid[cz-1][cx] = 1
                         
+                        if self.game_ui.clock % constants["altitude_sickness_check_freq"] == 0:
+                            #"Altitude sickness"
+                            if self.valid_chunk(cz, cx) and not self.chunks[cz][cx].tree_shadows_loaded:
+                                self.altitude_sickness()
+                            if self.valid_chunk(cz-1, cx-1) and not self.chunks[cz-1][cx-1].tree_shadows_loaded:
+                                self.altitude_sickness()
+                            if self.valid_chunk(cz, cx-1) and not self.chunks[cz][cx-1].tree_shadows_loaded:
+                                self.altitude_sickness()
+                            if self.valid_chunk(cz-1, cx) and not self.chunks[cz-1][cx].tree_shadows_loaded:
+                                self.altitude_sickness()
                         
                         
         
@@ -1869,10 +1975,10 @@ class World(LooiObject):
         c_y = self.get_elevation(int((chunk_z+.5) * self.properties["chunk_size"]), int((chunk_x+.5) * self.properties["chunk_size"]))*vs
         horizontal_dist = ( (self.view.z-c_z)**2 + (self.view.x-c_x)**2 )**.5
         
-        aim_higher_than_the_chunk_actually_is = 20#cuz then we can just simply ask:
+        aim_higher_than_the_chunk_actually_is = 20#13#cuz then we can just simply ask:
             #if the ray hit somthing, then the chunk isn't visible
             #if the ray didn't hit something, then the chunk is visible
-        start_higher_than_you_actually_are = 12    
+        start_higher_than_you_actually_are = 12#12    
             
         
         
@@ -1995,6 +2101,7 @@ class World(LooiObject):
     def draw(self, chunk_load_grid):
         
         
+        
         mobile_vertices_close = numpy.array(self.mobile_vertices_close)
         mobile_colors_close = numpy.array(self.mobile_colors_close)
         mobile_vertices_far = numpy.array(self.mobile_vertices_far)
@@ -2055,7 +2162,7 @@ class World(LooiObject):
                     
                     #print("chunk",z,x,"num occupied",self.chunks[z][x].tvh.num_occupied(), "capacity", self.chunks[z][x].tvh.capacity())
                     
-                    if hasattr(self.chunks[z][x],"svh"):
+                    if hasattr(self.chunks[z][x],"svh") and constants["do_shadows"]:
                         shadow_vertices_draw.append(self.chunks[z][x].svh.vertices)
                         shadow_colors_draw.append(self.chunks[z][x].svh.vertex_colors)
                 elif chunk_load_grid[z][x] == 1:
@@ -2066,7 +2173,7 @@ class World(LooiObject):
                     tex_vertices_draw_far.append(self.chunks[z][x].tvh.vertices)
                     tex_coords_draw_far.append(self.chunks[z][x].tvh.vertex_colors)
                     
-                    if hasattr(self.chunks[z][x],"svh"):
+                    if hasattr(self.chunks[z][x],"svh") and constants["do_shadows"]:
                         shadow_vertices_draw_far.append(self.chunks[z][x].svh.vertices)
                         shadow_colors_draw_far.append(self.chunks[z][x].svh.vertex_colors)
                     
@@ -2096,7 +2203,7 @@ class World(LooiObject):
         
         #now here's where we do all the drawing (and stacking)
         
-        [self.sparkle_buffer[1].vertices] + shadow_vertices_draw_far + vertices_draw_far
+        #shadow_vertices_draw_far + vertices_draw_far
         
         self.num_vertices_drawn = (
         
@@ -2104,10 +2211,8 @@ class World(LooiObject):
         sum([len(x) for x in pan_chunk_vertices]) +
         sum([len(x) for x in shadow_vertices_draw_far]) + 
         sum([len(x) for x in vertices_draw_far]) + 
-        len(self.sparkle_buffer[1].vertices) + 
         sum([len(x) for x in shadow_vertices_draw]) + 
         sum([len(x) for x in vertices_draw]) + 
-        len(self.sparkle_buffer[0].vertices) +
         sum([len(x) for x in tex_vertices_draw]) + 
         sum([len(x) for x in tex_vertices_draw_far])
         
@@ -2125,10 +2230,8 @@ class World(LooiObject):
             sum([len(x) for x in pan_chunk_vertices]) +
             
             sum([len(x) for x in vertices_draw_far]) + 
-            len(self.sparkle_buffer[1].vertices) + 
             sum([len(x) for x in shadow_vertices_draw]) + 
             sum([len(x) for x in vertices_draw]) + 
-            len(self.sparkle_buffer[0].vertices) +
             sum([len(x) for x in tex_vertices_draw]) + 
             sum([len(x) for x in tex_vertices_draw_far])
             
@@ -2158,12 +2261,12 @@ class World(LooiObject):
         
         
         if self.far_shadows:
-            vertices_draw_far = numpy.vstack([self.sparkle_buffer[1].vertices] + shadow_vertices_draw_far + vertices_draw_far)
-            colors_draw_far = numpy.vstack([self.sparkle_buffer[1].vertex_colors] + shadow_colors_draw_far + colors_draw_far)
+            vertices_draw_far = numpy.vstack(shadow_vertices_draw_far + vertices_draw_far)
+            colors_draw_far = numpy.vstack(shadow_colors_draw_far + colors_draw_far)
             self.draw_quad_array_3d(vertices_draw_far, colors_draw_far, setup_3d=self.get_setup_3d_far())
         else:
-            vertices_draw_far = numpy.vstack([self.sparkle_buffer[1].vertices] + vertices_draw_far)
-            colors_draw_far = numpy.vstack([self.sparkle_buffer[1].vertex_colors] + colors_draw_far)
+            vertices_draw_far = numpy.vstack(vertices_draw_far)
+            colors_draw_far = numpy.vstack(colors_draw_far)
             self.draw_quad_array_3d(vertices_draw_far, colors_draw_far, setup_3d=self.get_setup_3d_far())
         
         
@@ -2182,14 +2285,17 @@ class World(LooiObject):
         
         glClear(GL_DEPTH_BUFFER_BIT)
         
+        """
+        print("start")
+        for a in shadow_vertices_draw + vertices_draw:
+            print(a.dtype)
+        print("stop")
+        """
+        
+        
         #NEAR DRAW
-        
-        
-        
-        
-        
-        vertices_draw = numpy.vstack(tuple([self.sparkle_buffer[0].vertices] + shadow_vertices_draw + vertices_draw))
-        colors_draw = numpy.vstack(tuple([self.sparkle_buffer[0].vertex_colors] + shadow_colors_draw + colors_draw))
+        vertices_draw = numpy.vstack(tuple(shadow_vertices_draw + vertices_draw))
+        colors_draw = numpy.vstack(tuple(shadow_colors_draw + colors_draw))
         self.draw_quad_array_3d(vertices_draw, colors_draw, setup_3d=self.get_setup_3d_close())
         
         if len(tex_vertices_draw) > 0:
@@ -2197,14 +2303,15 @@ class World(LooiObject):
             tex_vertices_draw = numpy.vstack(tuple(tex_vertices_draw))
             tex_coords_draw = numpy.vstack(tuple(tex_coords_draw))
             #print("Stacking took %f secs" % (time()-_start,))###
+            #print(tex_vertices_draw.dtype)
             _start=time()###
             #self.draw_image_array_3d(tex_vertices_draw, tex_coords_draw, texture.tex, texture.tex_b, setup_3d=self.get_setup_3d_close())
             self.draw_tex(tex_vertices_draw, tex_coords_draw, self.get_setup_3d_close())
             #print("Drawing took %f secs" % (time()-_start,))###
 
 
-            
-        self.draw_snow_tex()
+        if constants["draw_snow_tex"]:
+            self.draw_snow_tex()
         self.draw_tex([],[],self.get_setup_3d_close())
         
         #print("drawing took " + str(time()-start) + " seconds")
@@ -2215,7 +2322,12 @@ class World(LooiObject):
             print("Incorrect!",self.num_vertices_drawn,"!=",num_vertices_drawn_check)
         
         #print(self.get_my_window().layered_looi_objects)
+        glClear(GL_DEPTH_BUFFER_BIT)
         
+        
+        
+        
+        self.draw_quad_array_2d(self.particle_handler.vertices, self.particle_handler.vertex_colors)
         
         
         
@@ -2333,7 +2445,8 @@ class World(LooiObject):
             self.chunks[chunk_z][chunk_x].vh.add_vertex(vertex3, color[2])
             self.chunks[chunk_z][chunk_x].vh.add_vertex(vertex4, color[3])
         
-        self.chunks[chunk_z][chunk_x].colors_changed = True
+        self.chunks[chunk_z][chunk_x].changed()
+        
         
         if object != None:
             self.quads[anchor_z][anchor_x].containedObjects.append(object)
@@ -2349,7 +2462,7 @@ class World(LooiObject):
         self.chunks[chunk_z][chunk_x].vh.rm_vertex(quad_id+2)
         self.chunks[chunk_z][chunk_x].vh.rm_vertex(quad_id+3)
         
-        self.chunks[chunk_z][chunk_x].colors_changed = True
+        self.chunks[chunk_z][chunk_x].changed()
         
         if object != None:
             self.quads[anchor_z][anchor_x].containedObjects.remove(object)
@@ -2368,7 +2481,7 @@ class World(LooiObject):
             self.chunks[chunk_z][chunk_x].svh.add_vertex(vertex3, color[2])
             self.chunks[chunk_z][chunk_x].svh.add_vertex(vertex4, color[3])
         
-        self.chunks[chunk_z][chunk_x].colors_changed = True
+        self.chunks[chunk_z][chunk_x].changed()
         
         if object != None:
             self.quads[anchor_z][anchor_x].containedObjects.append(object)
@@ -2384,7 +2497,7 @@ class World(LooiObject):
         self.chunks[chunk_z][chunk_x].svh.rm_vertex(quad_id+2)
         self.chunks[chunk_z][chunk_x].svh.rm_vertex(quad_id+3)
         
-        self.chunks[chunk_z][chunk_x].colors_changed = True
+        self.chunks[chunk_z][chunk_x].changed()
         
         if object != None:
             self.quads[anchor_z][anchor_x].containedObjects.remove(object)

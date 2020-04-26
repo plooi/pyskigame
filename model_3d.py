@@ -3,6 +3,7 @@ from math import *
 import texture
 from random import random
 
+
 def main():
     p = [1,0,1]
     horizontal_rotate_around_origin(p, pi/4)
@@ -20,11 +21,13 @@ def horizontal_rotate_around_origin(point, theta):
     z = point[0]*sin(theta)+ point[2]*cos(theta)
     point[0] = x
     point[2] = z
+
 def vertical_rotate_around_x_eq_0(point, theta):
     x = point[0]*cos(theta)- point[1]*sin(theta)
     y = point[0]*sin(theta)+ point[1]*cos(theta)
     point[0] = x
     point[1] = y
+
 def horizontal_rotate_track_around_origin(track, theta):
     for i in range(0, len(track.points)):
         horizontal_rotate_around_origin(track.points[i], theta)
@@ -36,7 +39,7 @@ def horizontal_rotate_model_around_origin(model, theta, gradient_model=False, te
         horizontal_rotate_around_origin(model[i+1], theta)
         horizontal_rotate_around_origin(model[i+2], theta)
         horizontal_rotate_around_origin(model[i+3], theta)
-        
+
 def vertical_rotate_model_around_x_eq_0(model, theta, gradient_model=False, texture_model=False):
     point_size = 8 if gradient_model else 5
     for i in range(0, len(model), point_size):
@@ -44,15 +47,18 @@ def vertical_rotate_model_around_x_eq_0(model, theta, gradient_model=False, text
         vertical_rotate_around_x_eq_0(model[i+1], theta)
         vertical_rotate_around_x_eq_0(model[i+2], theta)
         vertical_rotate_around_x_eq_0(model[i+3], theta)
+
 def move_point(point, x_mov, y_mov, z_mov):
     point[0] += x_mov
     point[1] += y_mov
     point[2] += z_mov
+
 def move_track(track, x_mov, y_mov, z_mov):
     for i in range(0, len(track.points)):
         track.points[i][0] += x_mov
         track.points[i][1] += y_mov
         track.points[i][2] += z_mov
+
 def move_model(model, x_mov, y_mov, z_mov, gradient_model=False, texture_model=False):
     point_size = 8 if gradient_model else 5
     for i in range(0, len(model), point_size):
@@ -71,7 +77,7 @@ def move_model(model, x_mov, y_mov, z_mov, gradient_model=False, texture_model=F
         model[i+3][0] += x_mov
         model[i+3][1] += y_mov
         model[i+3][2] += z_mov
-def add_model_to_world_fixed(model, world, anchor_z, anchor_x, object=None, gradient_model=False, texture_model=False):
+def add_model_to_world_fixed(model, world, anchor_z, anchor_x, object=None, gradient_model=False, texture_model=False, is_tree=False):
     keys = []
     if object != None:
         world.quads[anchor_z][anchor_x].containedObjects.append(object)
@@ -87,6 +93,7 @@ def add_model_to_world_fixed(model, world, anchor_z, anchor_x, object=None, grad
             keys.append(
                 texture.add_image_to_vertex_handler(world.chunks[chunk_z][chunk_x].tvh, model[i], model[i+1], model[i+2], model[i+3], model[i+4])
                 )
+            if is_tree: world.chunks[chunk_z][chunk_x].tree_shadows_loaded=False
     else:
         for i in range(0, len(model), 5):
             keys.append(

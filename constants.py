@@ -8,7 +8,7 @@ x = {
     "gondola_rope_speed" : .7,
     
     "fixed_grip_rope_speed" : .275,
-    "fixed_grip_terminal_speed" : .274999,
+    "fixed_grip_terminal_speed" : .274999,#okay WHY DID I DO THIS???#OHHHH RIGHT because the poles look for rope speed to go bububump
     "ski_mode_walk_speed" : .17,#.075,
     
     "chair_ride_distance" : 1.5, #in terms of real distance. How far away you need to be from a chair in order to get on it
@@ -81,6 +81,22 @@ x = {
     
     "turn_shadows_on_threshold" : 119000,#95000,
     "turn_shadows_off_threshold" : 120000,#110000,
-
+    
+    "snowing_range" : 3,
+    "snowing_height_min" : -1,
+    "snowing_height_max" : 2,
+    "snowing_particle_life" : 26,
+    
+    
+    "do_shadow_updates" : True,
+    "tree_shadow_load_radius" : 4,#when you get "altitude sickness", how big of a radius do we load? MULTIPLIED BY LINE OF SHIGT
+    "altitude_sickness_check_freq" : 30,#500,
+    "draw_snow_tex" : True,
+    "do_shadows" : True,
+    
+    
+    "sun_vr" : math.pi/5,
+    
+    
 
 }

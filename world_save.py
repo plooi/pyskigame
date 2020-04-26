@@ -21,7 +21,6 @@ from pylooiengine.misc.graphics import VertexHandler
 
 from lift import Lift,Terminal#,chair_model_1,chair_model_2,chair_model_3,chair_model_4,rope_model_1,terminal_design_1,pole_design_1
 
-
 class StringBuffer:
     def __init__(self):
         self.array = []
@@ -184,8 +183,14 @@ def read(path, new_version = True):
             
             
             f.close()
-            if not hasattr(the_world, "sparkle_buffer"):
-                the_world.sparkle_buffer = None
+            
+            
+            the_world.lastx = None
+            the_world.lasty = None
+            the_world.lastz = None
+            the_world.lasthr = None
+            the_world.lastvr = None
+            the_world.particle_handler = VertexHandler(2)
             if not hasattr(the_world, "last_sparkle_spacing"):
                 the_world.last_sparkle_spacing = -999,-999
             if not hasattr(the_world, "shadow_map"):
@@ -202,12 +207,12 @@ def read(path, new_version = True):
             if not hasattr(the_world, "disable_remove_fixed_quads"):
                 the_world.disable_remove_fixed_quads = False
             
-            """
+            
             for z in range(the_world.get_height_chunks()):
                 for x in range(the_world.get_width_chunks()):
-                    if not hasattr(the_world.chunks[z][x], "svh"):
-                        the_world.chunks[z][x].svh = VertexHandler(3)
-            """
+                    if not hasattr(the_world.chunks[z][x], "tree_shadows_loaded"):
+                        the_world.chunks[z][x].tree_shadows_loaded = False
+            
             
             for z in range(the_world.get_height_floors()):
                 for x in range(the_world.get_width_floors()):

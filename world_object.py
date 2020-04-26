@@ -4,6 +4,7 @@ from random import random
 from model_3d import *
 import models
 import PySimpleGUI as sg
+import tree
 
 class WorldObject(LooiObject):
     """
@@ -162,7 +163,7 @@ class WorldObject(LooiObject):
         
         self.do_lighting(model)
         
-        self.vertex_handler_pointers = add_model_to_world_fixed(model, self.world, int(self.args["z"]), int(self.args["x"]), self,gradient_model=gm, texture_model=tex)
+        self.vertex_handler_pointers = add_model_to_world_fixed(model, self.world, int(self.args["z"]), int(self.args["x"]), self,gradient_model=gm, texture_model=tex, is_tree=self.__class__ == tree.Tree)
         
         
         

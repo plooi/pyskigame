@@ -45,6 +45,8 @@ class Tree(WorldObject):
         
         super().__init__(**args)
         self.args["has_shadow"] = False
+        self.shadow_pointers = None
+        
         #self.add_shadow()
         
 #        color = shading.hill_shade_to_shadow_color(args["world"].get_proper_floor_color(int(args["z"]),int(args["x"]))[0])
@@ -56,9 +58,12 @@ class Tree(WorldObject):
         if "height" not in self.args["model_args"]: self.args["model_args"]["height"] = 10#for backwared compatibility
         
         
-        s_base = 3*shadow_map.D#actually equal to base over 2, the real base of the triangle is sbase * 2
+        #s_base = 3*shadow_map.D#actually equal to base over 2, the real base of the triangle is sbase * 2
+        #s_height = 15*self.args["model_args"]["height"]/10  *shadow_map.D#12
         
-        s_height = 15*self.args["model_args"]["height"]/10  *shadow_map.D#12
+        s_base = 3*shadow_map.D#actually equal to base over 2, the real base of the triangle is sbase * 2
+        s_height = 12*self.args["model_args"]["height"]/10  *shadow_map.D#12
+        
         sa = self.world.properties["sun_angle"]
         hs = self.world.properties["horizontal_stretch"]
         
@@ -84,24 +89,32 @@ class Tree(WorldObject):
         x3+= x_offset
         
         return z1,x1,z2,x2,z3,x3
+    """
     def add_shadow(self):
         if "has_shadow" in self.args and self.args["has_shadow"]==False:
             z1,x1,z2,x2,z3,x3=self.get_shadow_pos()
-            self.world.shadow_map.add_triangle_shadow(z1,x1,z2,x2,z3,x3,self,cut_outside=True)
+            ret = self.world.shadow_map.add_triangle_shadow(z1,x1,z2,x2,z3,x3,self,cut_outside=True)
             self.args["has_shadow"] = True
+            return ret
+    
     def remove_shadow(self):
         z1,x1,z2,x2,z3,x3=self.get_shadow_pos()
         self.world.shadow_map.remove_triangle_shadow(z1,x1,z2,x2,z3,x3,self)
+    """
+      
+    def add_shadow(self, vertices, colors):
+        chunk_z = int(self.args["z"]/self.world.properties["chunk_size"])
+        chunk_x = int(self.args["x"]/self.world.properties["chunk_size"])
         
-    ###
-    """
-    def add_shadow(self):
-        return
+        offset = self.world.chunks[chunk_z][chunk_x].svh.add_vertices_colors(vertices, colors)
+        
+        self.shadow_pointers = {"offset":offset, "length":len(vertices)}
     def remove_shadow(self):
-        return
-    """
-    ###
-
+        if self.shadow_pointers != None:
+            chunk_z = int(self.args["z"]/self.world.properties["chunk_size"])
+            chunk_x = int(self.args["x"]/self.world.properties["chunk_size"])
+            for i in range(self.shadow_pointers["offset"], self.shadow_pointers["offset"]+self.shadow_pointers["length"]):
+                self.world.chunks[chunk_z][chunk_x].svh.rm_vertex(i)
 
     
     def touching(self, x, y, z): return (((x-self.args["model_x"])**2 + (z-self.args["model_z"])**2) ** .5 < 1.4) and y<self.args["model_y"]+6

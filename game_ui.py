@@ -27,7 +27,7 @@ from util import is_a_left_of_b
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-
+import particle
 from constants import x as constants
 
 
@@ -463,7 +463,12 @@ class UI(LooiObject):
             i += 1
     def step(self):
         
-        self.do_shadow_updates()
+        v = self.world.view
+        
+        
+
+        #if constants["do_shadow_updates"]:
+        #    self.do_shadow_updates()
         
         
         
@@ -540,7 +545,7 @@ class UI(LooiObject):
     def draw_sun(self):
         model = models.sun_model_1()
         
-        model_3d.vertical_rotate_model_around_x_eq_0(model, math.pi/10)
+        model_3d.vertical_rotate_model_around_x_eq_0(model, constants["sun_vr"])
         model_3d.horizontal_rotate_model_around_origin(model, self.world.properties["sun_angle"])
         model_3d.move_model(model, self.world.view.x, self.world.view.y, self.world.view.z)
         #model_3d.add_model_to_world_mobile(model, self.world)
@@ -960,6 +965,7 @@ class UI(LooiObject):
         if self.health_target < 0: self.health_target = 0
         if timer:
             self.health_timer = 85
+        
     def ski_mode_move(self):
         v = self.world.view
         g = .1
@@ -1074,6 +1080,11 @@ class UI(LooiObject):
             else:
                 
                 
+                
+                
+                
+                
+                
                         
                 #switch between stop and go modes
                 #if self.key(constants["action_key"], "pressed"):
@@ -1128,19 +1139,18 @@ class UI(LooiObject):
                             self.swish_sound.play(fade_ms=500)
                             self.swish_timer = 40
                 if self.mouse("right","down"):
-                    """
-                    if resistance > math.pi/2 or equivalent_floor_slope < math.pi/10:
-                        break_factor = 1
-                    else:
-                        break_factor = resistance/(math.pi/2)
-                    self.world.properties["momentum"] -= break_factor * .03
-                    """
+                    
                     if resistance > math.pi/2 or equivalent_floor_slope < math.pi/10:
                         break_factor = 1
                     else:
                         break_factor = resistance/(math.pi/2) 
                     if break_factor < .3: break_factor=0
                     self.world.properties["momentum"] /= break_factor*.04 + 1#
+                    
+                    for i in range(int(self.world.properties["momentum"]*5)):
+                        particle.Spray(self.world)
+                    
+                    
                 
                 #momentum direction
                 self.world.properties["momentum_direction"] = self.world.properties["ski_direction"]
@@ -1325,13 +1335,13 @@ class UI(LooiObject):
             
             
             
-            txt = "FPS: " + str(self.fps) + "; Hidden Chunks: " + (str(self.world.chunks_out_of_sight) if hasattr(self.world, "chunks_out_of_sight") else "?") + "; Vertices: " + (str(self.world.num_vertices_drawn) if hasattr(self.world, "num_vertices_drawn") else "?")
-            
+            #txt = "FPS: " + str(self.fps) + "; Hidden Chunks: " + (str(self.world.chunks_out_of_sight) if hasattr(self.world, "chunks_out_of_sight") else "?") + "; Vertices: " + (str(self.world.num_vertices_drawn) if hasattr(self.world, "num_vertices_drawn") else "?")
+            txt = str(self.fps)+"," + str(self.world.chunks_out_of_sight)
             
             self.draw_text(0,20,txt, font_size=20)
         #self.draw_text(0,13,str(self.world.view.y), font_size=13)
-        if self.game_mode == ("ski test"):
-            self.draw_text(800,70,"SKI TEST", font_size=70)
+        #if self.game_mode == ("ski test"):
+            #self.draw_text(800,70,"SKI TEST", font_size=70)
         """
         
         if self.game_mode.startswith("ski"):

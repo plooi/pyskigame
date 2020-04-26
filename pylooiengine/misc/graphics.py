@@ -19,6 +19,8 @@ class Queue:
 class VertexHandler:
     def __init__(self, vertex_size, color_size=3, initial_capacity=2):
         initial_capacity *= 4 #to make sure it's multiple of four so squares will stay together
+        #self.vertices = numpy.zeros([initial_capacity, vertex_size])
+        #self.vertex_colors = numpy.zeros([initial_capacity, color_size])
         self.vertices = numpy.zeros([initial_capacity, vertex_size])
         self.vertex_colors = numpy.zeros([initial_capacity, color_size])
         self.available_indices = Queue()
@@ -90,17 +92,17 @@ class VertexHandler:
                 self.vertex_colors.append([0]*self.color_size)
         
         self.num_available_indices += size_increase
-        """
-        #doubles the list's length
-        original_length = len(self.vertices)
-        for i in range(original_length):
-            self.available_indices.put(i + original_length, block=False)
-            
-        self.vertices = numpy.vstack((self.vertices, [[0]*self.vertex_size]*original_length))
-        self.vertex_colors = numpy.vstack((self.vertex_colors, [[0]*self.color_size]*original_length))
-        self.num_available_indices += original_length
-        """
+    #vertices and colors are numpy arrays with vertices and colors
+    def add_vertices_colors(self, vertices, colors):
+        if len(vertices) % 4 != 0:
+            raise Exception("no")
+        if len(vertices) != len(colors):
+            raise Exception("no")
+        ret = len(self.vertices)
+        self.vertices = numpy.vstack((self.vertices,vertices))
+        self.vertex_colors = numpy.vstack((self.vertex_colors,colors))
         
+        return ret
     def update_vertex(self, index, new_vertex, new_color):
         if index >= len(self.vertices):
             fail("Cannot update vertex %d from vertex list of length %d" % (index, len(self.vertices)))

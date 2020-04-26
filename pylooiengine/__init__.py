@@ -16,6 +16,10 @@ main_window = None
 import math
 
 
+
+
+
+
 def default_3d_view_setup():
     gluPerspective(45, (main_window.window_size[0]/main_window.window_size[1]), 0.1, 5000.0)
 
@@ -763,6 +767,7 @@ class LooiObject:
         glVertex3fv((x4,y4,z4))
         glEnd()
         glPopMatrix()
+    
     def draw_quad_array_3d(self, vertices, colors, setup_3d=default_3d_view_setup):
         glPushMatrix()
         setup_3d()
@@ -781,6 +786,7 @@ class LooiObject:
         glDisableClientState(GL_COLOR_ARRAY);
         
         glPopMatrix()
+    
     def draw_image_array_3d(self, vertices, texutre_coords, image, bytes, setup_3d=default_3d_view_setup):
         glPushMatrix()
         
