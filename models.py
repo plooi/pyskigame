@@ -932,8 +932,8 @@ def pole_design_1(
         #0 to 1
         scalar = scalar**5
         scalar *= .3
-        scalar += .2
-        #.2 to .5
+        scalar += .7
+        #.7 to 1
         
         ret = [0]*len(arr)
         for i in range(len(arr)):
@@ -1096,7 +1096,7 @@ def rock_design_3(
 
 def sun_model_1(
         angle_segments = 30,
-        radius = 300,
+        radius = 100,
         dist_from_player = 4800,
         color = [1,1,.95]):
     

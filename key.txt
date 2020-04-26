@@ -1,4 +1,4 @@
-2324_235
+3628_324
 Black_0_0_4_4
 White_4_0_4_4
 MinecraftSnow-lighting-243_8_0_32_32
@@ -25,3 +25,6 @@ BuildingStoneTexture_1874_0_152_93
 BuildingWoodTexture_2026_0_118_118
 BuildingWoodTexture2_2144_0_158_116
 DoorTexture_2302_0_22_57
+Cloud1_2324_0_303_166
+Cloud2_2627_0_501_273
+Cloud3_3128_0_500_324

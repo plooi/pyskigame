@@ -250,14 +250,16 @@ class Chunk:
                                     real_z = obj.real_z
                                     real_y = obj.real_y
                                     
-                                    base = -999999
+                                    #base = -999999
+                                    base = -30
                                     wid = .3
                                     
                                     hei = 10
                                     brightness = self.world.get_proper_floor_color(r, c)[0]
-                                    pole_color = [.15,.15,.15]
+                                    pole_color = [.75,.75,.75]
+                                    pole_color2 = [0,0,0]
                                     
-                                    t_color = [.7,.7,.7]
+                                    t_color = [.68,.68,.68]
                                     t_wid = 1.3
                                     t_h = .8
                                     
@@ -265,7 +267,7 @@ class Chunk:
                                     self.pan_chunk_squares["trees"].add_vertex([real_x-wid,real_y+hei,real_z], pole_color)
                                     self.pan_chunk_squares["trees"].add_vertex([real_x+wid*.7,real_y+hei,real_z+wid*.7], pole_color)
                                     self.pan_chunk_squares["trees"].add_vertex([real_x+wid*.7,real_y+hei,real_z-wid*.7], pole_color)
-                                    self.pan_chunk_squares["trees"].add_vertex([real_x,real_y+base,real_z], pole_color)
+                                    self.pan_chunk_squares["trees"].add_vertex([real_x,real_y+base,real_z], pole_color2)
                                     
                                     
                                     self.pan_chunk_squares["trees"].add_vertex([real_x+t_wid*math.cos(obj.angle+math.pi/2),real_y+hei,real_z-t_wid*math.sin(obj.angle+math.pi/2)], t_color)
@@ -707,13 +709,14 @@ class World(LooiObject):
             except Exception as e:
                 pass
         return setup_3d
-    def get_setup_3d_far(self):
+    def get_setup_3d_far(self,translate=True):
         def setup_3d():
             gluPerspective(45, (pylooiengine.main_window.window_size[0]/pylooiengine.main_window.window_size[1]), (constants["front_row_chunk_distance"]-.5)*self.properties["chunk_size"]*self.properties["horizontal_stretch"], constants["max_los"] )
             try:
                 glRotate(rad_to_deg(-(self.view.hor_rot-math.pi/2)), 0, 1, 0)
                 glRotate(rad_to_deg(-self.view.vert_rot), math.cos(self.view.hor_rot - math.pi/2), 0, -math.sin(self.view.hor_rot - math.pi/2))
-                glTranslate(-self.view.x, -self.view.y, -self.view.z)
+                if translate:
+                    glTranslate(-self.view.x, -self.view.y, -self.view.z)
             except Exception as e:
                 pass
         return setup_3d
@@ -1589,7 +1592,7 @@ class World(LooiObject):
     
     
         
-        self.snowing(30)
+        #self.snowing(30)
         self.particle_response()
     
         
@@ -1623,9 +1626,12 @@ class World(LooiObject):
         start = time()
         self.draw_scenery()
         self.game_ui.draw_sun()
+        
         glClear(GL_DEPTH_BUFFER_BIT)
-        
-        
+        for obj in self.get_my_window().layered_looi_objects + self.get_my_window().unlayered_looi_objects:
+            if hasattr(obj,"draw_heavenly_body"):
+                obj.draw_heavenly_body()
+        glClear(GL_DEPTH_BUFFER_BIT)
         
         
         self.draw(self.chunk_load_grid)

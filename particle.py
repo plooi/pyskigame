@@ -178,7 +178,7 @@ class Spray(LooiObject):
     def init(self):
         
         self.x=random()*w/3+w/3
-        self.y=random()*h/4+3*h/4
+        self.y=random()*3*h/10+7*h/10
         self.z=random()*3+6
         self.actual_size = .4
     def upon_activation(self):

@@ -98,5 +98,21 @@ x = {
     "sun_vr" : math.pi/5,
     
     
+    
+    
+    "cloud_travel_distance" : 4500,
+    "max_cloud_length" : 600,
+    "min_cloud_length" : 250,
+    "max_cloud_width" : 600,
+    "min_cloud_width" : 250,
+    "max_cloud_height" : 700,
+    "min_cloud_height" : 500,
+    "cloud_spawn_length" : 4000,
+    "max_cloud_initial_head_start" : 500,
+    "cloud_move_speed" : .4,
+    "num_clouds" : 10,
+    
+    
+    
 
 }

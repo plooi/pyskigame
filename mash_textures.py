@@ -45,7 +45,10 @@ None,
 "BuildingStoneTexture.png",
 "BuildingWoodTexture.png",
 "BuildingWoodTexture2.png",
-"DoorTexture.png"
+"DoorTexture.png",
+"Cloud1.png",
+"Cloud2.png",
+"Cloud3.png",
 ]
 n = []
 for name in names:

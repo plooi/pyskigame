@@ -30,7 +30,7 @@ from OpenGL.GLU import *
 import particle
 from constants import x as constants
 
-
+from cloud_manager import CloudManager
 
 
 
@@ -149,6 +149,8 @@ class UI(LooiObject):
         self.shadow_update_center_x = 0
         self.shadow_updates_allowed = 0
         self.restart_shadow_search = False
+        
+        self.cloud_manager = CloudManager(self)
  
     def set_master_volume(self, vol):
         self.master_volume = vol/100
@@ -462,6 +464,7 @@ class UI(LooiObject):
             self.shadow_update_index += 1
             i += 1
     def step(self):
+        
         
         v = self.world.view
         
@@ -1147,8 +1150,9 @@ class UI(LooiObject):
                     if break_factor < .3: break_factor=0
                     self.world.properties["momentum"] /= break_factor*.04 + 1#
                     
-                    for i in range(int(self.world.properties["momentum"]*5)):
-                        particle.Spray(self.world)
+                    if break_factor > 0:
+                        for i in range(int(self.world.properties["momentum"]*5 + floor_slope*1.4)):
+                            particle.Spray(self.world)
                     
                     
                 
