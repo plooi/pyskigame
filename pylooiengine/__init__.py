@@ -123,9 +123,9 @@ class Window():
             "released" : [False, False, False]
         }
         self.keys = {
-            "down" : [False]*len(pygame.key.get_pressed()),
-            "pressed" : [False]*len(pygame.key.get_pressed()),
-            "released" : [False]*len(pygame.key.get_pressed()),
+            "down" : {},
+            "pressed" : {},
+            "released" : {},
         }
         self.update_view_dimensions()
         
@@ -135,12 +135,16 @@ class Window():
         pygame.mixer.init()
     
     def start(self):
-        keysdown = [False]*len(pygame.key.get_pressed())
         
         while True:
             start_time = time()
             self.scroll_up = False
             self.scroll_down = False
+            self.keys["pressed"] = {}
+            self.keys["released"] = {}
+            for i in range(3):
+                self.mouse["pressed"][i] = False
+                self.mouse["released"][i] = False
             for event in pygame.event.get():
                 if event.type == pygame.VIDEORESIZE:
                     self.window_size = (event.w, event.h)
@@ -148,9 +152,24 @@ class Window():
                     for looi_object in self.layered_looi_objects: looi_object.upon_resize()
                     for looi_object in self.unlayered_looi_objects: looi_object.upon_resize()
                 if event.type == pygame.KEYDOWN:
-                    keysdown[event.key] = True
+                    self.keys["pressed"][event.key] = True
+                    self.keys["down"][event.key] = True
+                    self.keys["released"][event.key] = False
+                    
                 if event.type == pygame.KEYUP:
-                    keysdown[event.key] = False
+                    self.keys["pressed"][event.key] = False
+                    self.keys["down"][event.key] = False
+                    self.keys["released"][event.key] = True
+
+                
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    self.mouse["pressed"][event.button-1] = True
+                    self.mouse["down"][event.button-1] = True
+                    self.mouse["released"][event.button-1] = False
+                if event.type == pygame.MOUSEBUTTONUP:
+                    self.mouse["pressed"][event.button-1] = False
+                    self.mouse["down"][event.button-1] = False
+                    self.mouse["released"][event.button-1] = True
                 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 4:
@@ -158,58 +177,7 @@ class Window():
                     elif event.button == 5:
                         self.scroll_down = True
                     
-                    
-            #mouse
-            mouse_buttons_pressing = pygame.mouse.get_pressed()
-            for i in range(3):
-                if mouse_buttons_pressing[i] == True:# is it pressing now?
-                    if self.mouse["down"][i] == True:#was it down before?
-                        self.mouse["pressed"][i] = False
-                        self.mouse["down"][i] = True
-                        self.mouse["released"][i] = False
-                    else:
-                        #it was not down before
-                        self.mouse["pressed"][i] = True
-                        self.mouse["down"][i] = True
-                        self.mouse["released"][i] = False
-                else:
-                    #it is not down now
-                    if self.mouse["down"][i] == True:#was it down before?
-                        self.mouse["pressed"][i] = False
-                        self.mouse["down"][i] = False
-                        self.mouse["released"][i] = True
-                    else:
-                        #it was not down before
-                        self.mouse["pressed"][i] = False
-                        self.mouse["down"][i] = False
-                        self.mouse["released"][i] = False
-                    
-                
-            #keys
-            keys = keysdown
-            
-            for i in range(len(keys)):
-                if keys[i] == True:# is it down now?
-                    if self.keys["down"][i] == True:#was it down before?
-                        self.keys["pressed"][i] = False
-                        self.keys["down"][i] = True
-                        self.keys["released"][i] = False
-                    else:
-                        #it was not down before
-                        self.keys["pressed"][i] = True
-                        self.keys["down"][i] = True
-                        self.keys["released"][i] = False
-                else:
-                    #it is not down now
-                    if self.keys["down"][i] == True:#was it down before?
-                        self.keys["pressed"][i] = False
-                        self.keys["down"][i] = False
-                        self.keys["released"][i] = True
-                    else:
-                        #it was not down before
-                        self.keys["pressed"][i] = False
-                        self.keys["down"][i] = False
-                        self.keys["released"][i] = False
+                  
             
             
             #drawing and stepping
@@ -498,7 +466,7 @@ class LooiObject:
                 key = getattr(pygame, "K_"+key.upper())
         else:
             fail("incorrect type for 'key' argument. Must be string or int key code")
-        return self.get_my_window().keys[action][key]
+        return self.get_my_window().keys[action][key] if key in self.get_my_window().keys[action] else False
     def set_layer(self, layer):
         check(layer == None or is_num(layer))
         
