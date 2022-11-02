@@ -92,7 +92,7 @@ def main():
 
 class Window():
     def __init__(self, window_width=1000, window_height=600, internal_size=(1920,1080), fps=30):
-        pygame.mixer.pre_init(44100, 16, 2, 4096)
+        pygame.mixer.pre_init(44100, -16, 2, 4096)
         pygame.init()
         self.window_size = (window_width, window_height)
         self.internal_size = internal_size
